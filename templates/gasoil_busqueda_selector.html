@@ -88,8 +88,12 @@
             <table>
                 <tr>
                     <td colspan="4"><strong>Totales:</strong></td>
-                    <td>Gasoil {{ total_gasoil | default(0) | round(2) }} litros {{total_euros_gasoil | default(0) | round(2)}}€ {{media_gasoil | default(0) | round(2)}}€/l</td>
-                    <td>Addblue {{ total_addblue | default(0) | round(2) }} litros {{total_euros_addblue |default(0) | round(2)}}€ {{media_addblue |default(0) | round(2)}}€/l</td>
+                    <td>Gasoil {{ total_gasoil | default(0) | round(2) }} litros <br>
+                               {{total_euros_gasoil | default(0) | round(2)}}€ <br>
+                               {{media_gasoil | default(0) | round(2)}}€/litro</td>
+                    <td>Addblue {{ total_addblue | default(0) | round(2) }} litros <br>
+                                {{total_euros_addblue |default(0) | round(2)}}€ <br>
+                                {{media_addblue |default(0) | round(2)}}€/litro</td>
                     <td>Km recorridos: {{km_recorridos | round(2)}}</td>
                     <td>{{precio_km | round(2)}}€ por km</td>
                     <td colspan="6"></td>
