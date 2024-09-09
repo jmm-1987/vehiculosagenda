@@ -16,6 +16,7 @@ from func_especiales.funciones import register_func_especiales_routes
 from vehiculos.ficha_vehiculos import register_ficha_routes
 from seguros.edicion import register_seguroedit_routes
 from tacografos.edicion import register_tacografoedit_routes
+from transpaletas.edicion import register_transpaletaedit_routes
 from rodajes.edicion import register_rodajeedit_routes
 from extintores.edicion import register_extintoredit_routes
 from manager.manager import register_usuarios_routes
@@ -57,6 +58,7 @@ register_rodajeedit_routes(app)
 register_extintoredit_routes(app)
 register_usuarios_routes(app)
 register_transpaletas_routes(app)
+register_transpaletaedit_routes(app)
 register_transpaleta_talleres_routes(app)
 register_visitas_transapaleta_routes(app)
 register_talleres_routes(app)

@@ -32,14 +32,14 @@
                     <td>{{ tr.modelo }}</td>
                     <td>{{ tr.bastidor }}</td>
                     <td>{{ tr.asignada }}</td>
-                    <td><a href="form_editar_tacografo/{{ tr.id }}" target="_blank">
+                    <td><a href="form_editar_transpaleta/{{ tr.id }}" target="_blank">
                         <button type="submit" class="boton-editar"><i class="fas fa-pencil"></i></button>
                     </a>
 
                     <td>
-                        <form action="/borrar_tacografo/{{ tr.id }}" method="POST">
+                        <form action="/borrar_transpaleta/{{ tr.id }}" method="POST">
                             <input type="hidden" name="id" value="{{ tr.id }}">
-                            <input type="hidden" name="clase" value="Tacografo">
+                            <input type="hidden" name="clase" value="Transpaleta">
                             <button type="submit" class="boton-borrar"><i class="fas fa-trash-alt"></i></button>
                         </form>
                     </td>
