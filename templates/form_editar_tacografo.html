@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modificar Tacografo</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+    <div class="container">
+
+    <h1>Modificar Taacografo {{veh_editar.matricula}}</h1><br>
+
+    <form action="/modificar_tacografo" method="POST">
+        <input type="hidden" name="id" value="{{veh_editar.id}}">
+        <label for="rev_tacografo_ant" id="rev_tacografo_ant"><b>Ultima revisión</b></label>
+        <input type="date" id="rev_tacografo_new" name="rev_tacografo_new" value={{veh_editar_rev_tacografo}}><br><br>
+
+        <label for="venc_tacografo_ant" id="venc_tacografo_ant"><b>Vencimiento</b></label>
+        <input type="date" id="venc_tacografo_new" name="venc_tacografo_new" value={{veh_editar_venc_tacografo}}><br><br>
+
+        <label for="obs_tacografo_ant" id="obs_tacografo_ant">Observaciones </label><br>
+        <textarea id="obs_tacografo_new" name="obs_tacografo_new" rows="4" cols="50">{{ veh_editar_obs_tacografo }}</textarea><br><br>
+
+        <input class="button" type="submit" value="Guardar cambios">
+        <a class="button_red" href="/tacografos">Volver</a>
+    </form>
+<footer class="banda-roja"></footer>
+    </div>
+</body>
+</html>

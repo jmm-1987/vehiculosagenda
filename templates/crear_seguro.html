@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Añadir seguro</title>
+    <link rel="stylesheet" href="static/main.css">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+    <div class="container">
+        <h1>Añadir Seguro</h1>
+        <form action="/crear_seguro" method="post">
+            <div class="form-group">
+                <label for="matricula">Selecciona una matricula:</label>
+                <select id="matricula" name="matricula" required>
+                    <option value="" selected disabled></option>
+                    {% for m in lista_matriculas %}
+                        <option value="{{ m.matricula }}">{{ m["matricula"] }}</option>
+                    {% endfor %}
+                </select>
+                <!--<input type="text" id="matricula" name="matricula" required>-->
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="venc_seguro">Vencimiento seguro:</label>
+                <input type="date" id="venc_seguro" name="venc_seguro" required>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="cia_seguro">Compañía:</label>
+                <input type="text" id="cia_seguro" name="cia_seguro" </input>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="cob_seguro">Coberturas:</label>
+                <textarea id="cob_seguro" name="cob_seguro" rows="2"></textarea>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="fra_seguro">Franquicia:</label>
+                <input id="fra_seguro" name="fra_seguro" </input>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="pri_seguro">Prima:</label>
+                <input id="pri_seguro" name="pri_seguro" </input>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="obs_seguro">Observaciones:</label>
+                <textarea id="obs_seguro" name="obs_seguro" rows="4"></textarea>
+            </div>
+            </br>
+            <button class="button" type="submit" onclick="return confirm('¿Quieres añadir un nuevo seguro? Se dará por vencido el último en vigor')">Guardar</button>
+            <a class="button_red" href="/seguros">Volver</a>
+        </form>
+    </div>
+<footer class="banda-roja"></footer>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control gasoil</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+        <a class="top-user"> {{ current_user.username }}</a>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+</div>
+    <div class="container">
+        <h1>Gestión de tickets de gasoil</h1>
+        <h2>Selecciona un vehículo</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Matrícula</th>
+                    <th>Alias</th>
+
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for vehiculo in lista_vehiculos %}
+                <tr>
+                    <td><a href="/gasoil_busqueda_selector/{{vehiculo.id}}">{{ vehiculo.matricula }}</td>
+                    <td>{{ vehiculo.alias }}</td>
+
+
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+        <br>
+        <a class="button" href="/formulario_gasoil">Introducir ticket</a>
+        <a class="button_red" href="/index">Volver</a>
+
+    </div>
+<footer class="banda-roja"></footer>
+</body>
+</html>

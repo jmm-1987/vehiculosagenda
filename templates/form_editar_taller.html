@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modificar taller</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+    <div class="container">
+
+    <h1>Modificar intervención taller del vehículo {{taller_editar.matricula}}</h1><br>
+
+    <form action="/modificar_taller" method="POST">
+        <input type="hidden" name="id" value="{{taller_editar.id}}">
+        <label for="fecha_visita_ant" id="fecha_visita_ant"><b>Fecha de entrada</b></label>
+        <input type="date" id="fecha_visita_new" name="fecha_visita_new" value={{taller_editar.fecha_visita}}><br><br>
+
+        <label for="kilometros_ant" id="kilometros_ant"><b>Kilometros</b></label>
+        <input type="text" id="kilometros_new" name="kilometros_new" value={{taller_editar.kilometros}}><br><br>
+
+        <label for="taller_ant" id="taller_ant"><b>Taller</b></label>
+        <input type="text" id="taller_new" name="taller_new" value="{{taller_editar.taller}}"><br><br>
+
+        <label for="problema_ant" id="problema_ant"><b>Problema</b></label>
+        <input type="text" id="problema_new" name="problema_new" value="{{taller_editar.problema}}"><br><br>
+
+        <label for="albaran_ant" id="albaran_ant"><b>Albarán de taller</b></label>
+        <input type="text" id="albaran_new" name="albaran_new" value="{{taller_editar.albaran}}"><br><br>
+
+        <label for="presupuesto_ant" id="presupuesto_ant"><b>Presupuesto sin IVA</b></label>
+        <input type="text" id="presupuesto_new" name="presupuesto_new" value="{{taller_editar.presupuesto}}"><br><br>
+
+        <label for="trabajos_ant" id="trabajos_ant"><b>Trabajos realizados</b></label>
+        <input type="text" id="trabajos_new" name="trabajos_new" value="{{taller_editar.trabajos}}"><br><br>
+
+        <label for="importe_ant" id="importe_ant"><b>Importe sin IVA</b></label>
+        <input type="text" id="importe_new" name="importe_new" value="{{taller_editar.importe}}"><br><br>
+
+        <label for="fecha_entrega_ant" id="fecha_entrega_ant"><b>Fecha de salida</b></label>
+        <input type="date" id="fecha_entrega_new" name="fecha_entrega_new" value={{taller_editar.fecha_entrega}}><br><br>
+
+        <input class="button" type="submit" value="Guardar cambios">
+        <a class="button_red" href="/talleres">Volver</a>
+    </form>
+<footer class="banda-roja"></footer>
+    </div>
+</body>
+</html>

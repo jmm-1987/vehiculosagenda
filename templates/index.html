@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+</head>
+<body>
+    <div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+        <a class="top-user"> {{ current_user.username }}</a>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+
+    </div>
+    <div class="container">
+
+        <h1>Control de vehículos</h1>
+        <div class="buttons">
+            <a href="/vehiculos" class="button">Vehículos</a>
+            <a href="/talleres" class="button">Talleres</a>
+            <a href="/itv" class="button">ITV</a>
+            <a href="/seguros" class="button">Seguros</a>
+            <a href="/tacografos" class="button">Tacógrafos</a></br></br>
+            <a href="/rodajes" class="button">Rodajes</a>
+            <a href="/extintores" class="button">Extintores</a>
+            <a href="/selector" class="button">Gasoil/Add</a>
+            <a href="/transpaletas" class="button-dark">Transapaletas</a>
+            {% if current_user.username == "jmurillo" %} <a href="/manager" class="button">Manager</a>
+            {% else %}
+            {%endif%}
+            {% if current_user.username == "jmurillo" or current_user.username == "rocio" %} <a href="/tareas" class="button">Tareas</a>
+            {% else %}
+            {%endif%}
+        </div>
+    </div>
+    <br><br>
+    <h2><center>Vencimientos en los próximos 30 días</center></h2>
+    <div class="avisos">
+    {% for a in avisos %}
+                <tr>
+                    <br>
+                    <td>{{ a[0]}} {{ a[1]}} {{a[2]}}</td>
+                </tr>
+    {% endfor %}
+<br>
+
+    </div>
+<br>
+<br>
+
+<footer class="banda-roja"></footer>
+<br>
+</body>
+</html>

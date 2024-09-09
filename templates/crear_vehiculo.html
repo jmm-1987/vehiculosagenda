@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nuevo Vehículo</title>
+  <link rel="stylesheet" href="static/main.css">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+
+<div class="container">
+  <h1>Formulario de Vehículo</h1>
+  <form action="/crear_vehiculo" method="POST">
+    <label for="matricula">Matrícula:</label>
+    <input type="text" id="matricula" name="matricula" required>
+
+    <label for="alias">Alias:</label>
+    <input type="text" id="alias" name="alias">
+
+    <label for="tipo">Tipo:</label>
+    <select id="tipo" name="tipo" required>
+            <option value="" selected disabled></option>
+            <option value="camion">Camión</option>
+            <option value="remolque">Remolque</option>
+        </select>
+    <br><br>
+
+    <button class="button" type="submit">Guardar</button>
+    <a class="button_red" href="/vehiculos">Volver</a>
+  </form>
+</div>
+<footer class="banda-roja"></footer>
+</body>
+</html>

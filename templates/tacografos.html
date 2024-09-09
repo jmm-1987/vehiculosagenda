@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revisiones de tacógrafos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+    .verde {
+      color: green; /* Cambia el color a verde */
+    }
+    </style>
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+        <a class="top-user"> {{ current_user.username }}</a>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+</div>
+
+    <div class="container">
+        <h1>Revisiones de tacógrafos</h1>
+        <a class="button" href="/tacografos_todos">Mostrar caducados</a>
+        <br>
+        <br>
+        <table>
+            <thead>
+                <tr>
+                    <th>Matrícula</th>
+                    <th>Revisión</th>
+                    <th>Próxima revisión</th>
+                    <th>Observaciones</th>
+                    <th>Documento</th>
+                    <th colspan="2">Acciones</th>
+
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for t in lista_tacografos %}
+                <tr class="{% if not t.activo %}no_activo{% endif %}">
+                    <td>{{ t.matricula }}</td>
+                    <td>{{ t.rev_tacografo.strftime('%d-%m-%Y') }}</td>
+                    <td>{{ t.venc_tacografo.strftime('%d-%m-%Y') }}</td>
+                    <td>{{ t.obs_tacografo }}</td>
+
+                    {% if not t.nombre_doc %}
+                    <td>
+                        <form action="/subir_doc" method="POST" enctype="multipart/form-data">
+                            <input type="file" name="documento" accept=".pdf, .doc, .docx">
+                            <input type="hidden" name="matricula" value="{{ t.matricula }}">
+                            <input type="hidden" name="id" value="{{ t.id }}">
+                            <input type="hidden" name="clase" value="Tacografo">
+                            <input type="submit" value="Adjuntar">
+                        </form>
+                    </td>
+                    {% else %}
+                    <td><a href="static/subidas/{{t.nombre_doc}}"><i class="fas fa-check verde"></i>Ver</td>
+                    {% endif %}
+                    <td><a href="form_editar_tacografo/{{ t.id }}" target="_blank">
+                        <button type="submit" class="boton-editar"><i class="fas fa-pencil"></i></button>
+                    </a>
+                    {% if current_user.username == "jmurillo" or current_user.username == "javimurillo" %}
+                    <td>
+                        <form action="/borrar_tacografo/{{ t.id }}" method="POST">
+                            <input type="hidden" name="id" value="{{ t.id }}">
+                            <input type="hidden" name="clase" value="Tacografo">
+                            <button type="submit" class="boton-borrar"><i class="fas fa-trash-alt"></i></button>
+                        </form>
+                    </td>
+                    {% else %}
+                    <td></td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <br>
+        <a class="button" href="/formulario_tacografo">Crear Revisión</a>
+        <a class="button_red" href="/index">Volver</a>
+        <br>
+        <div>{{ mensaje }}</div>
+        <br>
+        <br>
+        <br>
+
+    </div>
+<footer class="banda-roja"></footer>
+</body>
+</html>

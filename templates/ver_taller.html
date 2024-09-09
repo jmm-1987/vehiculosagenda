@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Taller</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+    <div class="container">
+    <h1>Consulta visita taller {{taller_ver.matricula}}</h1><br>
+        <label> Fecha de entrada <b>{{taller_ver.fecha_visita.strftime('%d-%m-%Y')}}</b></label>
+        <br><br>
+        <label> Kilometros <b>{{taller_ver.kilometros}}</b></label>
+        <br><br>
+        <label>Taller: <b>{{taller_ver.taller}}</b></label>
+        <br><br>
+        <label>Problema: <b>{{taller_ver.problema}}</b></label>
+        <br><br>
+        <label>Número albarán: <b>{{taller_ver.albaran}}</b></label>
+        <br><br>
+        <label>Presupuesto: <b>{{taller_ver.presupuesto}}</b></label>
+        <br><br>
+        <label>Trabajos realizados: <b>{{taller_ver.trabajos}}</b></label>
+        <br><br>
+        <label>Importe: <b>{{taller_ver.importe}}</b></label>
+        <br><br>
+        {% if taller_ver.fecha_entrega %}
+            <label> Fecha de entrega <b>{{taller_ver.fecha_entrega.strftime('%d-%m-%Y')}}</b></label>
+        {% else %}
+            <label> Fecha de entrega <b>En curso</b></label>
+        {% endif %}
+        <br><br>
+        <label><a href="static/subidas/{{taller_ver.nombre_doc}}" target="_blank"</a><i class="fas fa-check verde"></i>Ver documento adjunto</label>
+        <br><br>
+        <a class="button_red" href="/talleres">Volver</a>
+        <br>
+        <br>
+        <br><br>
+
+<footer class="banda-roja"></footer>
+    </div>
+</body>
+</html>

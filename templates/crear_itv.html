@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario</title>
+    <link rel="stylesheet" href="static/main.css">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+    <div class="container">
+        <h1>Añadir ITV</h1>
+        <form action="/crear_itv" method="post">
+            <div class="form-group">
+                <label for="matricula">Selecciona una matricula:</label>
+                <select id="matricula" name="matricula" required>
+                    <option value="" selected disabled></option>
+                    {% for m in lista_matriculas %}
+                        <option value="{{ m.matricula }}">{{ m["matricula"] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="fecha_itv">Fecha de ITV:</label>
+                <input type="date" id="fecha_itv" name="fecha_itv" required>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="venc_itv">Vencimiento ITV:</label>
+                <input type="date" id="venc_itv" name="venc_itv" required>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="cita_itv">Próxima Cita:</label>
+                <input type="date" id="cita_itv" name="cita_itv">
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="obs_itv">Observaciones:</label>
+                <textarea id="obs_itv" name="obs_itv" rows="4"></textarea>
+            </div>
+
+            </br>
+            <button class="button" type="submit" onclick="return confirm('¿Quieres añadir ITV? Se dará por finalizada la última en vigor')">Guardar</button>
+            <a class="button_red" href="/itv">Volver</a>
+        </form>
+    </div>
+<footer class="banda-roja"></footer>
+</body>
+</html>

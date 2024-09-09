@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario</title>
+    <link rel="stylesheet" href="static/main.css">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+    <div class="container">
+        <h1>Añadir rodaje</h1>
+        <form action="/crear_rodaje" method="post">
+            <div class="form-group">
+                <label for="matricula">Selecciona una matricula:</label>
+                <select id="matricula" name="matricula" required>
+                    <option value="" selected disabled></option>
+                    {% for m in lista_matriculas %}
+                        <option value="{{ m.matricula }}">{{ m["matricula"] }}</option>
+                    {% endfor %}
+                </select>
+                <!--<input type="text" id="matricula" name="matricula" required>-->
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="pago_rodaje">Pago rodaje:</label>
+                <input type="date" id="pago_rodaje" name="pago_rodaje" required>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="venc_rodaje">Valido hasta:</label>
+                <input type="date" id="venc_rodaje" name="venc_rodaje" required>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="obs_rodaje">Observaciones:</label>
+                <textarea type="date" id="obs_rodaje" name="obs_rodaje"> </textarea>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="imp_rodaje">Importe:</label>
+                <input type="text" id="imp_rodaje" name="imp_rodaje"> </input>
+            </div>
+            </br>
+            <button class="button" type="submit" onclick="return confirm('¿Quieres añadir un nuevo rodaje?')">Guardar</button>
+            <a class="button_red" href="/rodajes">Volver</a>
+        </form>
+    </div>
+<footer class="banda-roja"></footer>
+</body>
+</html>

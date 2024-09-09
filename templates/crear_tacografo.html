@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario tacógrafos</title>
+    <link rel="stylesheet" href="static/main.css">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+    <div class="container">
+        <h1>Añadir revisión tacógrafo</h1>
+        <form action="/crear_tacografo" method="post">
+            <div class="form-group">
+                <label for="matricula">Selecciona una matricula:</label>
+                <select id="matricula" name="matricula" required>
+                    <option value="" selected disabled></option>
+                    {% for t in lista_matriculas %}
+                        <option value="{{ t.matricula }}">{{ t["matricula"] }}</option>
+                    {% endfor %}
+                </select>
+                <!--<input type="text" id="matricula" name="matricula" required>-->
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="rev_tacografo">Ultima revisión:</label>
+                <input type="date" id="rev_tacografo" name="rev_tacografo" required>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="venc_tacografo">Próxima revisión:</label>
+                <input type="date" id="venc_tacografo" name="venc_tacografo" required>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="obs_tacografo">Observaciones:</label>
+                <textarea id="obs_tacografo" name="obs_tacografo" rows="4"></textarea>
+            </div>
+            </br>
+            <button class="button" type="submit" onclick="return confirm('¿Quieres añadir una revisión? Se dará por finalizada la última en vigor')">Guardar</button>
+            <a class="button_red" href="/tacografos">Volver</a>
+        </form>
+    </div>
+<footer class="banda-roja"></footer>
+</body>
+</html>

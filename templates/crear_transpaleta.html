@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nuevo Vehículo</title>
+  <link rel="stylesheet" href="static/main.css">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+
+<div class="container">
+  <h1>Formulario de Transapaleta</h1>
+  <form action="/crear_transpaleta" method="POST">
+    <label for="alias">Alias:</label>
+    <input type="text" id="alias" name="alias" required>
+
+    <label for="marca">Marca:</label>
+    <input type="text" id="marca" name="marca">
+
+    <label for="modelo">Modelo:</label>
+    <input type="text" id="modelo" name="modelo">
+
+    <label for="bastidor">Bastidor:</label>
+    <input type="text" id="bastidor" name="bastidor">
+
+    <label for="asignada">Asignada a:</label>
+    <input type="text" id="asignada" name="asignada">
+
+
+    <button class="button" type="submit">Guardar</button>
+    <a class="button_red" href="/transpaletas">Volver</a>
+  </form>
+</div>
+<footer class="banda-roja"></footer>
+</body>
+</html>

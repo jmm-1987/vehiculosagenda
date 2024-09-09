@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario</title>
+    <link rel="stylesheet" href="static/main.css">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+    <div class="container">
+        <h1>Registrar reparación de vehículo</h1>
+        <form action="/crear_taller" method="post">
+            <div class="form-group">
+                <label for="matricula">Selecciona una matricula:</label>
+                    <select id="matricula" name="matricula" required>
+                        <option value="" selected disabled></option>
+                        {% for t in lista_matriculas %}
+                            <option value="{{ t.matricula }}">{{ t["matricula"] }}</option>
+                        {% endfor %}
+                    </select>
+            </div>
+            <br>
+            <div class="form-group" style="display: inline-block; vertical-align: top; margin-right: 10px;">
+                <label for="taller">Taller:</label>
+                <input id="taller" name="taller" required>
+            </div>
+            <div class="form-group" style="display: inline-block; vertical-align: top; margin-right: 10px;">
+                <label for="fecha_visita">Fecha visita:</label>
+                <input type="date" id="fecha_visita" name="fecha_visita" required>
+            </div>
+            <br>
+            <br>
+            <div class="form-group">
+                <label for="problema">Avería:</label>
+                <textarea id="problema" name="problema" required></textarea>
+            </div>
+            <br>
+            <div class="form-group" style="display: inline-block; vertical-align: top; margin-right: 10px;">
+                <label for="albaran">Albarán:</label>
+                <input type="text" id="albaran" name="albaran">
+            </div>
+            <div class="form-group" style="display: inline-block; vertical-align: top; margin-right: 10px;">
+                <label for="presupuesto">Presupuesto:</label>
+                <input type="text" id="presupuesto" name="presupuesto">
+            </div>
+            <br><br>
+            <div class="form-group">
+                <label for="kilometros">Kilometros:</label>
+                <input type="text" id="kilometros" name="kilometros">
+            </div>
+            <br>
+            <div class="form-group">
+                <label for="trabajos">Trabajos realizados:</label>
+                <textarea id="trabajos" name="trabajos"></textarea>
+            </div>
+            <br>
+            <div class="form-group">
+                <label for="importe">Importe reparación:</label>
+                <input type="text" id="importe" name="importe">
+            </div>
+            <br>
+            <div class="form-group">
+                <label for="fecha_entrega">Fecha entrega:</label>
+                <input type="date" id="fecha_entrega" name="fecha_entrega">
+            </div>
+            <br>
+            <div>
+            <button class="button" type="submit">Guardar</button>
+            <a class="button_red" href="/talleres">Volver</a>
+            </div>
+        </form>
+    </div>
+<footer class="banda-roja"></footer>
+</body>
+</html>

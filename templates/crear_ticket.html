@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario</title>
+    <link rel="stylesheet" href="static/main.css">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+    <div class="container">
+        <h1>Nuevo ticket</h1>
+        <form action="/crear_ticket" method="post">
+            <div class="form-group">
+                <label for="matricula">Selecciona una matricula:</label>
+                <select id="matricula" name="matricula" required>
+                    <option value="" selected disabled></option>
+                    {% for m in lista_matriculas %}
+                        <option value="{{ m.matricula }}">{{ m["matricula"] }}</option>
+                    {% endfor %}
+                </select>
+                <!--<input type="text" id="matricula" name="matricula" required>-->
+            </div>
+            <br>
+            <div class="form-group">
+                <label for="tipo">Selecciona un tipo:</label>
+                <select id="tipo" name="tipo" required>
+                    <option value="" selected disabled></option>
+                    <option value="gasoil">Gasoil</option>
+                    <option value="addblue">AddBlue</option>
+                </select>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="fecha_ticket">Fecha:</label>
+                <input type="date" id="fecha_ticket" name="fecha_ticket" required>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="kms_ticket">Kilometros:</label>
+                <input type="text" id="kms_ticket" name="kms_ticket" required>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="litros_ticket">Litros:</label>
+                <input type="input" id="litros_ticket" name="litros_ticket"required>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="precio_ticket">Importe:</label>
+                <input type="text" id="precio_ticket" name="precio_ticket" required>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="obs_ticket">Observaciones:</label>
+                <input type="text" id="obs_ticket" name="obs_ticket">
+            </div>
+            </br>
+            <button class="button" type="submit">Guardar</button>
+            <a class="button_red" href="/selector">Volver</a>
+        </form>
+    </div>
+<footer class="banda-roja"></footer>
+</body>
+</html>

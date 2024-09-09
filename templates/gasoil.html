@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control gasoil</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+<div class="container">
+        <!-- Formulario de búsqueda -->
+        <form action="/buscador_tickets" method="post">
+            <div class="form-group">
+                <label for="mat">Selecciona una matricula:</label>
+                <select id="mat" name="mat" required>
+                    {% for m in lista_matriculas %}
+                        <option value="{{ m.matricula }}">{{ m["matricula"] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <br>
+            <div class="form-group">
+                <label for="fecha_inicio">Fecha inicio:</label><input type="date" id="fecha_inicio" name="fecha_inicio">
+                <label for="fecha_fin">Fecha fin:</label><input type="date" id="fecha_fin" name="fecha_fin">
+            </div>
+
+            <br>
+
+            <button class="button" type="submit">Buscar</button>
+            <a href="/gasoil" class="button">Anular filtro</a>
+
+        </form>
+    <div class="container">
+        <h1>Tickets de gasoil</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Matrícula</th>
+                    <th>Fecha</th>
+                    <th>Tipo</th>
+                    <th>km</th>
+                    <th>litros</th>
+                    <th>precio</th>
+                    <th>precio/litro</th>
+                    <th>Nota</th>
+                    <th>Facturado</th>
+                    <th>Marcar</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in lista_tickets %}
+                <tr>
+                    <td>{{ r.matricula }}</td>
+                    <td>{{ r.fecha_ticket }}</td>
+                    <td>{{ r.tipo }}</td>
+                    <td>{{ r.kms_ticket }} km</td>
+                    <td>{{ r.litros_ticket }} l</td>
+                    <td>{{ r.precio_ticket }} €</td>
+                    <td>{{ r.precio_litro_ticket }} €/l</td>
+                    <td>{{ r.obs_ticket }}</td>
+                    <td>{% if r.facturado == True %}Sí{% else %}No{% endif %}</td>
+                    <td>{% if r.marcado == False %}
+                    <form action="/marcar_ticket" method="POST">
+                        <input type="hidden" name="marcar" value="{{ r.id }}">
+                        <button type="submit" class="boton-marcar">
+                        <i class="fas fa-check" style="background-color: white;"></i></button>
+                        {% else %}
+                    <form action="/desmarcar_ticket" method="POST">
+                        <input type="hidden" name="desmarcar" value="{{ r.id }}">
+                        <button type="submit" class="boton-desmarcar">
+                        <i class="fas fa-check" style="color: green;"></i></button>
+                        {% endif %}
+                    </td>
+                    </form>
+                    <td>
+                        <form action="/borrar_ticket/{{ r.id }}" method="POST">
+                            <input type="hidden" name="id" value="{{ r.id }}">
+                            <input type="hidden" name="clase" value="Gasoil">
+                            <button type="submit" class="boton-borrar"><i class="fas fa-trash-alt"></i>Borrar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <br>
+        <a class="button" href="/facturar_ticket" id="Facturar">Facturar</a>
+        <a class="button" href="/formulario_gasoil">Introducir ticket</a>
+        <a class="button_red" href="/index">Volver</a>
+
+    </div>
+<footer class="banda-roja"></footer>
+</body>
+</html>

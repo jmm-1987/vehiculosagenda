@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listado de Rodajes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+        <a class="top-user"> {{ current_user.username }}</a>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+</div>
+    <div class="container">
+        <h1>Rodajes</h1>
+        <a class="button" href="/rodajes_todos">Mostrar caducados</a>
+        </br>
+        </br>
+        <table>
+            <thead>
+                <tr>
+                    <th>Matrícula</th>
+                    <th>Fecha de pago</th>
+                    <th>Validez</th>
+                    <th>Observaciones</th>
+                    <th>Importe</th>
+                    <th>Documento</th>
+                    <th colspan="2">Acciones</th>
+
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for r in lista_rodajes %}
+                <tr class="{% if not r.activo %}no_activo{% endif %}">
+                    <td>{{ r.matricula }}</td>
+                    <td>{{ r.pago_rodaje.strftime('%d-%m-%Y') }}</td>
+                    <td>{{ r.venc_rodaje.strftime('%d-%m-%Y') }}</td>
+                    <td>{{ r.obs_rodaje }}</td>
+                    <td>{{ r.imp_rodaje }}</td>
+                    {% if not r.nombre_doc %}
+                    <td>
+                        <form action="/subir_doc" method="POST" enctype="multipart/form-data">
+                            <input type="file" name="documento" accept=".pdf, .doc, .docx">
+                            <input type="hidden" name="matricula" value="{{ r.matricula }}">
+                            <input type="hidden" name="id" value="{{ r.id }}">
+                            <input type="hidden" name="clase" value="Rodaje">
+                            <input type="submit" value="Adjuntar">
+                        </form>
+                    </td>
+                    {% else %}
+                    <td><a href="static/subidas/{{r.nombre_doc}}" target="_blank"</a><i class="fas fa-check verde"></i>Ver</td>
+                    {% endif %}
+                    <td><a href="form_editar_rodaje/{{ r.id }}" target="_blank">
+                        <button type="submit" class="boton-editar"><i class="fas fa-pencil"></i></button>
+                    </a>
+                    {% if current_user.username == "jmurillo" or current_user.username == "javimurillo" %}
+                    <td>
+                        <form action="/borrar_rodaje/{{ r.id }}" method="POST">
+                            <input type="hidden" name="id" value="{{ r.id }}">
+                            <input type="hidden" name="clase" value="Rodaje">
+                            <button type="submit" class="boton-borrar"><i class="fas fa-trash-alt"></i></button>
+                        </form>
+                    </td>
+                    {% else %}
+                    <td></td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <br>
+        <a class="button" href="/formulario_rodaje">Crear rodaje</a>
+        <a class="button_red" href="/index">Volver</a>
+        <br>
+        <br>
+        <br><br>
+
+    </div>
+<footer class="banda-roja"></footer>
+</body>
+</html>

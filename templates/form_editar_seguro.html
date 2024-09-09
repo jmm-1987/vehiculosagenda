@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modificar Seguro</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+    <div class="container">
+
+    <h1>Modificar Seguro {{veh_editar.matricula}}</h1><br>
+
+    <form action="/modificar_seguro" method="POST">
+        <input type="hidden" name="id" value="{{veh_editar.id}}">
+        <label for="venc_seguro_new"><b>Fecha venciminento</b></label>
+        <input type="date" id="venc_seguro_new" name="venc_seguro_new" value={{veh_editar_venc_seguro}}><br><br>
+
+        <label for="cia_seguro_ant" id="cia_seguro_ant"><b>Compañia</b></label>
+        <input id="cia_seguro_new" name="cia_seguro_new" value={{veh_editar_cia_seguro}}><br><br>
+
+        <label for="cob_seguro_ant" id="cob_seguro_ant"><b>Coberturas</b></label>
+        <input id="cob_seguro_new" name="cob_seguro_new" value={{veh_editar_cob_seguro}}><br><br>
+
+        <label for="fra_seguro_ant" id="fra_seguro_ant"><b>Franquicia</b></label>
+        <input id="fra_seguro_new" name="fra_seguro_new" value={{veh_editar_fra_seguro}}><br><br>
+
+        <label for="pri_seguro_ant" id="pri_seguro_ant"><b>Prima</b></label>
+        <input id="pri_seguro_new" name="pri_seguro_new" value={{veh_editar_pri_seguro}}><br><br>
+
+        <label for="obs_seguro_ant" id="obs_seguro_ant">Observaciones </label><br>
+        <textarea id="obs_seguro_new" name="obs_seguro_new" rows="4" cols="50">{{ veh_editar_obs_seguro }}</textarea><br><br>
+
+        <input class="button" type="submit" value="Guardar cambios">
+        <a class="button_red" href="/seguros">Volver</a>
+    </form>
+<footer class="banda-roja"></footer>
+    </div>
+</body>
+</html>

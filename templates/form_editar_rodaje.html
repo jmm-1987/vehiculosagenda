@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modificar rodaje</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+    <div class="container">
+
+    <h1>Modificar rodaje {{veh_editar.matricula}}</h1><br>
+
+    <form action="/modificar_rodaje" method="POST">
+        <input type="hidden" name="id" value="{{veh_editar.id}}">
+        <label for="fecha_pago_ant" id="fecha_pago_ant"><b>Fecha último pago</b></label>
+        <input type="date" id="fecha_pago_new" name="fecha_pago_new" value={{veh_editar_pago_rodaje}}><br><br>
+
+        <label for="venc_rodaje_ant" id="venc_rodaje_ant"><b>Vencimiento</b></label>
+        <input type="date" id="venc_rodaje_new" name="venc_rodaje_new" value={{veh_editar_venc_rodaje}}><br><br>
+
+        <label for="imp_rodaje_ant" id="imp_rodaje_ant"><b>Importe</b></label>
+        <input id="imp_rodaje_new" name="imp_rodaje_new" value={{veh_editar_imp_rodaje}}><br><br>
+
+        <label for="obs_rodaje_ant" id="obs_rodaje_ant"><b>Observaciones </b></label>
+        <textarea id="obs_rodaje_new" name="obs_rodaje_new">{{veh_editar_obs_rodaje}}</textarea><br><br>
+
+        <input class="button" type="submit" value="Guardar cambios">
+        <a class="button_red" href="/rodajes">Volver</a>
+    </form>
+<footer class="banda-roja"></footer>
+    </div>
+</body>
+</html>

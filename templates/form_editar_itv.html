@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modificar Itv</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+    <div class="container">
+
+    <h1>Modificar ITV {{veh_editar.matricula}}</h1><br>
+
+    <form action="/modificar_itv" method="POST">
+        <input type="hidden" name="id" value="{{veh_editar.id}}">
+        <label for="fecha_itv_new"><b>Fecha última ITV</b></label>
+        <input type="date" id="fecha_itv_new" name="fecha_itv_new" value={{veh_editar_fecha_itv}}><br><br>
+
+        <label for="vencimiento_itv_ant" id="vencimiento_itv_ant"><b>Vencimiento ITV</b></label>
+        <input type="date" id="vencimiento_itv_new" name="vencimiento_itv_new" value={{veh_editar_venc_itv}}><br><br>
+
+        <label for="cita_itv_ant" id="cita_itv_ant"><b>Cita ITV </b></label>
+        <input type="date" id="cita_itv_new" name="cita_itv_new" value={{veh_editar_cita_itv}}><br><br>
+
+        <label for="observaciones_itv_ant" id="observaciones_itv_ant">Observaciones ITV </label><br>
+        <textarea id="observaciones_itv_new" name="observaciones_itv_new" rows="4" cols="50">{{ veh_editar.obs_itv }}</textarea><br><br>
+
+        <input class="button" type="submit" value="Guardar cambios">
+        <a class="button_red" href="/itv">Volver</a>
+    </form>
+<footer class="banda-roja"></footer>
+    </div>
+</body>
+</html>

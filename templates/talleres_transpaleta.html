@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transpaleta</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+        <a class="top-user"> {{ current_user.username }}</a>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+</div>
+    <div class="container">
+        <h1>Reparaciones transpaleta {{t_ficha_alias}}</h1>
+
+        </br>
+        </br>
+        <table>
+            <thead>
+                <tr>
+                    <th>Alias</th>
+                    <th>Descripción del problema</th>
+                    <th>Taller</th>
+                    <th>Fecha visita</th>
+                    <th>Fecha entrega</th>
+                    <th colspan="3">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in t_ficha %}
+                <tr class="{% if not t.finalizado %}no_activo{% endif %}">
+                    <td>{{ t.alias }}</td>
+                    <td>{{ t.problema }}</td>
+                    <td>{{ t.taller }}</td>
+                    <td>{{ t.fecha_visita.strftime('%d-%m-%Y') }}</td>
+                    {% if t.fecha_entrega %}
+                        <td>{{ t.fecha_entrega.strftime('%d-%m-%Y') }}</td>
+                    {% else %}
+                        <td></td>
+                    {% endif %}
+                    {% if not t.nombre_doc %}
+                    <td>
+                        <form action="/subir_doc" method="POST" enctype="multipart/form-data">
+                            <input type="file" name="documento" accept=".pdf, .doc, .docx">
+                            <input type="hidden" name="matricula" value="{{ t.alias }}">
+                            <input type="hidden" name="id" value="{{ t.id }}">
+                            <input type="hidden" name="clase" value="Rodaje">
+                            <input type="submit" value="Adjuntar">
+                        </form>
+                    </td>
+                    {% else %}
+                    <td><a href="static/subidas/{{t.nombre_doc}}" target="_blank"></a><i class="fas fa-check verde"></i>Ver</td>
+                    {% endif %}
+                    <td><a href="{{ url_for('ver_visita', id=t.id) }}">
+                        <button type="submit" class="boton-ver"><i class="fas fa-eye"></i></button>
+                    </a>
+                    <td>
+                    <td><a href="{{ url_for('edicion_visita', id=t.id) }}">
+                        <button type="submit" class="boton-editar"><i class="fas fa-pencil"></i></button>
+                    </a>
+                    {% if current_user.username == "jmurillo" %}
+                    <td>
+                        <form action="/borrar_visita/{{ t.id }}" method="POST">
+                            <input type="hidden" name="id" value="{{ t.id }}">
+                            <input type="hidden" name="clase" value="Visita">
+                            <button type="submit" class="boton-borrar"><i class="fas fa-trash-alt"></i></button>
+                        </form>
+                    </td>
+                    {% else %}
+                    <td></td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <br>
+        <a class="button" href="/formulario_visita_transpaleta/{{t_ficha_id}}">Crear intervención</a>
+        <a class="button_red" href="/transpaletas">Volver</a>
+
+    </div>
+<footer class="banda-roja"></footer>
+</body>
+</html>

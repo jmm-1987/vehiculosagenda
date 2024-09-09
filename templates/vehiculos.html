@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listado de Vehículos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+    <div class="container">
+        <h1>Listado Vehiculos</h1>
+        <a class="button" href="/vehiculos_todos">Mostrar inactivos</a>
+        </br></br>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Matrícula</th>
+                    <th>Tipo</th>
+                    <th>Alias</th>
+                    <th>Activo</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vehiculo in lista_vehiculos %}
+                <tr>
+                    <td><a href="/ficha/{{vehiculo.id}}">{{ vehiculo.matricula }}</a></td>
+                    <td>{{vehiculo.tipo}}</td>
+                    <td>{{ vehiculo.alias }}</td>
+                    <td><a href="/inactivo_vehiculo/{{vehiculo.id}}" onclick="return confirmarInactividad();">{{vehiculo.activo}}</a></td>
+                    <td><a href="/form_editar_vehiculo/{{ vehiculo.id }}">
+                        <button type="submit" class="boton-editar"><i class="fas fa-pencil"></i></button></a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <br>
+        <a class="button" href="/formulario_vehiculos"> Crear Vehículo</a>
+        <a class="button_red" href="/index">Volver</a>
+        <br>
+        <br>
+        <br>
+        <br>
+    </div>
+<br>
+<footer class="banda-roja"></footer>
+<script>
+  function confirmarInactividad() {
+    return confirm("¿Estás seguro de que deseas marcar este vehículo como inactivo?");
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario</title>
+    <link rel="stylesheet" href="static/main.css">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+    <div class="container">
+        <h1>Añadir interveción taller a la transapaleta {{transpaleta.alias}} asiganada a {{transpaleta.asignada}}</h1>
+        <form action="/crear_visita_transpaleta" method="post">
+        <input type="hidden" name="alias" id="alias" value="{{transpaleta.alias}}">
+            <br>
+            <div class="form-group">
+                <label for="taller">Taller:</label>
+                <input id="taller" name="taller" required>
+            </div>
+            <br>
+            <div class="form-group">
+                <label for="problema">Descripción del problema:</label>
+                <textarea id="problema" name="problema" required></textarea>
+            </div>
+            <br>
+            <div class="form-group">
+                <label for="albaran">Albarán:</label>
+                <input type="text" id="albaran" name="albaran">
+            </div>
+            <br>
+            <div class="form-group">
+                <label for="presupuesto">Presupuesto:</label>
+                <input type="text" id="presupuesto" name="presupuesto">
+            </div>
+            <br>
+            <div class="form-group">
+                <label for="fecha_visita">Fecha visita:</label>
+                <input type="date" id="fecha_visita" name="fecha_visita" required>
+            </div>
+            <br>
+            <div class="form-group">
+                <label for="trabajos">Trabajos realizados:</label>
+                <textarea id="trabajos" name="trabajos"></textarea>
+            </div>
+            <br>
+            <div class="form-group">
+                <label for="importe">Importe reparación:</label>
+                <input type="text" id="importe" name="importe">
+            </div>
+            <br>
+            <div class="form-group">
+                <label for="fecha_entrega">Fecha entrega:</label>
+                <input type="date" id="fecha_entrega" name="fecha_entrega">
+            </div>
+            <br>
+            <button class="button" type="submit">Guardar</button>
+            <a class="button_red" href="/transpaletas">Volver</a>
+        </form>
+    </div>
+<footer class="banda-roja"></footer>
+</body>
+</html>

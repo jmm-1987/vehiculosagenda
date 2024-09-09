@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listado de usuarios</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+    .verde {
+      color: green; /* Cambia el color a verde */
+    }
+    </style>
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+        <a class="top-user"> {{ current_user.username }}</a>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+</div>
+
+    <div class="container">
+        <h1>Listado de usuarios</h1>
+        </br>
+        </br>
+        <table>
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Contraseña</th>
+                    <th colspan="2">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in lista_usuarios %}
+                    <td>{{ u.username }}</td>
+                    <td>{{ u.password }}</td>
+                    <td>
+                        <form action="/borrar_usuario/{{ u.id }}" method="POST">
+                            <input type="hidden" name="id" value="{{ u.id }}">
+                            <input type="hidden" name="clase" value="Usuario">
+                            <button type="submit" class="boton-borrar"><i class="fas fa-trash-alt"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <br>
+        <a class="button" href="/formulario_usuario">Crear Usuario</a>
+        <a class="button_red" href="/index">Volver</a>
+        <br>
+        <div>{{ mensaje }}</div>
+
+    </div>
+<footer class="banda-roja"></footer>
+</body>
+</html>

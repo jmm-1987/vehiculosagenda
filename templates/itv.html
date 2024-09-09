@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de ITV</title>
+    <link rel="stylesheet" href="static/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+        <a class="top-user"> {{ current_user.username }}</a>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+</div>
+    <div class="container">
+        <h1>Listado de ITV</h1>
+        <a class="button" href="/itv_todas">Mostrar caducadas</a>
+        </br>
+        </br>
+        <table>
+            <thead>
+                <tr>
+                    <th>Matrícula</th>
+                    <th>Última ITV</th>
+                    <th>Validez ITV</th>
+                    <th>Cita ITV</th>
+                    <th>Observaciones</th>
+                    <th>Documento</th>
+                    <th colspan="2">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for i in lista_itv %}
+                <tr class="{% if not i.activo %}no_activo{% endif %}">
+                    <td>{{ i.matricula }}</td>
+                    <td>{{ i.fecha_itv.strftime('%d-%m-%Y') }}</td>
+                    <td>{{ i.venc_itv.strftime('%d-%m-%Y') }}</td>
+                    {% if i.cita_itv %}
+                    <td>{{ i.cita_itv.strftime('%d-%m-%Y') }}</td>
+                    {% else %}
+                    <td> - </td>
+                    {% endif %}
+                    <td>{{ i.obs_itv }}</td>
+                    {% if not i.nombre_doc %}
+                    <td>
+                        <form action="/subir_doc" method="POST" enctype="multipart/form-data">
+                            <input type="file" name="documento" accept=".pdf, .doc, .docx">
+                            <input type="hidden" name="matricula" value="{{ i.matricula }}">
+                            <input type="hidden" name="id" value="{{ i.id }}">
+                            <input type="hidden" name="clase" value="Itv">
+                            <input type="submit" value="Adjuntar">
+                        </form>
+                    </td>
+                    {% else %}
+                    <td><a href="static/subidas/{{i.nombre_doc}}" target="_blank"><i class="fas fa-check verde"></i>Ver</a></td>
+                    {% endif %}
+                    <td><a href="form_editar_itv/{{ i.id }}" target="_blank" >
+                        <button type="submit" class="boton-editar"><i class="fas fa-pencil"></i></button>
+                    </a>
+                    {% if current_user.username == "jmurillo" or current_user.username == "javimurillo" %}
+                    <td>
+                        <form action="/borrar_itv/{{ i.id }}" method="POST">
+                            <input type="hidden" name="id" value="{{ i.id }}">
+                            <input type="hidden" name="clase" value="Itv">
+                            <button type="submit" class="boton-borrar"><i class="fas fa-trash-alt"></i></button>
+                        </form>
+                    </td>
+                    {% else %}
+                    <td></td>
+                    {% endif %}
+                </tr>
+
+                {% endfor %}
+            </tbody>
+        </table>
+        <div >{{mensaje}}</div>
+        <br>
+        <a class="button" href="/formulario_itv">Añadir ITV</a>
+        <a class="button_red" href="/index">Volver</a>
+        <br>
+        <br>
+        <br><br>
+    </div>
+<footer class="banda-roja"></footer>
+</body>
+</html>

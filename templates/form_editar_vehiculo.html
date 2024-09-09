@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modificar vehiculo</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+    <div class="container">
+
+    <h1>Modificar vehiculo {{veh_editar.matricula}}</h1><br>
+
+    <form action="/modificar_vehiculo" method="POST">
+        <input type="hidden" name="id" value="{{veh_editar.id}}">
+
+        <label for="matricula_ant" id="matricula_ant"><b>Matricula: {{veh_editar_matricula}} tipo: {{veh_editar_tipo}}</b></label>
+        <input type="hidden" name="matricula_ant" value="{{veh_editar_matricula}}">
+        <br><br>
+
+        <label for="alias_ant" id="alias_ant"><b>Alias</b></label>
+        <input type="text" id="alias_new" name="alias_new" value={{veh_editar_alias}}><br><br>
+
+        <label for="tipo_ant" id="tipo_ant">Selecciona un tipo:</label>
+        <select id="tipo_new" name="tipo_new" required>
+            <option value=""></option>
+            <option value="camion">Camión</option>
+            <option value="remolque">Remolque</option>
+        </select>
+        <br><br>
+        <input class="button" type="submit" value="Guardar cambios">
+        <a class="button_red" href="/vehiculos">Volver</a>
+    </form>
+<footer class="banda-roja"></footer>
+    </div>
+</body>
+</html>

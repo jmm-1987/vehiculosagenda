@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listado de reparaciones</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+        <a class="top-user"> {{ current_user.username }}</a>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+</div>
+    <div class="container">
+        <h1>Reparaciones Taller</h1>
+        <form action="/busqueda_matricula" method="post">
+            <div class="form-group">
+                <label for="matricula">Selecciona una matricula:</label>
+                    <select id="matricula" name="matricula" required>
+                        <option value="" selected disabled></option>
+                        {% for t in lista_matriculas %}
+                            <option value="{{ t.matricula }}">{{ t["matricula"] }}</option>
+                        {% endfor %}
+                    </select>
+            </div>
+            <br>
+         <button class="button" type="submit">Buscar por matricula</button>
+        </form>
+        </br>
+        </br>
+        <table>
+            <thead>
+                <tr>
+                    <th>Matrícula</th>
+                    <th>Problema</th>
+                    <th>Taller</th>
+                    <th>Fecha visita</th>
+                    <th>Fecha entrega</th>
+                    <th>Precio</th>
+                    <th colspan="2">Acciones</th>
+
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for t in lista_talleres %}
+                <tr class="{% if not t.activo %}no_activo{% endif %}">
+                    <td>{{ t.matricula }}</td>
+                    <td>{{ t.problema }}</td>
+                    <td>{{ t.taller }}</td>
+                    <td>{{ t.fecha_visita.strftime('%d-%m-%Y') }}</td>
+                    {% if t.fecha_entrega %}
+                        <td>{{ t.fecha_entrega.strftime('%d-%m-%Y') }}</td>
+                    {% else %}
+                        <td></td>
+                    {% endif %}
+                    <td>{{t.importe }}</td>
+                    {% if not t.nombre_doc %}
+                    <td>
+                        <form action="/subir_doc" method="POST" enctype="multipart/form-data">
+                            <input type="file" name="documento" accept=".pdf, .doc, .docx">
+                            <input type="hidden" name="matricula" value="{{ t.matricula }}">
+                            <input type="hidden" name="id" value="{{ t.id }}">
+                            <input type="hidden" name="clase" value="Taller">
+                            <input type="submit" value="Adjuntar">
+                        </form>
+                    </td>
+                    {% else %}
+                    <td><a href="{{ url_for('static', filename='subidas/' ~ t.nombre_doc) }}"><i class="fas fa-check verde"></i>Ver</td>
+                    {% endif %}
+                    <td><a href="ver_taller/{{ t.id }}">
+                        <button type="submit" class="boton-ver"><i class="fas fa-eye"></i></button>
+                    </a>
+                    <td>
+                    <td><a href="form_editar_taller/{{ t.id }}">
+                        <button type="submit" class="boton-editar"><i class="fas fa-pencil"></i></button>
+                    </a>
+                    {% if current_user.username == "jmurillo" %}
+                    <td>
+                        <form action="/borrar_taller/{{ t.id }}" method="POST">
+                            <input type="hidden" name="id" value="{{ t.id }}">
+                            <input type="hidden" name="clase" value="Taller">
+                            <button type="submit" class="boton-borrar"><i class="fas fa-trash-alt"></i></button>
+                        </form>
+                    </td>
+                    {% else %}
+                    <td></td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <br>
+        <a class="button" href="/formulario_taller">Crear intervención</a>
+        <a class="button_red" href="/index">Volver</a>
+        <br>
+        <br>
+        <br><br>
+    </div>
+<footer class="banda-roja"></footer>
+</body>
+</html>

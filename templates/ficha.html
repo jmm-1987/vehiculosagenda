@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ficha</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+    <div class="container">
+
+            <h1><p><strong>Matrícula:</strong> {{ veh_ficha_mat }}<strong>&nbsp;&nbsp;&nbsp;Alias:</strong> {{ veh_ficha_alias }}</p></h1>
+
+                <h2>Documentos</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Matricula</th>
+                                <th>Ficha técnica</th>
+                                <th>Permiso Circulación</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            <tr>
+                                <td>{{ veh_ficha_mat }}</td>
+                                {% if veh_ficha_ficha == "" %}
+                                <td>
+                                    <form action="/subir_doc" method="POST" enctype="multipart/form-data">
+                                        <input type="file" name="documento" accept=".pdf">
+                                        <input type="hidden" name="matricula" value="{{ veh_ficha_mat }}">
+                                        <input type="hidden" name="id" value="{{ id }}">
+                                        <input type="hidden" name="clase" value="ficha_tecnica">
+                                        <input type="submit" value="Adjuntar">
+                                    </form>
+                                </td>
+                                {% else %}
+                                <td><a href="{{ url_for('static', filename='subidas/' ~ veh_ficha_ficha) }}" target="_blank"><i class="fas fa-check verde"></i>Ficha técnica</a></td>
+                                {% endif %}
+                                {% if veh_ficha_permiso == "" %}
+                                <td>
+                                    <form action="/subir_doc" method="POST" enctype="multipart/form-data">
+                                        <input type="file" name="documento" accept=".pdf">
+                                        <input type="hidden" name="matricula" value="{{ veh_ficha_mat }}">
+                                        <input type="hidden" name="id" value="{{ id }}">
+                                        <input type="hidden" name="clase" value="permiso">
+                                        <input type="submit" value="Adjuntar">
+                                    </form>
+                                </td>
+                                {% else %}
+                                <td><a href="{{ url_for('static', filename='subidas/' ~ veh_ficha_permiso) }}" target="_blank"><i class="fas fa-check verde"></i>Permiso circulación</a></td>
+                                {% endif %}
+                            </tr>
+                        </tbody>
+                    </table>
+
+                <h2>ITV</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Matrícula</th>
+                                <th>Última ITV</th>
+                                <th>Validez ITV</th>
+                                <th>Cita ITV</th>
+                                <th>Observaciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in itv_ficha %}
+                            <tr>
+                                <td>{{ i.matricula }}</td>
+                                <td>{{ i.fecha_itv.strftime('%d-%m-%Y') }}</td>
+                                <td>{{ i.venc_itv.strftime('%d-%m-%Y') }}</td>
+                                <td>{{ i.cita_itv.strftime('%d-%m-%Y') }}</td>
+                                <td>{{ i.obs_itv }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                <h2>Seguros</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Matrícula</th>
+                                <th>Compañía</th>
+                                <th>Venciminento</th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in seguro_ficha %}
+                            <tr>
+                                <td>{{ i.matricula }}</td>
+                                <td>{{ i.cia_seguro }}</td>
+                                <td>{{ i.venc_seguro.strftime('%d-%m-%Y') }}</td>
+
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                <h2>Tacografos</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Matrícula</th>
+                                <th>Valido hasta:</th>
+
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in tacografo_ficha %}
+                            <tr>
+                                <td>{{ i.matricula }}</td>
+                                <td>{{ i.venc_tacografo.strftime('%d-%m-%Y') }}</td>
+
+
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                <h2>Rodajes</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Matrícula</th>
+                                <th>Valido hasta:</th>
+
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for r in rodaje_ficha %}
+                            <tr>
+                                <td>{{ r.matricula }}</td>
+                                <td>{{ r.venc_rodaje.strftime('%d-%m-%Y') }}</td>
+
+
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                <h2>Extintores</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Matrícula</th>
+                                <th>Identificador</th>
+                                <th>Próximo retimbrado</th>
+                                <th>Próxima revisión</th>
+
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for e in extintor_ficha %}
+                            <tr>
+                                <td>{{ e.matricula }}</td>
+                                <td>{{ e.id_ext }}</td>
+                                <td>{{ e.venc_ret_ext.strftime('%d-%m-%Y') }}</td>
+                                <td>{{ e.venc_ext.strftime('%d-%m-%Y') }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+        </br>
+        <a class="button_red" href="/vehiculos">Volver</a>
+        </br></br></br></br>
+    </div>
+<footer class="banda-roja"></footer>
+</body>
+</html>

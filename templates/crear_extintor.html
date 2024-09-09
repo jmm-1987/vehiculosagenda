@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario</title>
+    <link rel="stylesheet" href="static/main.css">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+    <div class="container">
+        <h1>Añadir extintor</h1>
+        <form action="/crear_extintor" method="post">
+            <div class="form-group">
+                <label for="matricula">Selecciona una matricula:</label>
+                <select id="matricula" name="matricula" required>
+                    <option value="" selected disabled></option>
+                    {% for m in lista_matriculas %}
+                        <option value="{{ m.matricula }}">{{ m["matricula"] }}</option>
+                    {% endfor %}
+                </select>
+
+                <!--<input type="text" id="matricula" name="matricula" required>-->
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="id_ext">Identificador:</label>
+                <input type="text" id="id_ext" name="id_ext" required>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="ano_ext">Año extintor:</label>
+                <input type="text" id="ano_ext" name="ano_ext" </input>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="rev_ext">Última revisión:</label>
+                <input type="date" id="rev_ext" name="rev_ext" required>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="venc_ret_ext">Próximo retimbrado:</label>
+                <input type="date" id="venc_ret_ext" name="venc_ret_ext" required>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="venc_ext">Próximo revisión:</label>
+                <input type="date" id="venc_ext" name="venc_ext" required>
+            </div>
+            </br>
+            <div class="form-group">
+                <label for="obs_ext">Observaciones:</label>
+                <textarea  id="obs_ext" name="obs_ext"> </textarea>
+            </div>
+            </br>
+            <button class="button" type="submit">Guardar</button>
+            <a class="button_red" href="/extintores">Volver</a>
+        </form>
+    </div>
+<footer class="banda-roja"></footer>
+</body>
+</html>

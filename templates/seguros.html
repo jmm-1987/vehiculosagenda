@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listado de Seguros</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+        <a class="top-user"> {{ current_user.username }}</a>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+</div>
+    <div class="container">
+        <h1>Listado de Seguros</h1>
+        <a class="button" href="/seguros_todos">Mostrar caducados</a>
+        </br>
+        </br>
+        <table>
+            <thead>
+                <tr>
+                    <th>Matrícula</th>
+                    <th>Vencimiento</th>
+                    <th>Compañia</th>
+                    <th>Coberturas</th>
+                    <th>Franquicia</th>
+                    <th>Prima</th>
+                    <th>Observaciones</th>
+                    <th>Recibo</th>
+                    <th colspan="2">Acciones</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for seguro in lista_seguros %}
+                <tr class="{% if not seguro.activo %}no_activo{% endif %}">
+                    <td>{{ seguro.matricula }}</td>
+                    <td>{{ seguro.venc_seguro.strftime('%d-%m-%Y') }}</td>
+                    <td>{{ seguro.cia_seguro }}</td>
+                    <td>{{ seguro.cob_seguro }}</td>
+                    <td>{{ seguro.fra_seguro }}</td>
+                    <td>{{ seguro.pri_seguro }}€</td>
+                    <td>{{ seguro.obs_seguro }}</td>
+                    {% if not seguro.nombre_doc %}
+                    <td>
+                        <form action="/subir_doc" method="POST" enctype="multipart/form-data">
+                            <input type="file" name="documento" accept=".pdf, .doc, .docx">
+                            <input type="hidden" name="matricula" value="{{ seguro.matricula }}">
+                            <input type="hidden" name="id" value="{{ seguro.id }}">
+                            <input type="hidden" name="clase" value="Seguro">
+                            <input type="submit" value="Adjuntar">
+                        </form>
+                    </td>
+                    {% else %}
+                    <td><a href="static/subidas/{{seguro.nombre_doc}}" target="_blank"</a><i class="fas fa-check verde"></i>Ver</td>
+                    {% endif %}
+                    <td><a href="form_editar_seguro/{{ seguro.id }}" target="_blank">
+                        <button type="submit" class="boton-editar"><i class="fas fa-pencil"></i></button>
+                    </a>
+                    {% if current_user.username == "jmurillo" or current_user.username == "javimurillo" %}
+                    <td>
+                        <form action="/borrar_seguro/{{ seguro.id }}" method="POST">
+                            <input type="hidden" name="id" value="{{ seguro.id }}">
+                            <input type="hidden" name="clase" value="Itv">
+                            <button type="submit" class="boton-borrar"><i class="fas fa-trash-alt"></i></button>
+                        </form>
+                    </td>
+                    {% else %}
+                    <td></td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <br>
+        <a class="button" href="/formulario_seguro">Crear Seguro</a>
+        <a class="button_red" href="/index">Volver</a>
+        <br>
+        <br>
+        <br><br>
+    </div>
+<footer class="banda-roja"></footer>
+</body>
+</html>

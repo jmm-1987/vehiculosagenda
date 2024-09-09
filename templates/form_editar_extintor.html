@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modificar extintor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+    <div class="container">
+
+    <h1>Modificar extintor {{extintor_editar_id_ext}}</h1><br>
+
+    <form action="/modificar_extintor" method="POST">
+        <input type="hidden" name="id" value="{{extintor_editar.id}}">
+        <label for="matricula_ext_ant" id="matricula_ext_ant"><b>Vehículo asignado: {{extintor_editar_matricula}}</b></label>
+        <select id="matricula_ext_new" name="matricula_ext_new">
+            {% for m in lista_matriculas %}
+                <option value="{{ m.matricula }}">{{ m["matricula"] }}</option>
+            {% endfor %}
+            </select><br><br>
+
+
+        <label for="ano_ext_ant" id="ano_ext_ant"><b>Año fabricación</b></label>
+        <input id="ano_ext_new" name="ano_ext_new" value={{extintor_editar_ano_ext}}><br><br>
+
+        <label for="rev_ext_ant" id="rev_ext_ant"><b>Ultima revisión</b></label>
+        <input type="date" id="rev_ext_new" name="rev_ext_new" value={{extintor_editar_rev_ext}}><br><br>
+
+        <label for="venc_ret_ext_ant" id="venc_ret_ext_ant"><b>Próximo retimbrado</b></label>
+        <input type="date" id="venc_ret_ext_new" name="venc_ret_ext_new" value={{extintor_editar_venc_ret_ext}}><br><br>
+
+        <label for="venc_ext_ant" id="venc_ext_ant"><b>Próxima revisión</b></label>
+        <input type="date" id="venc_ext_new" name="venc_ext_new" value={{extintor_editar_venc_ext}}><br><br>
+
+        <label for="obs_ext_ant" id="obs_ext_ant">Observaciones ITV</label><br>
+        <textarea id="obs_ext_new" name="obs_ext_new" rows="4" cols="50">{{extintor_editar_obs_ext}}</textarea><br><br>
+
+        <input class="button" type="submit" value="Guardar cambios">
+        <a class="button_red" href="/extintores">Volver</a>
+    </form>
+<footer class="banda-roja"></footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control gasoil</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+<div class="container">
+        <h1>{{veh_select_mat}}</h1>
+        <form action="/gasoil_busqueda_selector/{{veh_select_mat}}" method="post">
+            <br>
+            <div class="form-group">
+                <input type="hidden" name="mat" value={{veh_select_mat}}>
+                <label for="fecha_inicio">Fecha inicio:</label>
+                <input type="date" id="fecha_inicio" name="fecha_inicio" value={{fecha_inicio}}>
+                <label for="fecha_fin">Fecha fin:</label>
+                <input type="date" id="fecha_fin" name="fecha_fin" value={{fecha_fin}}>
+            </div>
+            <br>
+            <button class="button" type="submit">Buscar</button>
+        </form>
+    <div class="container">
+        <h1>Tickets de gasoil</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Matrícula</th>
+                    <th>Fecha</th>
+                    <th>Tipo</th>
+                    <th>km</th>
+                    <th>litros</th>
+                    <th>precio</th>
+                    <th>€/l</th>
+                    <th>Nota</th>
+                    <th>Facturado</th>
+                    <th>Marcar</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in lista_tickets %}
+                <tr class="{% if r.facturado %}facturado{% endif %}">
+                    <td>{{ r.matricula }}</td>
+                    <td>{{ r.fecha_ticket.strftime('%d-%m-%Y') }}</td>
+                    <td>{{ r.tipo_ticket }}</td>
+                    <td>{{ r.kms_ticket }} km</td>
+                    <td>{{ r.litros_ticket }} l</td>
+                    <td>{{ r.precio_ticket }} €</td>
+                    <td>{{ r.precio_litro_ticket }} €/l</td>
+                    <td>{{ r.obs_ticket }}</td>
+                    <td>{% if r.facturado == True %}Sí{% else %}No{% endif %}</td>
+                    <td>
+                        {% if not r.facturado %}
+                            {% if r.marcado == False %}
+                            <form action="/marcar_ticket" method="POST">
+                                <input type="hidden" name="marcar" value="{{ r.id }}">
+                                    <button type="submit" class="boton-marcar">
+                                <i class="fas fa-check" style="background-color: white;"></i></button>
+                            </form>
+                            {% else %}
+                            <form action="/desmarcar_ticket" method="POST">
+                                <input type="hidden" name="desmarcar" value="{{ r.id }}">
+                                    <button type="submit" class="boton-desmarcar">
+                                <i class="fas fa-check" style="color: green;"></i></button>
+                            {% endif %}
+                        {% endif %}
+                            </form>
+                    </td>
+                    <td>
+                        <form action="/borrar_ticket/{{ r.id }}" method="POST">
+                            <input type="hidden" name="id" value="{{ r.id }}">
+                            <input type="hidden" name="clase" value="Gasoil">
+                            <button type="submit" class="boton-borrar"><i class="fas fa-trash-alt"></i>Borrar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <br><br>
+
+            <table>
+                <tr>
+                    <td colspan="4"><strong>Totales:</strong></td>
+                    <td>Gasoil {{ total_gasoil | default(0) | round(2) }} litros {{total_euros_gasoil | default(0) | round(2)}}€ {{media_gasoil | default(0) | round(2)}}€/l</td>
+                    <td>Addblue {{ total_addblue | default(0) | round(2) }} litros {{total_euros_addblue |default(0) | round(2)}}€ {{media_addblue |default(0) | round(2)}}€/l</td>
+                    <td>Km recorridos: {{km_recorridos | round(2)}}</td>
+                    <td>{{precio_km | round(2)}}€ por km</td>
+                    <td colspan="6"></td>
+                </tr>
+            </table>
+            <br>
+        <a class="button" href="/facturar_ticket?mat={{ veh_select_mat }}&fecha_inicio={{ fecha_inicio }}&fecha_fin={{ fecha_fin }}" id="Facturar">Facturar</a>
+        <a class="button_red" href="/selector">Volver</a>
+        </table>
+        <br>
+        <br>
+        <br>
+        <br>
+
+    </div>
+<footer class="banda-roja"></footer>
+</div>
+</body>
+</html>

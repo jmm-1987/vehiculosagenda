@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de ITV</title>
+    <link rel="stylesheet" href="static/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+        <a class="top-user"> {{ current_user.username }}</a>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+</div>
+    <div class="container">
+        <h1>Listado de extintores</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Matrícula</th>
+                    <th>Identificador</th>
+                    <th>Año fabricación</th>
+                    <th>Última revisión</th>
+                    <th>Próximo Retimbrado</th>
+                    <th>Próxima revisión</th>
+                    <th>Observaciones</th>
+                    <th colspan="2">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for e in lista_extintores %}
+                <tr>
+                    <td>{{ e.matricula }}</td>
+                    <td>{{ e.id_ext }}</td>
+                    <td>{{ e.ano_ext }}</td>
+                    <td>{{ e.rev_ext.strftime('%d-%m-%Y') }}</td>
+                    <td>{{ e.venc_ret_ext.strftime('%d-%m-%Y') }}</td>
+                    <td>{{ e.venc_ext.strftime('%d-%m-%Y') }}</td>
+                    <td>{{ e.obs_ext }}</td>
+                    <td><a href="form_editar_extintor/{{ e.id }}" target="_blank">
+                        <button type="submit" class="boton-editar"><i class="fas fa-pencil"></i></button>
+                    </a>
+                    {% if current_user.username == "jmurillo" or current_user.username == "javimurillo" %}
+                    <td>
+                        <form action="/borrar_extintor/{{ e.id }}" method="POST">
+                            <input type="hidden" name="id" value="{{ e.id }}">
+                            <input type="hidden" name="clase" value="Rodaje">
+                            <button type="submit" class="boton-borrar"><i class="fas fa-trash-alt"></i></button>
+                        </form>
+                    </td>
+                    {% else %}
+                    <td></td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <br>
+        <a class="button" href="/formulario_extintor">Añadir extintor</a>
+        <a class="button_red" href="/index">Volver</a>
+        <br>
+        <br>
+        <br><br>
+    </div>
+<footer class="banda-roja"></footer>
+</body>
+</html>

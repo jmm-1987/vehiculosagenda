@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transpaletas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+</head>
+<body>
+<div class="top-bar">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+</div>
+    <div class="container">
+        <h1>Listado de Tranpaletas</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Alias</th>
+                    <th>Marca</th>
+                    <th>Modelo</th>
+                    <th>Bastidor</th>
+                    <th>Asignada a:</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in lista_transpaletas %}
+                <tr>
+                    <td><a href="/talleres_transpaleta/{{t.id}}">{{ t.alias }}</a></td>
+                    <td>{{ t.marca }}</td>
+                    <td>{{ t.modelo }}</td>
+                    <td>{{ t.bastidor }}</td>
+                    <td>{{ t.asignada }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <br>
+        <a class="button" href="/formulario_transpaleta"> Crear Transpalet</a>
+        <a class="button_red" href="/index">Volver</a>
+        <br>
+        <br>
+        <br><br>
+    </div>
+<footer class="banda-roja"></footer>
+</body>
+</html>

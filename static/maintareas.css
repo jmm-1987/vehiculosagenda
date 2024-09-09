@@ -1,0 +1,123 @@
+body {
+  background-image: url('fondo.jpg'); /* Cambia 'fondo.jpg' por la URL de tu imagen de fondo */
+  background-size: 1600px 800px;
+  background-repeat: repeat;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  height: 100vh;
+  width: 100%;
+}
+
+.flex-container,
+    .flex-container2 {
+      margin-top: 60px; /* Añade margen superior para separar los contenedores */
+
+    }
+
+/*contendor donde están los posit*/
+.flex-container {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap; /* Permite que los elementos se envuelvan a la siguiente línea si no hay suficiente espacio */
+  margin-top: 80px;
+  gap: 10px; /* Espacio entre los elementos flexibles */
+  max-width: 800px;
+  flex-direction: column;
+}
+
+.titulo {
+  position: absolute; /* Saca el título del flujo de flexbox */
+  top: 0; /* Lo posiciona en la parte superior del contenedor flex */
+  width: 100%; /* Ajusta el ancho para que ocupe todo el contenedor */
+  color: white;
+  font-family: cursive;
+}
+
+.titulo2{
+  color:white;
+  font-family: cursive;
+}
+
+.titulo_contenido{
+  color:white;
+  font-family: cursive;
+}
+
+/*sobre los posit*/
+.post-it {
+  background-color: #fff;
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 10px;
+  width: calc(33.33% - 20px); /* Define el ancho de cada post-it para que haya tres columnas */
+  margin-right: 20px; /* Espacio entre las columnas */
+  margin-left: 0; /* Eliminar el margen izquierdo del primer elemento */
+  width: 300px; /* Ancho fijo para los contenedores post-it */
+  padding: 20px;
+  text-align: center;
+}
+
+.post-it2 {
+  background-color: #a09f9f;
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 10px;
+  width: calc(33.33% - 20px); /* Define el ancho de cada post-it para que haya tres columnas */
+  margin-right: 20px; /* Espacio entre las columnas */
+  margin-left: 0; /* Eliminar el margen izquierdo del primer elemento */
+  width: 300px; /* Ancho fijo para los contenedores post-it */
+  padding: 20px;
+  text-align: center;
+}
+
+.realizada {
+  background-color: #7afa5d;
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(1, 1, 0, 2.1);
+  margin-bottom: 10px;
+  width: calc(33.33% - 20px); /* Define el ancho de cada post-it para que haya tres columnas */
+  margin-right: 20px; /* Espacio entre las columnas */
+  margin-left: 0; /* Eliminar el margen izquierdo del primer elemento */
+  width: 300px; /* Ancho fijo para los contenedores post-it */
+  padding: 20px;
+  text-align: center;
+}
+
+.post-it h2 {
+    margin-top: 0; /* Elimina el margen superior predeterminado del h2 */
+  }
+
+/*botones*/
+
+
+button {
+      background-color: transparent; /* Establece el fondo transparente */
+      border: none; /* Elimina el borde */
+      cursor: pointer;
+    }
+
+
+.custom-icon {
+    font-size: 80px; /* Cambia este valor según el tamaño deseado */
+    color: #FFFFFF;
+    background-color: transparent;
+    padding: 0;
+    margin: 0;
+    width: 80px; /* Igual al tamaño del icono */
+    height: 80px; /* Igual al tamaño del icono */
+    position: absolute;
+    left: 20px;
+    top: 550px;
+  }
+
+.bi-trash custom-icon2 {
+    margin-left: auto;
+}
+
