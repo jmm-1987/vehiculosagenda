@@ -25,20 +25,20 @@
                 </tr>
             </thead>
             <tbody>
-                {% for t in lista_transpaletas %}
+                {% for tr in lista_transpaletas %}
                 <tr>
-                    <td><a href="/talleres_transpaleta/{{t.id}}">{{ t.alias }}</a></td>
-                    <td>{{ t.marca }}</td>
-                    <td>{{ t.modelo }}</td>
-                    <td>{{ t.bastidor }}</td>
-                    <td>{{ t.asignada }}</td>
-                    <td><a href="form_editar_tacografo/{{ t.id }}" target="_blank">
+                    <td><a href="/talleres_transpaleta/{{tr.id}}">{{ tr.alias }}</a></td>
+                    <td>{{ tr.marca }}</td>
+                    <td>{{ tr.modelo }}</td>
+                    <td>{{ tr.bastidor }}</td>
+                    <td>{{ tr.asignada }}</td>
+                    <td><a href="form_editar_tacografo/{{ tr.id }}" target="_blank">
                         <button type="submit" class="boton-editar"><i class="fas fa-pencil"></i></button>
                     </a>
 
                     <td>
-                        <form action="/borrar_tacografo/{{ t.id }}" method="POST">
-                            <input type="hidden" name="id" value="{{ t.id }}">
+                        <form action="/borrar_tacografo/{{ tr.id }}" method="POST">
+                            <input type="hidden" name="id" value="{{ tr.id }}">
                             <input type="hidden" name="clase" value="Tacografo">
                             <button type="submit" class="boton-borrar"><i class="fas fa-trash-alt"></i></button>
                         </form>
