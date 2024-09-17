@@ -87,6 +87,16 @@ h2 {
     border-radius: 5px;
 }
 
+.button_black {
+    display: inline-block;
+    padding: 10px 20px;
+    margin: 0 10px;
+    background-color: #000000;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
 .button-dark {
     display: inline-block;
     padding: 10px 20px;

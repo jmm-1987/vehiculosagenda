@@ -3,32 +3,36 @@ import db
 from datetime import datetime
 from models import Transpaleta
 
+
 def register_transpaletaedit_routes(app):
-    #La primera función se encarga de llevar os datos al formulario de edición y la segunda es la que registra los cambios
+    # La primera función se encarga de llevar os datos al formulario de edición y la segunda es la que registra los cambios
     @app.route('/form_editar_transpaleta/<id>')
     def edicion_transpaleta(id):
         tr_editar = db.session.query(Transpaleta).filter_by(id=(id)).first()
+        tr_editar_alias = tr_editar.alias
         tr_editar_marca = tr_editar.marca
         tr_editar_modelo = tr_editar.modelo
         tr_editar_bastidor = tr_editar.bastidor
         tr_editar_asignada = tr_editar.asignada
 
-        return render_template("form_editar_transpaleta.html", veh_editar = tr_editar,
-                                                                         tr_editar_marca= tr_editar_marca,
-                                                                         tr_editar_modelo= tr_editar_modelo,
-                                                                         tr_editar_bastidor= tr_editar_bastidor,
-                                                                         tr_editar_asignada = tr_editar_asignada)
-"""    @app.route("/modificar_tacografo", methods=['POST'])
-    def modificar_tacografo():
+        return render_template("form_editar_transpaleta.html", tr_editar_asignada=tr_editar_asignada,
+                               tr_editar_marca=tr_editar_marca,
+                               tr_editar_modelo=tr_editar_modelo,
+                               tr_editar_bastidor=tr_editar_bastidor,
+                               tr_editar=tr_editar,
+                               tr_editar_alias=tr_editar_alias)
+
+
+    @app.route("/modificar_transpaleta", methods=['POST'])
+    def modificar_transpaleta():
         id = request.form["id"]
-        rev_tacografo=datetime.strptime(request.form["rev_tacografo_new"], "%Y-%m-%d")
-        venc_tacografo=datetime.strptime(request.form["venc_tacografo_new"], "%Y-%m-%d")
-        obs_tacografo=request.form["obs_tacografo_new"]
-        tacografo_modificar = db.session.query(Tacografo).filter_by(id=(id)).first()
-        tacografo_modificar.rev_tacografo = rev_tacografo
-        tacografo_modificar.venc_tacografo = venc_tacografo
-        tacografo_modificar.obs_tacografo = obs_tacografo
+        tr_modificar = db.session.query(Transpaleta).filter_by(id=(id)).first()
+        tr_modificar.alias=request.form["alias_new"]
+        tr_modificar.marca = request.form["marca_new"]
+        tr_modificar.modelo = request.form["modelo_new"]
+        tr_modificar.bastidor = request.form["bastidor_new"]
+        tr_modificar.asiganar = request.form["bastidor_new"]
         db.session.commit()
-        todos_tacografos = db.session.query(Tacografo).all()
-        return render_template("tacografos.html", lista_tacografos=todos_tacografos)
-"""
+        todas_transpaletas = db.session.query(Transpaleta).all()
+        return render_template("transpaletas.html", lista_transpaletas=todas_transpaletas)
+

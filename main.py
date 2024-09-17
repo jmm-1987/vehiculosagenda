@@ -148,7 +148,6 @@ def home():
 
     return render_template('index.html', avisos=avisos)
 
-
 if __name__ == '__main__':
     db.Base.metadata.create_all(db.engine)
     app.run(debug=True)

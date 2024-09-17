@@ -12,21 +12,25 @@
 </div>
     <div class="container">
 
-    <h1>Modificar Transpaleta {{veh_editar.matricula}}</h1><br>
+    <h1>Modificar Transpaleta {{tr_editar_alias}}</h1><br>
 
-    <form action="/modificar_tacografo" method="POST">
-        <input type="hidden" name="id" value="{{veh_editar.id}}">
-        <label for="rev_tacografo_ant" id="rev_tacografo_ant"><b>Ultima revisión</b></label>
-        <input type="date" id="rev_tacografo_new" name="rev_tacografo_new" value={{veh_editar_rev_tacografo}}><br><br>
+    <form action="/modificar_transpaleta" method="POST">
+        <input type="hidden" name="id" value="{{tr_editar.id}}">
 
-        <label for="venc_tacografo_ant" id="venc_tacografo_ant"><b>Vencimiento</b></label>
-        <input type="date" id="venc_tacografo_new" name="venc_tacografo_new" value={{veh_editar_venc_tacografo}}><br><br>
+        <label for="alias_ant" id="alias_ant"><b>Alias</b></label>
+        <input type="text" id="alias_new" name="alias_new" value="{{tr_editar_alias}}"><br><br>
 
-        <label for="obs_tacografo_ant" id="obs_tacografo_ant">Observaciones </label><br>
-        <textarea id="obs_tacografo_new" name="obs_tacografo_new" rows="4" cols="50">{{ veh_editar_obs_tacografo }}</textarea><br><br>
+        <label for="marca_ant" id="marca_ant"><b>Marca</b></label>
+        <input type="text" id="marca_new" name="marca_new" value={{tr_editar_marca}}><br><br>
+
+        <label for="modelo_ant" id="modelo_ant"><b>Modelo</b></label>
+        <input type="text" id="modelo_new" name="modelo_new" value={{tr_editar_modelo}}><br><br>
+
+        <label for="bastidor_ant" id="bastidor_ant"><b>Bastidor</b></label>
+        <input type="text" id="bastidor_new" name="bastidor_new" value={{tr_editar_bastidor}}><br><br>
 
         <input class="button" type="submit" value="Guardar cambios">
-        <a class="button_red" href="/tacografos">Volver</a>
+        <a class="button_red" href="/transpaletas">Volver</a>
     </form>
 <footer class="banda-roja"></footer>
     </div>
