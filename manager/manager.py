@@ -30,3 +30,7 @@ def register_usuarios_routes(app):
         db.session.commit()
         return redirect(url_for('lista_usuarios'))
 
+    @app.route('/ficheros')
+    def ficheros():
+        return render_template("ficheros.html")
+

@@ -25,6 +25,7 @@ from transpaletas.visitas_transpaleta import register_visitas_transapaleta_route
 from talleres.talleres import register_talleres_routes
 from talleres.edicion import register_talleredit_routes
 from tareas.tareas import register_tareas_routes
+from ficheros.ficheros import register_func_subir_fichero
 
 #Arranque app
 app = Flask(__name__)
@@ -62,6 +63,7 @@ register_visitas_transapaleta_routes(app)
 register_talleres_routes(app)
 register_talleredit_routes(app)
 register_tareas_routes(app)
+register_func_subir_fichero(app)
 
 @app.route('/')
 def index():
