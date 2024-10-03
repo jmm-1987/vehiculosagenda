@@ -44,30 +44,30 @@ def register_func_subir_fichero(app):
                     ]
                     datos_excel.append(row_converted)
 
+        # Crear un libro de trabajo de Excel
+        wb = openpyxl.Workbook()
+        ws = wb.active
 
-            # Crear un libro de trabajo de Excel
-            wb = openpyxl.Workbook()
-            ws = wb.active
+        # Definir encabezados de columna
+        ws.title = "ImportacionXPO"
+        ws.append(["FACTURA", "FECHA FACTURA", "FECHA RECOGIDA", "DEPOT", "EXPEDICION", "PEDIDO", "REMITENTE",
+                   "COD POSTAL", "ORIGEN", "VEHICULO", "TRAILER", "FECHA ENTR", "DESTINATARIO",
+                   "CODIGO POS", "DESTINO", "REF ENTREGA", "MERCANCIA", "BULTO", "PESO", "VOLUMEN", "R100", "R83",
+                   "R8", "T100", "T83", "D100", "D83", "D8", "D110", "D111", "D112", "D51",
+                   "D70", "D75", "M1", "M100", "M2", "M3", "M17", "M40", "M99", "A14", "C1", "GASOIL", "SEGURO",
+                   "SEGUN REC", "PARALIZACION", "OTROS", "TOTAL CS"])
 
-            # Definir encabezados de columna
-            ws.title = "ImportacionXPO"
-            ws.append(["FACTURA", "FECHA FACTURA", "FECHA RECOGIDA", "DEPOT", "EXPEDICION", "PEDIDO", "REMITENTE",
-                       "COD POSTAL", "ORIGEN", "VEHICULO", "TRAILER", "FECHA ENTR", "DESTINATARIO",
-                       "CODIGO POS", "DESTINO", "REF ENTREGA", "MERCANCIA", "BULTO", "PESO", "VOLUMEN", "R100", "R83",
-                       "R8", "T100", "T83", "D100", "D83", "D8", "D110", "D111", "D112", "D51",
-                       "D70", "D75", "M1", "M100", "M2", "M3", "M17", "M40", "M99", "A14", "C1", "GASOIL", "SEGURO",
-                       "SEGUN REC", "PARALIZACION", "OTROS", "TOTAL CS"])
+        # Añadir los datos al archivo Excel
+        for row in datos_excel:
+            ws.append(row)
 
-            # Añadir los datos al archivo Excel
-            for row in datos_excel:
-                ws.append(row)
+        # Guardar el archivo Excel
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
 
-            # Guardar el archivo Excel
-            output = io.BytesIO()
-            wb.save(output)
-            output.seek(0)
+        # Enviar el archivo Excel como respuesta para descargar
+        return send_file(output, download_name='imp_liq_XPO.xlsx', as_attachment=True)
 
-            # Enviar el archivo Excel como respuesta para descargar
-            return send_file(output, download_name='imp_liq_XPO.xlsx')
 
-        return "Archivos procesados correctamente"
+
