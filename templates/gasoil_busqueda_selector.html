@@ -6,25 +6,184 @@
     <title>Control gasoil</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Modern styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: linear-gradient(to right, #ffffff, #343a40); /* Degradado de blanco a gris */
+            color: white;
+        }
+
+        .top-bar img {
+            height: 50px;
+        }
+
+        .top-user {
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .top-button {
+            padding: 10px 20px;
+            background-color: #dc3545;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .top-button:hover {
+            background-color: #c82333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 50px auto;
+            text-align: center;
+        }
+
+        h1, h2 {
+            font-size: 36px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .button, .button_red {
+            padding: 15px 30px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            border-radius: 5px;
+            margin: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .button_red {
+            background-color: #dc3545;
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+        }
+
+        .button_red:hover {
+            background-color: #c82333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        table th, table td {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        table th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        table tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            padding: 20px;
+            background-color: #343a40;
+            color: white;
+            text-align: center;
+        }
+
+        .banda-roja {
+            height: 10px;
+            background-color: #dc3545;
+        }
+
+        .boton-borrar {
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #dc3545;
+            transition: color 0.3s;
+        }
+
+        .boton-borrar:hover {
+            color: #c82333;
+        }
+
+        .boton-marcar, .boton-desmarcar {
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .boton-marcar:hover i {
+            color: green;
+        }
+
+        .boton-desmarcar:hover i {
+            color: red;
+        }
+
+        @media screen and (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            table th, table td {
+                padding: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="top-bar">
+    <div class="top-bar">
        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
-</div>
-<div class="container">
-        <h1>{{veh_select_mat}}</h1>
-        <form action="/gasoil_busqueda_selector/{{veh_select_mat}}" method="post">
-            <br>
+    </div>
+
+    <div class="container">
+        <h1>{{ veh_select_mat }}</h1>
+        <form action="/gasoil_busqueda_selector/{{ veh_select_mat }}" method="post">
             <div class="form-group">
-                <input type="hidden" name="mat" value={{veh_select_mat}}>
+                <input type="hidden" name="mat" value={{ veh_select_mat }}>
                 <label for="fecha_inicio">Fecha inicio:</label>
-                <input type="date" id="fecha_inicio" name="fecha_inicio" value={{fecha_inicio}}>
+                <input type="date" id="fecha_inicio" name="fecha_inicio" value="{{ fecha_inicio }}">
                 <label for="fecha_fin">Fecha fin:</label>
-                <input type="date" id="fecha_fin" name="fecha_fin" value={{fecha_fin}}>
+                <input type="date" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin }}">
             </div>
             <br>
             <button class="button" type="submit">Buscar</button>
         </form>
+    </div>
+
     <div class="container">
         <h1>Tickets de gasoil</h1>
         <table>
@@ -61,50 +220,49 @@
                             <form action="/marcar_ticket" method="POST">
                                 <input type="hidden" name="marcar" value="{{ r.id }}">
                                     <button type="submit" class="boton-marcar">
-                                <i class="fas fa-check" style="background-color: white;"></i></button>
+                                <i class="fas fa-check"></i></button>
                             </form>
                             {% else %}
                             <form action="/desmarcar_ticket" method="POST">
                                 <input type="hidden" name="desmarcar" value="{{ r.id }}">
                                     <button type="submit" class="boton-desmarcar">
                                 <i class="fas fa-check" style="color: green;"></i></button>
+                            </form>
                             {% endif %}
                         {% endif %}
-                            </form>
                     </td>
                     <td>
                         <form action="/borrar_ticket/{{ r.id }}" method="POST">
                             <input type="hidden" name="id" value="{{ r.id }}">
                             <input type="hidden" name="clase" value="Gasoil">
-                            <button type="submit" class="boton-borrar"><i class="fas fa-trash-alt"></i>Borrar</button>
+                            <button type="submit" class="boton-borrar"><i class="fas fa-trash-alt"></i> Borrar</button>
                         </form>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
-            <br><br>
+        </table>
 
-            <table>
-                <tr>
-                    <td colspan="4"><strong>Totales:</strong></td>
-                    <td>Gasoil {{ total_gasoil | default(0) | round(2) }} litros {{total_euros_gasoil | default(0) | round(2)}}€ {{media_gasoil | default(0) | round(2)}}€/l</td>
-                    <td>Addblue {{ total_addblue | default(0) | round(2) }} litros {{total_euros_addblue |default(0) | round(2)}}€ {{media_addblue |default(0) | round(2)}}€/l</td>
-                    <td>Km recorridos: {{km_recorridos | round(2)}}</td>
-                    <td>{{precio_km | round(2)}}€ por km</td>
-                    <td colspan="6"></td>
-                </tr>
-            </table>
-            <br>
+        <br><br>
+
+        <table>
+            <tr>
+                <td colspan="4"><strong>Totales:</strong></td>
+                <td>Gasoil {{ total_gasoil | default(0) | round(2) }} litros {{ total_euros_gasoil | default(0) | round(2) }}€ {{ media_gasoil | default(0) | round(2) }}€/l</td>
+                <td>Addblue {{ total_addblue | default(0) | round(2) }} litros {{ total_euros_addblue | default(0) | round(2) }}€ {{ media_addblue | default(0) | round(2) }}€/l</td>
+                <td>Km recorridos: {{ km_recorridos | round(2) }}</td>
+                <td>{{ precio_km | round(2) }}€ por km</td>
+            </tr>
+        </table>
+
+        <br>
         <a class="button" href="/facturar_ticket?mat={{ veh_select_mat }}&fecha_inicio={{ fecha_inicio }}&fecha_fin={{ fecha_fin }}" id="Facturar">Facturar</a>
         <a class="button_red" href="/selector">Volver</a>
-        </table>
-        <br>
-        <br>
-        <br>
-        <br>
-
     </div>
-<footer class="banda-roja"></footer>
-</div>
+
+    <footer>
+        <div class="banda-roja"></div>
+        &copy; 2024 Empresa de Transporte. Todos los derechos reservados.
+    </footer>
 </body>
 </html>

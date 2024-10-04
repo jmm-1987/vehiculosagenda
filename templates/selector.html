@@ -6,42 +6,175 @@
     <title>Control gasoil</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Modern styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: linear-gradient(to right, #ffffff, #343a40); /* Degradado de blanco a gris */
+            color: white;
+        }
+
+        .top-bar img {
+            height: 50px;
+        }
+
+        .top-user {
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .top-button {
+            padding: 10px 20px;
+            background-color: #dc3545;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .top-button:hover {
+            background-color: #c82333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 50px auto;
+            text-align: center;
+        }
+
+        h1, h2 {
+            font-size: 36px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .button, .button_red {
+            padding: 15px 30px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            border-radius: 5px;
+            margin: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .button_red {
+            background-color: #dc3545;
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+        }
+
+        .button_red:hover {
+            background-color: #c82333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        table th, table td {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        table th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        table tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            padding: 20px;
+            background-color: #343a40;
+            color: white;
+            text-align: center;
+        }
+
+        .banda-roja {
+            height: 10px;
+            background-color: #dc3545;
+        }
+
+        @media screen and (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            table th, table td {
+                padding: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="top-bar">
+    <div class="top-bar">
        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
-        <a class="top-user"> {{ current_user.username }}</a>
-        <a href="/logout" class="top-button">Cerrar sesión</a>
-</div>
+       <span class="top-user">{{ current_user.username }}</span>
+       <a href="/logout" class="top-button">Cerrar sesión</a>
+    </div>
+
     <div class="container">
         <h1>Gestión de tickets de gasoil</h1>
         <h2>Selecciona un vehículo</h2>
+        <a class="button" href="/formulario_gasoil">Introducir ticket</a>
+        <a class="button_red" href="/index">Volver</a>
+
         <table>
             <thead>
                 <tr>
                     <th>Matrícula</th>
                     <th>Alias</th>
-
                 </tr>
             </thead>
 
             <tbody>
                 {% for vehiculo in lista_vehiculos %}
                 <tr>
-                    <td><a href="/gasoil_busqueda_selector/{{vehiculo.id}}">{{ vehiculo.matricula }}</td>
+                    <td><a href="/gasoil_busqueda_selector/{{vehiculo.id}}">{{ vehiculo.matricula }}</a></td>
                     <td>{{ vehiculo.alias }}</td>
-
-
                 </tr>
                 {% endfor %}
             </tbody>
-
         </table>
+
         <br>
         <a class="button" href="/formulario_gasoil">Introducir ticket</a>
         <a class="button_red" href="/index">Volver</a>
-
     </div>
-<footer class="banda-roja"></footer>
+
+    <footer>
+        <div class="banda-roja"></div>
+        &copy; 2024 Empresa de Transporte. Todos los derechos reservados.
+    </footer>
 </body>
 </html>

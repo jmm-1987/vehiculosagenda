@@ -6,30 +6,183 @@
     <title>Listado de reparaciones</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Modern styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: linear-gradient(to right, #ffffff, #343a40); /* Degradado de blanco a gris */
+            color: white;
+        }
+
+        .top-bar img {
+            height: 50px;
+        }
+
+        .top-user {
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .top-button {
+            padding: 10px 20px;
+            background-color: #dc3545;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .top-button:hover {
+            background-color: #c82333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 50px auto;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 36px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        select {
+            padding: 10px;
+            font-size: 16px;
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .button, .button_red {
+            padding: 15px 30px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            border-radius: 5px;
+            margin: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .button_red {
+            background-color: #dc3545;
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+        }
+
+        .button_red:hover {
+            background-color: #c82333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        table th, table td {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        table th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        table tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .boton-editar, .boton-ver, .boton-borrar {
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            transition: color 0.3s;
+        }
+
+        .boton-editar:hover, .boton-ver:hover, .boton-borrar:hover {
+            color: #0056b3;
+        }
+
+        .fas.fa-check.verde {
+            color: #28a745;
+        }
+
+        footer {
+            padding: 20px;
+            background-color: #343a40;
+            color: white;
+            text-align: center;
+        }
+
+        .banda-roja {
+            height: 10px;
+            background-color: #dc3545;
+        }
+
+        @media screen and (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            table th, table td {
+                padding: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="top-bar">
+    <div class="top-bar">
        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
-        <a class="top-user"> {{ current_user.username }}</a>
-        <a href="/logout" class="top-button">Cerrar sesión</a>
-</div>
+       <span class="top-user">{{ current_user.username }}</span>
+       <a href="/logout" class="top-button">Cerrar sesión</a>
+    </div>
+
     <div class="container">
         <h1>Reparaciones Taller</h1>
         <form action="/busqueda_matricula" method="post">
             <div class="form-group">
-                <label for="matricula">Selecciona una matricula:</label>
-                    <select id="matricula" name="matricula" required>
-                        <option value="" selected disabled></option>
-                        {% for t in lista_matriculas %}
-                            <option value="{{ t.matricula }}">{{ t["matricula"] }}</option>
-                        {% endfor %}
-                    </select>
+                <label for="matricula">Selecciona una matrícula:</label>
+                <select id="matricula" name="matricula" required>
+                    <option value="" selected disabled></option>
+                    {% for t in lista_matriculas %}
+                        <option value="{{ t.matricula }}">{{ t["matricula"] }}</option>
+                    {% endfor %}
+                </select>
             </div>
             <br>
-         <button class="button" type="submit">Buscar por matricula</button>
+            <button class="button" type="submit">Buscar por matrícula</button>
+		<a class="button" href="/formulario_taller">Crear intervención</a>
+        	<a class="button_red" href="/index">Volver</a>
+
         </form>
-        </br>
-        </br>
+
         <table>
             <thead>
                 <tr>
@@ -39,8 +192,7 @@
                     <th>Fecha visita</th>
                     <th>Fecha entrega</th>
                     <th>Precio</th>
-                    <th colspan="2">Acciones</th>
-
+                    <th colspan="3">Acciones</th>
                 </tr>
             </thead>
 
@@ -57,8 +209,8 @@
                         <td></td>
                     {% endif %}
                     <td>{{t.importe }}</td>
-                    {% if not t.nombre_doc %}
                     <td>
+                        {% if not t.nombre_doc %}
                         <form action="/subir_doc" method="POST" enctype="multipart/form-data">
                             <input type="file" name="documento" accept=".pdf, .doc, .docx">
                             <input type="hidden" name="matricula" value="{{ t.matricula }}">
@@ -66,17 +218,16 @@
                             <input type="hidden" name="clase" value="Taller">
                             <input type="submit" value="Adjuntar">
                         </form>
+                        {% else %}
+                        <a href="{{ url_for('static', filename='subidas/' ~ t.nombre_doc) }}"><i class="fas fa-check verde"></i> Ver</a>
+                        {% endif %}
                     </td>
-                    {% else %}
-                    <td><a href="{{ url_for('static', filename='subidas/' ~ t.nombre_doc) }}"><i class="fas fa-check verde"></i>Ver</td>
-                    {% endif %}
                     <td><a href="ver_taller/{{ t.id }}">
                         <button type="submit" class="boton-ver"><i class="fas fa-eye"></i></button>
-                    </a>
-                    <td>
+                    </a></td>
                     <td><a href="form_editar_taller/{{ t.id }}">
                         <button type="submit" class="boton-editar"><i class="fas fa-pencil"></i></button>
-                    </a>
+                    </a></td>
                     {% if current_user.username == "jmurillo" %}
                     <td>
                         <form action="/borrar_taller/{{ t.id }}" method="POST">
@@ -92,13 +243,15 @@
                 {% endfor %}
             </tbody>
         </table>
+
         <br>
         <a class="button" href="/formulario_taller">Crear intervención</a>
         <a class="button_red" href="/index">Volver</a>
-        <br>
-        <br>
-        <br><br>
     </div>
-<footer class="banda-roja"></footer>
+
+    <footer>
+        <div class="banda-roja"></div>
+        &copy; 2024 Empresa de Transporte. Todos los derechos reservados.
+    </footer>
 </body>
 </html>

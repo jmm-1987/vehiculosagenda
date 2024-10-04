@@ -20,7 +20,7 @@ def register_tickets_routes(app):
 
     @app.route('/formulario_gasoil')
     def formulario_gasoil():
-        matriculas = db.session.query(Vehiculo.matricula).filter(Vehiculo.tipo == "camion").all()
+        matriculas = db.session.query(Vehiculo.matricula).filter(Vehiculo.tipo == "camion", Vehiculo.activo == True).all()
         return render_template("crear_ticket.html", lista_matriculas=matriculas)
 
     @app.route("/borrar_ticket/<id>", methods=["POST", "GET"])
@@ -57,7 +57,7 @@ def register_tickets_routes(app):
             fecha_fin = datetime.strptime(request.form["fecha_fin"], '%Y-%m-%d').date()
         else:
             fecha_actual = date.today()
-            fecha_inicio= fecha_actual - timedelta(days=31)
+            fecha_inicio= fecha_actual - timedelta(days=90)
             fecha_fin = datetime.now().date()
 
         tickets_busqueda = db.session.query(Ticket).filter(
