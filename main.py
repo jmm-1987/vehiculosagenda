@@ -26,6 +26,7 @@ from talleres.talleres import register_talleres_routes
 from talleres.edicion import register_talleredit_routes
 from tareas.tareas import register_tareas_routes
 from ficheros.ficheros import register_func_subir_fichero
+from ficheros.ficheros_ts import register_func_subir_fichero_ts
 
 #Arranque app
 app = Flask(__name__)
@@ -64,6 +65,7 @@ register_talleres_routes(app)
 register_talleredit_routes(app)
 register_tareas_routes(app)
 register_func_subir_fichero(app)
+register_func_subir_fichero_ts(app)
 
 @app.route('/')
 def index():
