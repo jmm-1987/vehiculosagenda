@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FTP Transfer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            position: relative;
+            background-color: #f4f4f4;
+        }
+
+        /* Imagen de fondo con capa semitransparente */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('static/fondo_ftp.webp');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; /* Para que el fondo se mantenga fijo al hacer scroll */
+            background-repeat: no-repeat;
+            opacity: 0.3; /* Controla la opacidad de la imagen de fondo */
+            z-index: -1; /* Asegura que la capa esté detrás del contenido */
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            background-color: rgba(255, 255, 255, 0.8); /* Fondo semitransparente */
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        input {
+            padding: 5px;
+            margin-bottom: 10px;
+            width: 200px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+
+        input[readonly] {
+            background-color: #e9e9e9;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .connection-block {
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: rgba(255, 255, 255, 0.9); /* Fondo blanco semitransparente */
+        }
+
+        .connection-block h3 {
+            margin: 0;
+            cursor: pointer;
+            color: #007BFF;
+        }
+
+        .connection-block h3:hover {
+            text-decoration: underline;
+        }
+
+        .connection-details {
+            display: none;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            padding-top: 10px;
+        }
+
+        .connection-details .section {
+            flex-basis: 48%;
+        }
+
+        .form-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .form-row input {
+            flex-grow: 1;
+        }
+
+        /* Estilo personalizado para el contenedor de la conexión de origen */
+        .connection-block.origen {
+            background-color: rgba(209, 236, 241, 0.9); /* Color diferente para la conexión de origen con transparencia */
+            border-color: #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <h1>Transferencia de Archivos FTP</h1>
+    <form action="/iniciar_transferencia" method="POST">
+
+        <!-- Mostrar la conexión de origen con un color diferente -->
+        <div class="connection-block origen">
+            <h3 onclick="toggleDetails(this)">Conexión de Origen</h3>
+            <div class="connection-details">
+                <div class="section">
+                    <h4>Detalles FTP de Origen</h4>
+                    <div class="form-row">
+                        <label for="ftp_origen">Dirección FTP:</label>
+                        <input type="text" id="ftp_origen" name="ftp_origen" value="{{ origen[0] }}" readonly>
+                    </div>
+                    <div class="form-row">
+                        <label for="username_origen">Usuario:</label>
+                        <input type="text" id="username_origen" name="username_origen" value="{{ origen[1] }}" readonly>
+                    </div>
+                    <div class="form-row">
+                        <label for="password_origen">Contraseña:</label>
+                        <input type="password" id="password_origen" name="password_origen" value="{{ origen[2] }}" readonly>
+                    </div>
+                    <div class="form-row">
+                        <label for="directory_origen">Directorio:</label>
+                        <input type="text" id="directory_origen" name="directory_origen" value="{{ origen[3] }}" readonly>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generar las conexiones de destino usando Jinja -->
+        {% for conexion in conexiones %}
+        <div class="connection-block">
+            <h3 onclick="toggleDetails(this)">Conexión de Subida. Ficheros: {{ conexion[3] }}</h3>
+            <div class="connection-details">
+                <div class="section">
+                    <h4>Detalles FTP de Destino</h4>
+                    <div class="form-row">
+                        <label for="ftp_dest_{{ loop.index }}">Dirección FTP:</label>
+                        <input type="text" id="ftp_dest_{{ loop.index }}" name="ftp_dest_{{ loop.index }}" value="{{ conexion[0] }}" readonly>
+                    </div>
+                    <div class="form-row">
+                        <label for="username_dest_{{ loop.index }}">Usuario:</label>
+                        <input type="text" id="username_dest_{{ loop.index }}" name="username_dest_{{ loop.index }}" value="{{ conexion[1] }}" readonly>
+                    </div>
+                    <div class="form-row">
+                        <label for="password_dest_{{ loop.index }}">Contraseña:</label>
+                        <input type="password" id="password_dest_{{ loop.index }}" name="password_dest_{{ loop.index }}" value="{{ conexion[2] }}" readonly>
+                    </div>
+                    <div class="form-row">
+                        <label for="prefix_dest_{{ loop.index }}">Prefijo:</label>
+                        <input type="text" id="prefix_dest_{{ loop.index }}" name="prefix_dest_{{ loop.index }}" value="{{ conexion[3] }}" readonly>
+                    </div>
+                    <div class="form-row">
+                        <label for="directory_dest_{{ loop.index }}">Directorio:</label>
+                        <input type="text" id="directory_dest_{{ loop.index }}" name="directory_dest_{{ loop.index }}" value="{{ conexion[4] }}" readonly>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Botón para enviar el formulario -->
+        <button type="submit">Iniciar Transferencia</button>
+    </form>
+
+    <script>
+        function toggleDetails(element) {
+            var details = element.nextElementSibling;
+            if (details.style.display === "none" || details.style.display === "") {
+                details.style.display = "block";
+            } else {
+                details.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>

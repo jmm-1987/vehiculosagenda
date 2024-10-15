@@ -25,8 +25,8 @@
             <a href="/rodajes" class="button">Rodajes</a>
             <a href="/extintores" class="button">Extintores</a>
             <a href="/selector" class="button">Gasoil/Add</a>
-            <a href="/transpaletas" class="button-dark">Transapaletas</a>
-            {% if current_user.username == "jmurillo" %} <a href="/manager" class="button">Manager</a>
+            <a href="/transpaletas" class="button-green">Transapaletas</a>
+            {% if current_user.username == "jmurillo" or current_user.username == "rocio" %} <a href="/manager" class="button">Manager</a>
             {% else %}
             {%endif%}
             {% if current_user.username == "jmurillo" or current_user.username == "rocio" %} <a href="/tareas" class="button">Tareas</a>

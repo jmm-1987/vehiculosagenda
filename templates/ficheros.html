@@ -61,14 +61,12 @@
               </button>
               </form>
             </div>
-
-
           </div>
         </div>
         <div class="px-40 flex flex-1 justify-center py-2">
           <div class="layout-content-container flex flex-col w-[512px] max-w-[512px] py-5 max-w-[960px] flex-1">
             <div class="flex flex-wrap justify-between gap-3 p-4"><p class="text-[#111518] tracking-light text-[32px] font-bold leading-tight min-w-72">TRANSAHER liquidación columna exp </p></div>
-            <h3 class="text-[#111518] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Solo adminte Excel</h3>
+            <h3 class="text-[#111518] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Solo admite Excel</h3>
             <p class="text-[#111518] text-base font-normal leading-normal pb-3 pt-1 px-4">
              Sube el fichero Excel de la liquidación de llegadas de Transaher. Te devolverá un excel con el campo de la expedición listo para Nereid
             </p>
@@ -81,6 +79,29 @@
               </button>
               </form>
             </div>
+            </div>
+          </div>
+                <div class="px-40 flex flex-1 justify-center py-2">
+          <div class="layout-content-container flex flex-col w-[512px] max-w-[512px] py-5 max-w-[960px] flex-1">
+            <div class="flex flex-wrap justify-between gap-3 p-4"><p class="text-[#111518] tracking-light text-[32px] font-bold leading-tight min-w-72">NTL liquidación </p></div>
+            <h3 class="text-[#111518] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Solo admite Excel</h3>
+            <p class="text-[#111518] text-base font-normal leading-normal pb-3 pt-1 px-4">
+             Sube el fichero Excel de la liquidación de llegadas de Transaher. Te devolverá un excel con el campo de la expedición listo para Nereid
+            </p>
+            <div class="flex px-4 py-3">
+              <form action="/subir_fichero_ts" method="POST" enctype="multipart/form-data">
+              <button
+                class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 flex-1 bg-[#f8f32b] text-white text-sm font-bold leading-normal tracking-[0.015em]">
+                <input type="file" name="fichero" accept=".xlsx">
+                <span class="truncate">Procesar</span>
+              </button>
+              </form>
+            </div>
+            </div>
+          </div>
+
+
+
 
             <div class="flex justify-stretch">
               <div class="flex flex-1 gap-3 flex-wrap px-4 py-3 justify-end">
