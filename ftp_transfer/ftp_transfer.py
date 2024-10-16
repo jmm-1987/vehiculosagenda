@@ -1,16 +1,15 @@
 from flask import render_template, request, redirect, url_for
-import db
-
+import ftplib
 
 def register_ftp_transfer_routes(app):
     @app.route('/ftp_transfer')
     def ftp_transfer():
-        origen = ["ftpclientes.nereid.es", "ne4ld1tr43xXp0", "HA61(kl27", "/XPOsalidas"]
-        lista_conexiones = [["ftpclientes.nereid.es", "ne4ld1tr43xXp0", "HA61(kl27", "DSEL", "/PODSalidasXPO/POD"],
-                            ["ftpclientes.nereid.es", "ne4ld1tr43xXp0", "HA61(kl27", "GGSS", "/PODSalidasXPO/PRIVADO"],
-                            ["ftpclientes.nereid.es", "ne4ld1tr43xXp0", "HA61(kl27", "VARI", "/PODSalidasXPO/PRIVADO"],
-                            ["ftpclientes.nereid.es", "ne4ld1tr43xXp0", "HA61(kl27", "DADR", "/PODSalidasXPO/PRIVADO"],
-                            ["ftpclientes.nereid.es", "ne4ld1tr43xXp0", "HA61(kl27", "INCC", "/PODSalidasXPO/INC"]]
+        origen = ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "XPOsalidas"]
+        lista_conexiones = [["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "DSEL", "PODSalidasXPO/POD"],
+                            ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "GGSS", "PODSalidasXPO/PRIVADO"],
+                            ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "VARI", "PODSalidasXPO/PRIVADO"],
+                            ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "DADR", "PODSalidasXPO/PRIVADO"],
+                            ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "INCC", "PODSalidasXPO/INC"]]
         return render_template('ftp_transfer.html', origen=origen, conexiones=lista_conexiones)
 
     @app.route('/iniciar_transferencia', methods=['POST'])
@@ -42,9 +41,9 @@ def register_ftp_transfer_routes(app):
                 'prefix': prefix_dest,
                 'directory': directory_dest
             })
-        print(lista_conexiones)
 
-        # Llamar a la función que inicia las conexiones usando los datos recopilados
+
+        # Lógica para iniciar la transferencia
         iniciar_transferencia({
             'origen': {
                 'ftp': ftp_origen,
@@ -57,3 +56,28 @@ def register_ftp_transfer_routes(app):
 
         # Redirigir o mostrar un mensaje de éxito
         return redirect(url_for('ftp_transfer'))
+
+    def iniciar_transferencia(datos):
+        origen = datos['origen']
+        destinos = datos['destinos']
+
+        try:
+            # Conectar al servidor de origen
+            with ftplib.FTP(origen['ftp']) as ftp_origen:
+                ftp_origen.login(origen['username'], origen['password'])
+                ftp_origen.cwd(origen['directory'])
+
+                # Transferir archivos a cada destino
+                for destino in destinos:
+                    with ftplib.FTP(destino['ftp']) as ftp_dest:
+                        ftp_dest.login(destino['username'], destino['password'])
+                        ftp_dest.cwd(destino['directory'])
+
+                        # Aquí puedes agregar la lógica para transferir archivos desde el origen al destino
+                        # Un ejemplo básico para transferir un archivo llamado 'archivo.txt':
+                        file_name = 'archivo.txt'  # Cambia esto según el archivo que quieras transferir
+                        with open(file_name, 'rb') as file:
+                            ftp_dest.storbinary(f'STOR {file_name}', file)
+
+        except Exception as e:
+            print(f"Error durante la transferencia: {e}")
