@@ -9,7 +9,16 @@ def register_ftp_transfer_routes(app):
                             ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "GGSS", "PODSalidasXPO/PRIVADO"],
                             ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "VARI", "PODSalidasXPO/PRIVADO"],
                             ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "DADR", "PODSalidasXPO/PRIVADO"],
-                            ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "INCC", "PODSalidasXPO/INC"]]
+                            ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "ATRA", "PODSalidasXPO/POD"],
+                            ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "DFIR", "PODSalidasXPO/POD"],
+                            ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "DALB", "PODSalidasXPO/POD"],
+                            ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "POD", "PODSalidasXPO/POD"],
+                            ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "CONS", "PODSalidasXPO/POD"],
+                            ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "EREP", "PODSalidasXPO/POD"],
+                            ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "MANI", "PODSalidasXPO/POD"],
+                            ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "INCC", "PODSalidasXPO/INC"],
+                            ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "INCB", "PODSalidasXPO/INC"],
+                            ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "DIMG", "PODSalidasXPO/INC"]]
         return render_template('ftp_transfer.html', origen=origen, conexiones=lista_conexiones)
 
     @app.route('/iniciar_transferencia', methods=['POST'])
@@ -22,8 +31,7 @@ def register_ftp_transfer_routes(app):
 
         # Recoger las conexiones de destino (suponiendo que tienes un número variable de conexiones)
         lista_conexiones = []
-        numero_conexiones = len(
-            request.form) // 5  # Suponiendo que hay 5 campos por conexión (FTP, usuario, password, prefijo, directorio)
+        numero_conexiones = len(request.form) // 5  # Suponiendo 5 campos por conexión (FTP, usuario, password, prefijo, directorio)
 
         # Recopilar los datos de las conexiones de destino (suponiendo 5 campos por conexión)
         for i in range(1, numero_conexiones + 1):
@@ -41,7 +49,6 @@ def register_ftp_transfer_routes(app):
                 'prefix': prefix_dest,
                 'directory': directory_dest
             })
-
 
         # Lógica para iniciar la transferencia
         iniciar_transferencia({
@@ -67,17 +74,36 @@ def register_ftp_transfer_routes(app):
                 ftp_origen.login(origen['username'], origen['password'])
                 ftp_origen.cwd(origen['directory'])
 
+                # Listar los archivos en el directorio de origen
+                archivos_origen = ftp_origen.nlst()  # Obtiene la lista de nombres de archivos
+
                 # Transferir archivos a cada destino
                 for destino in destinos:
                     with ftplib.FTP(destino['ftp']) as ftp_dest:
                         ftp_dest.login(destino['username'], destino['password'])
                         ftp_dest.cwd(destino['directory'])
 
-                        # Aquí puedes agregar la lógica para transferir archivos desde el origen al destino
-                        # Un ejemplo básico para transferir un archivo llamado 'archivo.txt':
-                        file_name = 'archivo.txt'  # Cambia esto según el archivo que quieras transferir
-                        with open(file_name, 'rb') as file:
-                            ftp_dest.storbinary(f'STOR {file_name}', file)
+                        # Iterar sobre los archivos de origen y verificar el prefijo
+                        for archivo in archivos_origen:
+                            if archivo.startswith(destino['prefix']):  # Verifica si el nombre del archivo empieza con el prefijo
+                                print(f"Transferiendo {archivo} a {destino['directory']} en {destino['ftp']}")
+
+                                # Descargar el archivo del servidor de origen temporalmente
+                                with open(archivo, 'wb') as local_file:
+                                    ftp_origen.retrbinary(f'RETR {archivo}', local_file.write)
+
+                                # Subir el archivo al servidor de destino
+                                with open(archivo, 'rb') as local_file:
+                                    ftp_dest.storbinary(f'STOR {archivo}', local_file)
+
+                                print(f"{archivo} transferido con éxito a {destino['directory']} en {destino['ftp']}")
+
+                                # Borrar el archivo del servidor de origen
+                                ftp_origen.delete(archivo)
+                                print(f"{archivo} eliminado del servidor de origen.")
+
+                            else:
+                                print(f"El archivo {archivo} no coincide con el prefijo {destino['prefix']} de la conexión destino")
 
         except Exception as e:
             print(f"Error durante la transferencia: {e}")
