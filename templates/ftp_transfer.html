@@ -117,7 +117,24 @@
 </head>
 <body>
     <h1>Transferencia de Archivos FTP</h1>
+
+    {% if logs %}
+        <div class="logs">
+            <h3>Registro de la transferencia:</h3>
+            <ul>
+                {% for log in logs %}
+                    <li>{{ log }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    <form action="{{ url_for('volver_ftp_transfer') }}" method="POST">
+            <button type="submit" class="btn-aceptar">Aceptar</button>
+        </form>
+    {% endif %}
+
+    <!-- Botón para enviar el formulario -->
     <form action="/iniciar_transferencia" method="POST">
+        <button type="submit" style="display: block; margin: 0 auto 20px auto;">Iniciar Transferencia</button> <!-- Margen inferior añadido -->
 
         <!-- Mostrar la conexión de origen con un color diferente -->
         <div class="connection-block origen">
@@ -176,9 +193,6 @@
             </div>
         </div>
         {% endfor %}
-
-        <!-- Botón para enviar el formulario -->
-        <button type="submit">Iniciar Transferencia</button>
     </form>
 
     <script>
@@ -193,3 +207,4 @@
     </script>
 </body>
 </html>
+
