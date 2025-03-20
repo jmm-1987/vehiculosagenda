@@ -4,5 +4,3 @@ DateTime~=5.4
 paramiko
 gunicorn
 flask_login
-ftplib
-io
