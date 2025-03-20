@@ -5,3 +5,4 @@ paramiko
 gunicorn
 flask_login
 pandas
+openpyxl
