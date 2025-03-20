@@ -228,7 +228,7 @@
                     <td><a href="form_editar_taller/{{ t.id }}">
                         <button type="submit" class="boton-editar"><i class="fas fa-pencil"></i></button>
                     </a></td>
-                    {% if current_user.username == "jmurillo" %}
+                    {% if current_user.username == "jmurillo" or current_user.username == "javimurillo" %}
                     <td>
                         <form action="/borrar_taller/{{ t.id }}" method="POST">
                             <input type="hidden" name="id" value="{{ t.id }}">
