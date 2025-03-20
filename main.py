@@ -28,7 +28,7 @@ from talleres.edicion import register_talleredit_routes
 from tareas.tareas import register_tareas_routes
 from ficheros.ficheros import register_func_subir_fichero
 from ficheros.ficheros_ts import register_func_subir_fichero_ts
-from ficheros.ficheros_imp import register_func_subir_fichero_imp
+
 
 
 
@@ -70,7 +70,6 @@ register_talleredit_routes(app)
 register_tareas_routes(app)
 register_func_subir_fichero(app)
 register_func_subir_fichero_ts(app)
-register_func_subir_fichero_imp(app)
 register_ftp_transfer_routes(app)
 
 
