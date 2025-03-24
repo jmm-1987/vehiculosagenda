@@ -1,7 +1,6 @@
 from flask import Flask, render_template, session, request, redirect, url_for
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 import db
-from apscheduler.schedulers.background import BackgroundScheduler
 from ftp_transfer.ftp_transfer import register_ftp_transfer_routes
 from models import Itv, Seguro, Tacografo, Rodaje, Extintor, Usuario
 from datetime import datetime, timedelta
@@ -73,11 +72,6 @@ register_func_subir_fichero(app)
 register_func_subir_fichero_ts(app)
 register_ftp_transfer_routes(app)
 
-
-# Configuras el scheduler
-scheduler = BackgroundScheduler()
-scheduler.add_job(iniciar_transferencia, 'interval', minutes=2)  # Ejecutar cada hora
-scheduler.start()
 
 @app.route('/')
 def index():
