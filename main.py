@@ -74,7 +74,7 @@ register_ftp_transfer_routes(app)
 
 # Configuras el scheduler
 scheduler = BackgroundScheduler()
-scheduler.add_job(tarea_programada, 'interval', minutes=2)  # Ejecutar cada hora
+scheduler.add_job(iniciar_transferencia_route, 'interval', minutes=2)  # Ejecutar cada hora
 scheduler.start()
 
 @app.route('/')
