@@ -98,8 +98,8 @@ def iniciar_transferencia(datos):
                             logs.append(f"{archivo} transferido con éxito a {destino['directory']} en {destino['ftp']}")
                             ftp_origen.delete(archivo)
                             logs.append(f"{archivo} eliminado del servidor de origen.")
-                        else:
-                            logs.append(f"El archivo {archivo} no coincide con el prefijo {destino['prefix']}")
+                            #Else Anulo el else
+                            #logs.append(f"El archivo {archivo} no coincide con el prefijo {destino['prefix']}")
 
     except Exception as e:
         logs.append(f"Error durante la transferencia: {e}")
