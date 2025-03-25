@@ -44,6 +44,7 @@ login_manager = LoginManager(app)
 
 #Configuracion del sitio de las imagenes
 app.config['UPLOAD_FOLDER'] = 'static/subidas'
+iniciar_scheduler()
 
 #Rutas
 register_vehiculos_routes(app)
