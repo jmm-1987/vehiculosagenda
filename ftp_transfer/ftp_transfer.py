@@ -5,8 +5,8 @@ import json
 import os
 from apscheduler.schedulers.background import BackgroundScheduler
 
-CONFIG_PATH = os.path.join('static', 'ftp_config.json')
-# Ojo, la configuración está aquí para la web, pero para la automática está en el fichero JSON
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_PATH = os.path.join(BASE_DIR, '..', 'static', 'ftp_config.json')
 
 def register_ftp_transfer_routes(app):
     @app.route('/ftp_transfer')
@@ -29,6 +29,11 @@ def register_ftp_transfer_routes(app):
             ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "DIMG", "PODSalidasXPO/INC"]
         ]
         return render_template('ftp_transfer.html', origen=origen, conexiones=lista_conexiones)
+
+    @app.route('/volver', methods=['POST'])
+    def volver_ftp_transfer():
+        # Volver a cargar la página principal de ftp_transfer
+        return redirect(url_for('ftp_transfer'))
 
     @app.route('/iniciar_transferencia', methods=['POST'])
     def iniciar_transferencia_route():
@@ -66,11 +71,6 @@ def register_ftp_transfer_routes(app):
         })
 
         return render_template('ftp_transfer.html', origen=[ftp_origen, username_origen, password_origen, directory_origen], conexiones=lista_conexiones, logs=logs)
-
-    @app.route('/volver', methods=['POST'])
-    def volver_ftp_transfer():
-        return redirect(url_for('ftp_transfer'))
-
 
 def iniciar_transferencia(datos):
     origen = datos['origen']
@@ -128,10 +128,7 @@ def tarea_programada():
 
 def iniciar_scheduler():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(tarea_programada, 'interval', minutes=2)
+    scheduler.add_job(tarea_programada, 'interval', hours=1)
     scheduler.start()
 
-    @app.route('/volver', methods=['POST'])
-    def volver_ftp_transfer():
-        # Volver a cargar la página principal de ftp_transfer
-        return redirect(url_for('ftp_transfer'))
+

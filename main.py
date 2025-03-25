@@ -1,7 +1,7 @@
 from flask import Flask, render_template, session, request, redirect, url_for
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 import db
-from ftp_transfer.ftp_transfer import register_ftp_transfer_routes
+from ftp_transfer.ftp_transfer import register_ftp_transfer_routes, iniciar_scheduler
 from models import Itv, Seguro, Tacografo, Rodaje, Extintor, Usuario
 from datetime import datetime, timedelta
 from vehiculos.vehiculos import register_vehiculos_routes
