@@ -1,7 +1,7 @@
 from flask import Flask, render_template, session, request, redirect, url_for
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 import db
-from ftp_transfer.ftp_transfer import register_ftp_transfer_routes, iniciar_scheduler
+from ftp_transfer.ftp_transfer import register_ftp_transfer_routes
 from models import Itv, Seguro, Tacografo, Rodaje, Extintor, Usuario
 from datetime import datetime, timedelta
 from vehiculos.vehiculos import register_vehiculos_routes
@@ -28,6 +28,8 @@ from talleres.edicion import register_talleredit_routes
 from tareas.tareas import register_tareas_routes
 from ficheros.ficheros import register_func_subir_fichero
 from ficheros.ficheros_ts import register_func_subir_fichero_ts
+from ficheros.ficheros_pallex import register_func_subir_fichero_pallex
+from ficheros.ficheros_xpo import register_func_subir_fichero_xpo
 
 
 
@@ -44,7 +46,6 @@ login_manager = LoginManager(app)
 
 #Configuracion del sitio de las imagenes
 app.config['UPLOAD_FOLDER'] = 'static/subidas'
-iniciar_scheduler()
 
 #Rutas
 register_vehiculos_routes(app)
@@ -72,6 +73,9 @@ register_tareas_routes(app)
 register_func_subir_fichero(app)
 register_func_subir_fichero_ts(app)
 register_ftp_transfer_routes(app)
+register_func_subir_fichero_pallex(app)
+register_func_subir_fichero_xpo(app)
+
 
 
 @app.route('/')
