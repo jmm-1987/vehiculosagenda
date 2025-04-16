@@ -57,4 +57,4 @@ def register_func_subir_fichero_pallex(app):
         output.seek(0)
 
         # Enviar archivo al cliente
-        return send_file(output, download_name="ImportacionXPO.xlsx", as_attachment=True)
+        return send_file(output, download_name="Imp_costes_PALLEX.xlsx", as_attachment=True)
