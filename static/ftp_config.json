@@ -1,0 +1,108 @@
+{
+  "origen": {
+    "ftp": "ftpclientes.nereid.es",
+    "username": "ne4ld1tr43xSurp4q",
+    "password": "J8QP123(A2e",
+    "directory": "XPOsalidas"
+  },
+  "destinos": [
+    {
+      "ftp": "ftpclientes.nereid.es",
+      "username": "ne4ld1tr43xSurp4q",
+      "password": "J8QP123(A2e",
+      "prefix": "DSEL",
+      "directory": "PODSalidasXPO/POD"
+    },
+    {
+      "ftp": "ftpclientes.nereid.es",
+      "username": "ne4ld1tr43xSurp4q",
+      "password": "J8QP123(A2e",
+      "prefix": "GGSS",
+      "directory": "PODSalidasXPO/PRIVADO"
+    },
+    {
+      "ftp": "ftpclientes.nereid.es",
+      "username": "ne4ld1tr43xSurp4q",
+      "password": "J8QP123(A2e",
+      "prefix": "VARI",
+      "directory": "PODSalidasXPO/PRIVADO"
+    },
+    {
+      "ftp": "ftpclientes.nereid.es",
+      "username": "ne4ld1tr43xSurp4q",
+      "password": "J8QP123(A2e",
+      "prefix": "DADR",
+      "directory": "PODSalidasXPO/PRIVADO"
+    },
+    {
+      "ftp": "ftpclientes.nereid.es",
+      "username": "ne4ld1tr43xSurp4q",
+      "password": "J8QP123(A2e",
+      "prefix": "ATRA",
+      "directory": "PODSalidasXPO/POD"
+    },
+    {
+      "ftp": "ftpclientes.nereid.es",
+      "username": "ne4ld1tr43xSurp4q",
+      "password": "J8QP123(A2e",
+      "prefix": "DFIR",
+      "directory": "PODSalidasXPO/POD"
+    },
+    {
+      "ftp": "ftpclientes.nereid.es",
+      "username": "ne4ld1tr43xSurp4q",
+      "password": "J8QP123(A2e",
+      "prefix": "DALB",
+      "directory": "PODSalidasXPO/POD"
+    },
+    {
+      "ftp": "ftpclientes.nereid.es",
+      "username": "ne4ld1tr43xSurp4q",
+      "password": "J8QP123(A2e",
+      "prefix": "POD",
+      "directory": "PODSalidasXPO/POD"
+    },
+    {
+      "ftp": "ftpclientes.nereid.es",
+      "username": "ne4ld1tr43xSurp4q",
+      "password": "J8QP123(A2e",
+      "prefix": "CONS",
+      "directory": "PODSalidasXPO/POD"
+    },
+    {
+      "ftp": "ftpclientes.nereid.es",
+      "username": "ne4ld1tr43xSurp4q",
+      "password": "J8QP123(A2e",
+      "prefix": "EREP",
+      "directory": "PODSalidasXPO/POD"
+    },
+    {
+      "ftp": "ftpclientes.nereid.es",
+      "username": "ne4ld1tr43xSurp4q",
+      "password": "J8QP123(A2e",
+      "prefix": "MANI",
+      "directory": "PODSalidasXPO/POD"
+    },
+    {
+      "ftp": "ftpclientes.nereid.es",
+      "username": "ne4ld1tr43xSurp4q",
+      "password": "J8QP123(A2e",
+      "prefix": "INCC",
+      "directory": "PODSalidasXPO/INC"
+    },
+    {
+      "ftp": "ftpclientes.nereid.es",
+      "username": "ne4ld1tr43xSurp4q",
+      "password": "J8QP123(A2e",
+      "prefix": "INCB",
+      "directory": "PODSalidasXPO/INC"
+    },
+    {
+      "ftp": "ftpclientes.nereid.es",
+      "username": "ne4ld1tr43xSurp4q",
+      "password": "J8QP123(A2e",
+      "prefix": "DIMG",
+      "directory": "PODSalidasXPO/INC"
+    }
+  ]
+}
