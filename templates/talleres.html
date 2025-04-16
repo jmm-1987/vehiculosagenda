@@ -219,7 +219,8 @@
                             <input type="submit" value="Adjuntar">
                         </form>
                         {% else %}
-                        <a href="{{ url_for('static', filename='subidas/' ~ t.nombre_doc) }}"><i class="fas fa-check verde"></i> Ver</a>
+                        <td><a href="{{ url_for('ver_documento_vehiculo', filename=t.nombre_doc) }}" target="_blank"><i class="fas fa-check verde"></i>Ver</a></td>
+                        <!--<a href="{{ url_for('static', filename='subidas/' ~ t.nombre_doc) }}"><i class="fas fa-check verde"></i> Ver</a>-->
                         {% endif %}
                     </td>
                     <td><a href="ver_taller/{{ t.id }}">

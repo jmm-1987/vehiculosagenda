@@ -187,7 +187,7 @@
                         </form>
                     </td>
                     {% else %}
-                    <td><a href="static/subidas/{{t.nombre_doc}}"><i class="fas fa-check verde"></i> Ver</a></td>
+                    <td><a href="{{ url_for('ver_documento_vehiculo', filename=t.nombre_doc) }}" target="_blank"><i class="fas fa-check verde"></i>Ver</a></td>
                     {% endif %}
                     <td><a href="form_editar_tacografo/{{ t.id }}" target="_blank">
                         <button type="submit" class="boton-editar"><i class="fas fa-pencil"></i></button>

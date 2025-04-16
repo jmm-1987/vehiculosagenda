@@ -38,7 +38,8 @@
                                     </form>
                                 </td>
                                 {% else %}
-                                <td><a href="{{ url_for('static', filename='subidas/' ~ veh_ficha_ficha) }}" target="_blank"><i class="fas fa-check verde"></i>Ficha técnica</a></td>
+                                <td><a href="{{ url_for('ver_documento_vehiculo', filename=veh_ficha_ficha) }}" target="_blank"><i class="fas fa-check verde"></i>Ficha técnica</a></td>
+
                                 {% endif %}
                                 {% if veh_ficha_permiso == "" %}
                                 <td>
