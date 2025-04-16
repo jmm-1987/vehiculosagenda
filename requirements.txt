@@ -7,3 +7,4 @@ flask_login
 pandas
 openpyxl
 apscheduler
+pymupdf
