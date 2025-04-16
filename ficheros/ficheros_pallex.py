@@ -24,7 +24,7 @@ def register_func_subir_fichero_pallex(app):
 
         # Patrón para detectar bloques de envío
         pattern = re.compile(r"""
-            (?P<envio>\d{5,})\s+              # número de envío
+            (?P<envio>[A-Za-z0-9\-]{5,})\s+              # número de envío
             \d{2}/\d{2}/\d{4}.*?              # fecha y texto intermedio
             (?P<total>\d+\.\d{2})\s+          # total
             0\.00\s+                          # valor fijo
