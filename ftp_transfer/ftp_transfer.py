@@ -4,6 +4,7 @@ from io import BytesIO
 import json
 import os
 from apscheduler.schedulers.background import BackgroundScheduler
+import datetime
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(BASE_DIR, '..', 'static', 'ftp_config.json')
@@ -123,6 +124,8 @@ def cargar_config_ftp():
 
 
 def tarea_programada():
+    print("============== INICIO DE TAREA PROGRAMADA ==============")
+    print(f"Hora de inicio: {datetime.datetime.now()}")
     datos = cargar_config_ftp()
     if datos:
         print("Ejecutando tarea programada...")
@@ -131,6 +134,9 @@ def tarea_programada():
             print(log)
     else:
         print("No hay configuración disponible para ejecutar la tarea.")
+
+    print(f"Hora de finalización: {datetime.datetime.now()}")
+    print("=============== FIN DE TAREA PROGRAMADA ================\n")
 
 def iniciar_scheduler():
     scheduler = BackgroundScheduler()
