@@ -140,7 +140,7 @@ def tarea_programada():
 
 def iniciar_scheduler():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(tarea_programada, 'interval', minutes=3)
+    scheduler.add_job(tarea_programada, 'interval', minutes=30)
     scheduler.start()
 
 
