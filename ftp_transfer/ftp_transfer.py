@@ -76,6 +76,8 @@ def iniciar_transferencia(datos):
     origen = datos['origen']
     destinos = datos['destinos']
     logs = []
+    MAX_ARCHIVOS = 20
+    archivos_transferidos = 0
 
     try:
         with ftplib.FTP(origen['ftp']) as ftp_origen:
@@ -90,7 +92,11 @@ def iniciar_transferencia(datos):
 
                     for archivo in archivos_origen:
                         if archivo.startswith(destino['prefix']):
-                            logs.append(f"Transferiendo {archivo} a {destino['directory']} en {destino['ftp']}")
+                            if archivos_transferidos >= MAX_ARCHIVOS:
+                                logs.append("Límite de 20 archivos alcanzado. Proceso detenido.")
+                                return logs
+
+                            logs.append(f"Transfiriendo {archivo} a {destino['directory']} en {destino['ftp']}")
                             file_buffer = BytesIO()
                             ftp_origen.retrbinary(f'RETR {archivo}', file_buffer.write)
                             file_buffer.seek(0)
@@ -98,8 +104,8 @@ def iniciar_transferencia(datos):
                             logs.append(f"{archivo} transferido con éxito a {destino['directory']} en {destino['ftp']}")
                             ftp_origen.delete(archivo)
                             logs.append(f"{archivo} eliminado del servidor de origen.")
-                            #Else Anulo el else
-                            #logs.append(f"El archivo {archivo} no coincide con el prefijo {destino['prefix']}")
+
+                            archivos_transferidos += 1
 
     except Exception as e:
         logs.append(f"Error durante la transferencia: {e}")
@@ -128,7 +134,7 @@ def tarea_programada():
 
 def iniciar_scheduler():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(tarea_programada, 'interval', hours=1)
+    scheduler.add_job(tarea_programada, 'interval', minutes=3)
     scheduler.start()
 
 
