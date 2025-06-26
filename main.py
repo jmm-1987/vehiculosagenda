@@ -1,4 +1,4 @@
-from flask import Flask, render_template, session, request, redirect, url_for
+from flask import Flask, render_template, session, request, redirect, url_for, send_file
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 import db
 from ftp_transfer.ftp_transfer import register_ftp_transfer_routes, iniciar_scheduler
@@ -159,6 +159,15 @@ def home():
     avisos = sorted(avisos, key=lambda x: x[0])
 
     return render_template('index.html', avisos=avisos)
+
+@app.route('/descargar_db')
+@login_required
+def descargar_db():
+    return send_file(
+        'database/VEHICULOS.db',
+        as_attachment=True,
+        download_name='VEHICULOS.db'
+       )
 
 
 if __name__ == '__main__':
