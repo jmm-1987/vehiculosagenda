@@ -2,7 +2,7 @@ from flask import Flask, render_template, session, request, redirect, url_for, s
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 import db
 from ftp_transfer.ftp_transfer import register_ftp_transfer_routes, iniciar_scheduler
-from models import Itv, Seguro, Tacografo, Rodaje, Extintor, Usuario
+from models import Itv, Seguro, Tacografo, Rodaje, Extintor, Usuario, Vehiculo
 from datetime import datetime, timedelta
 from vehiculos.vehiculos import register_vehiculos_routes
 from itv.itv import register_itv_routes
@@ -115,6 +115,14 @@ def home():
     todos_tacografos = db.session.query(Tacografo).all()
     todos_rodajes = db.session.query(Rodaje).all()
     todos_extintores = db.session.query(Extintor).all()
+
+    # Obtener todos los vehículos
+    todos_vehiculos = db.session.query(Vehiculo).all()
+
+    # Filtrar vehículos por tipo
+    vehiculos_seguros = [v for v in todos_vehiculos if v.tipo == 'seguro']
+    vehiculos_flota = [v for v in todos_vehiculos if v.tipo in ['camion', 'remolque', 'coche']]
+
     for v in todas_itv:
         temporal = v.venc_itv
         if temporal.date() < referencia:
@@ -150,7 +158,7 @@ def home():
     for v in todos_extintores:
         temporal = v.venc_ext
         if temporal.date() < referencia:
-            avisos_extintores = []
+            avisos_extintores = []  
             avisos_extintores.append(temporal.date().strftime("%d-%m-%Y"))
             avisos_extintores.append(v.matricula)
             avisos_extintores.append("caducidad extintores")
@@ -158,7 +166,7 @@ def home():
 
     avisos = sorted(avisos, key=lambda x: x[0])
 
-    return render_template('index.html', avisos=avisos)
+    return render_template('index.html', avisos=avisos, vehiculos_seguros=vehiculos_seguros, vehiculos_flota=vehiculos_flota)
 
 @app.route('/descargar_db')
 @login_required
