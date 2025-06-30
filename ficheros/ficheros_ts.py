@@ -49,7 +49,7 @@ def register_func_subir_fichero_ts(app):
             fecha_entera = exp[5]
             formateada = fecha_entera.strftime('%d/%m/%Y')
 
-            importe = round(exp[14], 2)
+            importe = round(exp[12], 2)
 
             # Añadir los datos a la lista final
             datos_excel.append(
