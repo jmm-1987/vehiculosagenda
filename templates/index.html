@@ -249,6 +249,17 @@
         .flota-card .custom-swiper-nav .swiper-button-prev {
             color: #fd7e14;
         }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        .blink {
+            color: red;
+            font-weight: bold;
+            animation: blink 1s infinite;
+        }
     </style>
 </head>
 <body>
@@ -289,6 +300,8 @@
                     <a href="{{ url_for('ficha', id=vehiculo.id) }}" class="swiper-slide">
                         <i class="fas fa-shield-alt"></i>
                         <span>{{ vehiculo.alias }}</span>
+                        <br>
+                        <span style="font-size:12px; color:{{ seguros_colores[vehiculo.matricula] }};">Vence: {{ seguros_vencimientos[vehiculo.matricula] }}</span>
                     </a>
                     {% endfor %}
                 </div>
@@ -317,6 +330,8 @@
                             <i class="fas fa-question-circle"></i>
                         {% endif %}
                         <span>{{ vehiculo.alias }}</span>
+                        <br>
+                        <span style="font-size:12px; color:red;">{{ flota_vencimientos[vehiculo.matricula] }}</span>
                     </a>
                     {% endfor %}
                 </div>
@@ -325,11 +340,16 @@
     </div>
     
     <div class="avisos-card">
-        <h2>Vencimientos en los próximos 30 días</h2>
+        <h2>Vencidos</h2>
         <div class="avisos">
             {% for a in avisos %}
                 <div>
                     {{ a[0] }} - {{ a[1] }} - {{ a[2] }}
+                    {% set fecha_aviso = a[0].split('-') %}
+                    {% set fecha_aviso_iso = fecha_aviso[2] ~ '-' ~ fecha_aviso[1] ~ '-' ~ fecha_aviso[0] %}
+                    {% if fecha_aviso_iso < hoy %}
+                        <span class="blink">&#33;</span>
+                    {% endif %}
                 </div>
                 <br>
             {% endfor %}

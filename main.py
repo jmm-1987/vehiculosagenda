@@ -109,7 +109,6 @@ def logout():
 def home():
     avisos = []
     ahora = datetime.now().date()
-    referencia = ahora + timedelta(days=30)
     todas_itv = db.session.query(Itv).all()
     todos_seguros = db.session.query(Seguro).all()
     todos_tacografos = db.session.query(Tacografo).all()
@@ -117,15 +116,72 @@ def home():
     todos_extintores = db.session.query(Extintor).all()
 
     # Obtener todos los vehículos
-    todos_vehiculos = db.session.query(Vehiculo).all()
+    todos_vehiculos = db.session.query(Vehiculo).filter(Vehiculo.activo == True).all()
 
     # Filtrar vehículos por tipo
     vehiculos_seguros = [v for v in todos_vehiculos if v.tipo == 'seguro']
     vehiculos_flota = [v for v in todos_vehiculos if v.tipo in ['camion', 'remolque', 'coche']]
 
+    # Obtener fecha de vencimiento del seguro activo para cada vehículo de seguros y calcular color
+    seguros_vencimientos = {}
+    seguros_colores = {}
+    hoy_dt = ahora
+    vehiculos_seguros_fechas = []
+    for v in vehiculos_seguros:
+        seguro = db.session.query(Seguro).filter_by(matricula=v.matricula, activo=True).order_by(Seguro.venc_seguro.desc()).first()
+        if seguro:
+            fecha_venc = seguro.venc_seguro
+            seguros_vencimientos[v.matricula] = fecha_venc.strftime('%d-%m-%Y')
+            dias_restantes = (fecha_venc.date() - hoy_dt).days
+            if dias_restantes < 15:
+                seguros_colores[v.matricula] = 'red'
+            else:
+                seguros_colores[v.matricula] = 'black'
+            vehiculos_seguros_fechas.append((v, fecha_venc))
+        else:
+            seguros_vencimientos[v.matricula] = 'Sin seguro activo'
+            seguros_colores[v.matricula] = 'black'
+            vehiculos_seguros_fechas.append((v, datetime.max))
+    # Ordenar por fecha de vencimiento
+    vehiculos_seguros = [v for v, _ in sorted(vehiculos_seguros_fechas, key=lambda x: x[1])]
+
+    # --- FLUJO PARA FILTRAR Y MOSTRAR SOLO LOS DE FLOTAS CON VENCIMIENTOS PRÓXIMOS ---
+    referencia = hoy_dt + timedelta(days=30)
+    flota_vencimientos = {}
+    vehiculos_flota_filtrados = []
+    for v in vehiculos_flota:
+        vencimientos = []
+        # ITV
+        itv = db.session.query(Itv).filter_by(matricula=v.matricula, activo=True).order_by(Itv.venc_itv.desc()).first()
+        if itv and itv.venc_itv.date() < referencia:
+            vencimientos.append((itv.venc_itv.date(), f"ITV: {itv.venc_itv.strftime('%d-%m-%Y')}", 'ITV'))
+        # Seguro
+        seguro = db.session.query(Seguro).filter_by(matricula=v.matricula, activo=True).order_by(Seguro.venc_seguro.desc()).first()
+        if seguro and seguro.venc_seguro.date() < referencia:
+            vencimientos.append((seguro.venc_seguro.date(), f"Seguro: {seguro.venc_seguro.strftime('%d-%m-%Y')}", 'Seguro'))
+        # Tacógrafo
+        tacografo = db.session.query(Tacografo).filter_by(matricula=v.matricula, activo=True).order_by(Tacografo.venc_tacografo.desc()).first()
+        if tacografo and tacografo.venc_tacografo.date() < referencia:
+            vencimientos.append((tacografo.venc_tacografo.date(), f"Tacógrafo: {tacografo.venc_tacografo.strftime('%d-%m-%Y')}", 'Tacógrafo'))
+        # Rodaje
+        rodaje = db.session.query(Rodaje).filter_by(matricula=v.matricula, activo=True).order_by(Rodaje.venc_rodaje.desc()).first()
+        if rodaje and rodaje.venc_rodaje.date() < referencia:
+            vencimientos.append((rodaje.venc_rodaje.date(), f"Rodaje: {rodaje.venc_rodaje.strftime('%d-%m-%Y')}", 'Rodaje'))
+        # Extintor
+        extintor = db.session.query(Extintor).filter_by(matricula=v.matricula, activo=True).order_by(Extintor.venc_ext.desc()).first()
+        if extintor and extintor.venc_ext.date() < referencia:
+            vencimientos.append((extintor.venc_ext.date(), f"Extintor: {extintor.venc_ext.strftime('%d-%m-%Y')}", 'Extintor'))
+        if vencimientos:
+            # Tomar el vencimiento más próximo
+            vencimiento_proximo = min(vencimientos, key=lambda x: x[0])
+            flota_vencimientos[v.matricula] = vencimiento_proximo[1]
+            vehiculos_flota_filtrados.append((v, vencimiento_proximo[0]))
+    # Ordenar por fecha de vencimiento más próxima
+    vehiculos_flota = [v for v, _ in sorted(vehiculos_flota_filtrados, key=lambda x: x[1])]
+
     for v in todas_itv:
         temporal = v.venc_itv
-        if temporal.date() < referencia:
+        if temporal.date() < ahora:
             avisos_itv = []
             avisos_itv.append(temporal.date().strftime("%d-%m-%Y"))
             avisos_itv.append(v.matricula)
@@ -133,7 +189,7 @@ def home():
             avisos.append(avisos_itv)
     for v in todos_seguros:
         temporal = v.venc_seguro
-        if temporal.date() < referencia:
+        if temporal.date() < ahora:
             avisos_seguros = []
             avisos_seguros.append(temporal.date().strftime("%d-%m-%Y"))
             avisos_seguros.append(v.matricula)
@@ -141,7 +197,7 @@ def home():
             avisos.append(avisos_seguros)
     for v in todos_tacografos:
         temporal = v.venc_tacografo
-        if temporal.date() < referencia:
+        if temporal.date() < ahora:
             avisos_tacografos = []
             avisos_tacografos.append(temporal.date().strftime("%d-%m-%Y"))
             avisos_tacografos.append(v.matricula)
@@ -149,7 +205,7 @@ def home():
             avisos.append(avisos_tacografos)
     for v in todos_rodajes:
         temporal = v.venc_rodaje
-        if temporal.date() < referencia:
+        if temporal.date() < ahora:
             avisos_rodajes = []
             avisos_rodajes.append(temporal.date().strftime("%d-%m-%Y"))
             avisos_rodajes.append(v.matricula)
@@ -157,7 +213,7 @@ def home():
             avisos.append(avisos_rodajes)
     for v in todos_extintores:
         temporal = v.venc_ext
-        if temporal.date() < referencia:
+        if temporal.date() < ahora:
             avisos_extintores = []  
             avisos_extintores.append(temporal.date().strftime("%d-%m-%Y"))
             avisos_extintores.append(v.matricula)
@@ -166,7 +222,7 @@ def home():
 
     avisos = sorted(avisos, key=lambda x: x[0])
 
-    return render_template('index.html', avisos=avisos, vehiculos_seguros=vehiculos_seguros, vehiculos_flota=vehiculos_flota)
+    return render_template('index.html', avisos=avisos, vehiculos_seguros=vehiculos_seguros, vehiculos_flota=vehiculos_flota, hoy=ahora.strftime('%Y-%m-%d'), seguros_vencimientos=seguros_vencimientos, seguros_colores=seguros_colores, flota_vencimientos=flota_vencimientos)
 
 @app.route('/descargar_db')
 @login_required
