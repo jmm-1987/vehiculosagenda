@@ -2,7 +2,7 @@ from flask import Flask, render_template, session, request, redirect, url_for, s
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 import db
 from ftp_transfer.ftp_transfer import register_ftp_transfer_routes, iniciar_scheduler
-from models import Itv, Seguro, Tacografo, Rodaje, Extintor, Usuario, Vehiculo
+from models import Itv, Seguro, Tacografo, Rodaje, Extintor, Usuario, Vehiculo, Taller
 from datetime import datetime, timedelta
 from vehiculos.vehiculos import register_vehiculos_routes
 from itv.itv import register_itv_routes
@@ -30,6 +30,7 @@ from ficheros.ficheros import register_func_subir_fichero
 from ficheros.ficheros_ts import register_func_subir_fichero_ts
 from ficheros.ficheros_pallex import register_func_subir_fichero_pallex
 from ficheros.ficheros_xpo import register_func_subir_fichero_xpo
+from sqlalchemy import func
 
 iniciar_scheduler()
 
@@ -117,6 +118,19 @@ def home():
 
     # Obtener todos los vehículos
     todos_vehiculos = db.session.query(Vehiculo).filter(Vehiculo.activo == True).all()
+
+    # Contar visitas al taller por matrícula en el último año
+    hace_un_ano = ahora - timedelta(days=365)
+    tipos_filtrar = ['coche', 'camion', 'remolque']
+    vehiculos_filtrados = [v for v in todos_vehiculos if v.tipo and v.tipo.strip().lower() in tipos_filtrar]
+    talleres_count_ultimo_ano = {}
+    talleres_importe_ultimo_ano = {}
+    for v in vehiculos_filtrados:
+        count = db.session.query(Taller).filter(Taller.matricula == v.matricula, Taller.fecha_visita >= hace_un_ano).count()
+        suma_importe = db.session.query(func.coalesce(func.sum(Taller.importe), 0)).filter(Taller.matricula == v.matricula, Taller.fecha_visita >= hace_un_ano).scalar()
+        talleres_count_ultimo_ano[v.matricula] = count
+        talleres_importe_ultimo_ano[v.matricula] = suma_importe
+    vehiculos_ordenados_taller = sorted(vehiculos_filtrados, key=lambda v: talleres_count_ultimo_ano[v.matricula], reverse=True)
 
     # Filtrar vehículos por tipo
     vehiculos_seguros = [v for v in todos_vehiculos if v.tipo == 'seguro']
@@ -222,7 +236,7 @@ def home():
 
     avisos = sorted(avisos, key=lambda x: x[0])
 
-    return render_template('index.html', avisos=avisos, vehiculos_seguros=vehiculos_seguros, vehiculos_flota=vehiculos_flota, hoy=ahora.strftime('%Y-%m-%d'), seguros_vencimientos=seguros_vencimientos, seguros_colores=seguros_colores, flota_vencimientos=flota_vencimientos)
+    return render_template('index.html', avisos=avisos, vehiculos_seguros=vehiculos_seguros, vehiculos_flota=vehiculos_flota, hoy=ahora.strftime('%Y-%m-%d'), seguros_vencimientos=seguros_vencimientos, seguros_colores=seguros_colores, flota_vencimientos=flota_vencimientos, talleres_count_ultimo_ano=talleres_count_ultimo_ano, talleres_importe_ultimo_ano=talleres_importe_ultimo_ano, vehiculos_ordenados_taller=vehiculos_ordenados_taller)
 
 @app.route('/descargar_db')
 @login_required

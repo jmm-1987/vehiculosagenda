@@ -44,7 +44,7 @@ avisos {
     text-align: center;
     margin-top: 50px;
     justify-content: center;
-
+    margin: 0 auto;
 }
 
 img {
@@ -137,9 +137,9 @@ table {
     margin-top: 50px;
     justify-content: center;
     margin: 0 auto;
-    border: 1px solid black;
     border-collapse: collapse;
-    width: 1000px
+    width: 1000px;
+    border: none;
 }
 
 td {
@@ -181,6 +181,7 @@ th {
     bottom: 0;
     left: 0;
     width: 100%;
+}
 
 .boton-borrar {
     background-color: red; /* Cambia el color de fondo */
