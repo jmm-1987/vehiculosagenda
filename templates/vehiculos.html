@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Listado de Vehículos</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <title>Inicio</title>
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
     <style>
-        /* Modern styles */
+        /* Modern CSS styles */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f4f7f6;
@@ -17,85 +18,160 @@
 
         .top-bar {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            padding: 15px 30px;
-            background: linear-gradient(to right, #ffffff, #343a40); /* Degradado de blanco a gris */
+            padding: 2px 30px;
+            background: linear-gradient(to right, #ffffff, #343a40);
             color: white;
+            height: 50px;
+            box-sizing: border-box;
         }
 
         .top-bar img {
-            height: 50px;
+            width: 200px;
+            height: 45px;
+            object-fit: contain;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 50px auto;
-            text-align: center;
+        .top-user {
+            font-weight: bold;
+            font-size: 14px;
+            margin-left: auto;
+            margin-right: 20px;
         }
 
-        h1 {
-            font-size: 36px;
-            color: #333;
-            margin-bottom: 20px;
-        }
-
-        .button, .button_red {
-            padding: 15px 30px;
-            background-color: #007bff;
+        .top-button {
+            padding: 2px 8px;
+            background-color: #dc3545;
             color: white;
             text-decoration: none;
-            font-size: 18px;
             border-radius: 5px;
-            margin: 10px;
             transition: background-color 0.3s;
         }
 
-        .button_red {
-            background-color: #dc3545;
+        .nav-bar {
+            background-color: #343a40;
+            padding: 5px 30px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
         }
 
-        .button:hover {
-            background-color: #0056b3;
-        }
-
-        .button_red:hover {
-            background-color: #c82333;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            background-color: white;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        table th, table td {
-            padding: 15px;
-            text-align: center;
-            border-bottom: 1px solid #ddd;
-        }
-
-        table th {
-            background-color: #007bff;
+        .nav-bar a {
             color: white;
+            text-decoration: none;
+            font-size: 16px;
+            padding: 5px 15px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
         }
 
-        table tr:hover {
-            background-color: #f1f1f1;
+        .nav-bar a:hover {
+            background-color: #495057;
         }
 
-        .boton-editar {
-            background-color: transparent;
-            border: none;
-            cursor: pointer;
+        .dashboard-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 20px;
+            justify-content: center;
+        }
+
+        .content-card {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            flex: 1;
+            min-width: 300px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .content-card h2 {
+            font-size: 24px;
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .swiper-container {
+            width: 100%;
+            height: 150px; 
+        }
+
+        .swiper-slide {
+            text-align: center;
+            background: #f9f9f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            color: #333;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .swiper-slide:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        .swiper-slide i {
+            font-size: 32px;
+            margin-bottom: 10px;
             color: #007bff;
-            font-size: 18px;
-            transition: color 0.3s;
         }
 
-        .boton-editar:hover {
-            color: #0056b3;
+        .swiper-slide span {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .swiper-button-next, .swiper-button-prev {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 30px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            color: #007bff;
+            z-index: 10;
+        }
+
+        .swiper-button-next::after, .swiper-button-prev::after {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .swiper-container .swiper-button-prev {
+            left: 10px;
+        }
+
+        .swiper-container .swiper-button-next {
+            right: 10px;
+        }
+
+        .avisos-card {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            margin: 0 20px 20px;
+        }
+
+        .avisos-card h2 {
+            text-align: center;
+        }
+
+        .avisos {
+            font-size: 16px;
+            text-align: left;
         }
 
         footer {
@@ -103,27 +179,110 @@
             background-color: #343a40;
             color: white;
             text-align: center;
-        }
-
-        .banda-roja {
-            height: 10px;
-            background-color: #dc3545;
+            width: 100%;
         }
 
         @media screen and (max-width: 768px) {
-            .container {
-                padding: 20px;
+            .nav-bar, .top-bar {
+                flex-direction: column;
+                align-items: center;
+                height: auto;
             }
 
-            table th, table td {
-                padding: 10px;
+            .top-button {
+                margin-top: 10px;
             }
+        }
+
+        .content-card-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .content-card-title h2 {
+            font-size: 24px;
+            color: #333;
+            margin: 0;
+        }
+        .custom-swiper-nav {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .custom-swiper-nav .swiper-button-next,
+        .custom-swiper-nav .swiper-button-prev {
+            position: static;
+            width: 32px;
+            height: 32px;
+            background-color: #f4f7f6;
+            border-radius: 50%;
+            color: #007bff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            margin: 0;
+            top: auto;
+            right: auto;
+            left: auto;
+            transform: none;
+        }
+        .custom-swiper-nav .swiper-button-next::after,
+        .custom-swiper-nav .swiper-button-prev::after {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        /* --- Custom Card Styles --- */
+        .polizas-card {
+            background-color: #eaf6ff;
+        }
+        .polizas-card i, 
+        .polizas-card .custom-swiper-nav .swiper-button-next, 
+        .polizas-card .custom-swiper-nav .swiper-button-prev {
+            color: #0d6efd;
+        }
+        .flota-card {
+            background-color: #fff8e1;
+        }
+        .flota-card i, 
+        .flota-card .custom-swiper-nav .swiper-button-next, 
+        .flota-card .custom-swiper-nav .swiper-button-prev {
+            color: #fd7e14;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        .blink {
+            color: red;
+            font-weight: bold;
+            animation: blink 1s infinite;
         }
     </style>
 </head>
 <body>
     <div class="top-bar">
-        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+        <span class="top-user">{{ current_user.username }}</span>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+    </div>
+
+    <div class="nav-bar">
+        <a href="/vehiculos">Vehículo</a>
+        <a href="/talleres">Talleres</a>
+        <a href="/itv">ITV</a>
+        <a href="/seguros">Seguros</a>
+        <a href="/tacografos">Tacógrafos</a>
+        <a href="/rodajes">Rodajes</a>
+        <a href="/extintores">Extintores</a>
+        <a href="/selector">Gasoil/Add</a>
+        <a href="/transpaletas">Transpaletas</a>
+        {% if current_user.username == "jmurillo" or current_user.username == "rocio" %}
+        <a href="/manager">Manager</a>
+        <a href="/tareas">Tareas</a>
+        {% endif %}
     </div>
 
     <div class="container">

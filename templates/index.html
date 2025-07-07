@@ -347,7 +347,7 @@
                     <li style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:4px;">
                         <strong>{{ v.alias }} ({{ v.matricula }})</strong> —
                         <span style="color:#007bff; font-weight:bold;">{{ talleres_count_ultimo_ano.get(v.matricula, 0) }}</span> visita{{ 's' if talleres_count_ultimo_ano.get(v.matricula, 0) != 1 else '' }}
-                        <span style="color:#28a745; font-weight:bold; margin-left:10px;">{{ talleres_importe_ultimo_ano.get(v.matricula, 0) }} €</span>
+                        <!--<span style="color:#28a745; font-weight:bold; margin-left:10px;">{{ talleres_importe_ultimo_ano.get(v.matricula, 0) }} €</span>-->
                     </li>
                 {% endfor %}
             </ul>
