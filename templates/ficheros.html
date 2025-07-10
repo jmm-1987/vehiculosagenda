@@ -47,10 +47,10 @@
 
       <div class="bg-white shadow-md rounded-2xl p-6 border border-gray-200">
         <h2 class="text-2xl font-bold mb-2">PALLEX liquidación</h2>
-        <p class="text-sm mb-4">Solo admite PDF</p>
-        <p class="text-base mb-4">Sube el fichero en PDF de la liquidación de las salidas por PALLEX. Procesa para importar los costes a Nereid</p>
+        <p class="text-sm mb-4">Solo admite Excel (.xlsx)</p>
+        <p class="text-base mb-4">Sube hasta 3 ficheros Excel de la liquidación de las salidas por PALLEX. Procesa para importar los costes a Nereid y agrupa los importes por tipo de línea.</p>
         <form action="/subir_fichero_pallex" method="POST" enctype="multipart/form-data">
-          <input type="file" name="fichero" accept=".pdf" class="mb-2">
+          <input type="file" name="ficheros" accept=".xlsx" multiple class="mb-2">
           <button class="bg-yellow-400 text-white px-4 py-2 rounded font-bold w-full">Procesar</button>
         </form>
       </div>

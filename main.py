@@ -241,11 +241,13 @@ def home():
 @app.route('/descargar_db')
 @login_required
 def descargar_db():
+    fecha = datetime.now().strftime('%d%m%Y')
+    nombre = f'VEHICULOS_{fecha}.db'
     return send_file(
         'database/VEHICULOS.db',
         as_attachment=True,
-        download_name='VEHICULOS.db'
-       )
+        download_name=nombre
+    )
 
 
 if __name__ == '__main__':

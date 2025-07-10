@@ -4,70 +4,84 @@ import re
 import io
 import openpyxl
 from openpyxl.styles import numbers
+from collections import defaultdict
+import zipfile
 
 app = Flask(__name__)
 
 def register_func_subir_fichero_pallex(app):
     @app.route("/subir_fichero_pallex", methods=['POST'])
     def subir_fichero_pallex():
-        file = request.files['fichero']
-        if not file:
+        files = request.files.getlist('ficheros')
+        if not files or len(files) == 0:
             return "No se ha subido ningún archivo", 400
 
-        # Abrir el PDF usando PyMuPDF desde el stream
-        doc = fitz.open(stream=file.read(), filetype="pdf")
+        agrupado = defaultdict(lambda: defaultdict(float))
+        tipos_set = set()
 
-        # Reconstruir correctamente los números de expedición partidos por salto de línea
-        text_lines = []
-        for page in doc:
-            lines = page.get_text("text").splitlines()
-            i = 0
-            while i < len(lines):
-                line = lines[i].strip()
-                if line.endswith("_") and (i + 1 < len(lines)):
-                    # Unir línea que termina en "_" con la siguiente línea
-                    next_line = lines[i + 1].strip()
-                    combined = line + next_line
-                    text_lines.append(combined)
-                    i += 2  # Saltar la siguiente línea porque ya la hemos unido
-                else:
-                    text_lines.append(line)
-                    i += 1
+        for file in files:
+            wb = openpyxl.load_workbook(file, data_only=True)
+            ws = wb.active
+            for i, row in enumerate(ws.iter_rows(min_row=2), start=2):
+                tipo = row[1].value
+                importe = row[2].value
+                num_envio = row[4].value  # Columna E
+                if num_envio is None or tipo is None or importe is None:
+                    continue
+                tipos_set.add(str(tipo))
+                agrupado[str(num_envio)][str(tipo)] += float(importe)
 
-        # Convertir a texto plano
-        full_text = " ".join(text_lines)
+        tipos_ordenados = sorted(tipos_set)
+        columnas = ["Nº envío"] + tipos_ordenados + ["Total"]
 
-        # Expresión regular para detectar el número de envío, fecha, e importe
-        pattern = re.compile(r"""
-            (?P<envio>[A-Za-z0-9_\-]+?)\s+          # Número de expedición
-            \d{2}/\d{2}/\d{4}.*?                    # Fecha y texto intermedio
-            (?P<total>\d+\.\d{2})\s+                # Importe total
-            0\.00\s+                                # Cargos
-            (?P=total)                              # Total final igual al importe
-        """, re.VERBOSE | re.DOTALL)
+        wb_out = openpyxl.Workbook()
+        ws_out = wb_out.active
+        ws_out.title = "Resumen Pallex"
+        ws_out.append(columnas)
 
-        # Extraer datos relevantes
-        data = []
-        for match in pattern.finditer(full_text):
-            numero_envio = match.group("envio")
-            total_precio = match.group("total")
-            fila = ["", "", "", "", float(total_precio), "D", "", "", str(numero_envio)]
-            data.append(fila)
+        for num_envio, tipos_dict in agrupado.items():
+            fila = [num_envio]
+            total = 0.0
+            for tipo in tipos_ordenados:
+                valor = tipos_dict.get(tipo, 0.0)
+                fila.append(valor)
+                total += valor
+            fila.append(total)
+            ws_out.append(fila)
 
-        # Crear Excel
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Importacion_costes_PALLEX"
-        ws.append(["Vacia", "Vacia", "Vacia", "Vacia", "Importe", "Clave", "Vacia", "Vacia", "Importe"])
-
-        for fila in data:
-            ws.append(fila)
-            ws.cell(row=ws.max_row, column=9).number_format = numbers.FORMAT_TEXT
-
-        # Guardar el archivo en un buffer
         output = io.BytesIO()
-        wb.save(output)
+        wb_out.save(output)
         output.seek(0)
+        # Llamar a la función para exportar el segundo Excel
+        conceptos_output = exportar_excel_conceptos(agrupado, tipos_ordenados)
+        # Crear un zip con ambos archivos
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w') as zipf:
+            zipf.writestr('Resumen_Pallex.xlsx', output.getvalue())
+            zipf.writestr('Conceptos_Pallex.xlsx', conceptos_output.getvalue())
+        zip_buffer.seek(0)
+        return send_file(zip_buffer, download_name="Pallex_resultados.zip", as_attachment=True)
 
-        # Enviar archivo al cliente
-        return send_file(output, download_name="Imp_costes_PALLEX.xlsx", as_attachment=True)
+def exportar_excel_conceptos(agrupado, tipos_ordenados):
+    import openpyxl
+    import io
+    clave_map = {
+        'Coste de Hub': 'H',
+        'Entrega': 'E',
+        'Fondo de contingencia en origen': 'C',
+        'Recogida': 'R',
+        'Reentrega': 'R2',
+        'Seguro MET Origen': 'S',
+    }
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Conceptos Pallex"
+    ws.append(["", "", "", "", "Cantidad", "Clave", "", "", "Nº envío"])
+    for num_envio, tipos_dict in agrupado.items():
+        for tipo, cantidad in tipos_dict.items():
+            clave = clave_map.get(tipo, tipo)
+            ws.append(["", "", "", "", cantidad, clave, "", "", num_envio])
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    return output
