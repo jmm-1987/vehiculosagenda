@@ -10,12 +10,12 @@ def register_itv_routes(app):
     @app.route('/itv')
     @login_required
     def lista_itv():
-        todas_itv = db.session.query(Itv).filter(Itv.activo == True).all()
+        todas_itv = db.session.query(Itv).filter(Itv.activo == True).order_by(Itv.venc_itv.asc()).all()
         return render_template('itv.html', lista_itv=todas_itv)
 
     @app.route('/itv_todas')
     def lista_itv_todas():
-        todas_itv = db.session.query(Itv).all()
+        todas_itv = db.session.query(Itv).order_by(Itv.venc_itv.asc()).all()
         return render_template('itv.html', lista_itv=todas_itv)
 
 

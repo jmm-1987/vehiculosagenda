@@ -8,12 +8,12 @@ def register_seguros_routes(app):
     @app.route('/seguros')
     @login_required
     def lista_seguros():
-        todos_seguros = db.session.query(Seguro).filter(Seguro.activo == True).all()
+        todos_seguros = db.session.query(Seguro).filter(Seguro.activo == True).order_by(Seguro.venc_seguro.asc()).all()
         return render_template('seguros.html', lista_seguros=todos_seguros)
 
     @app.route('/seguros_todos')
     def lista_seguros_todos():
-        todos_seguros = db.session.query(Seguro).all()
+        todos_seguros = db.session.query(Seguro).order_by(Seguro.venc_seguro.asc()).all()
         return render_template('seguros.html', lista_seguros=todos_seguros)
 
 
