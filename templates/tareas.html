@@ -56,7 +56,7 @@
 <br>
 <div class="d-flex flex-column">
 <div class="flex-container">
-  <h2 class="titulo">Tareas de hoy {{hoy.strftime('%d/%m/%Y')}} </h2>
+  <h2 class="titulo">Tareas def hoy {{hoy.strftime('%d/%m/%Y')}} </h2>
   {% for t in lista_hoy %}
   <div class="{% if t.realizada == False %}post-it{% elif t.realizada %}realizada{% endif %}">
     <h2>{{t.titulo}}</h2>
