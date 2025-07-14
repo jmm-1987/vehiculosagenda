@@ -320,12 +320,17 @@
                 <div class="swiper-wrapper">
                     {% for vehiculo in vehiculos_flota %}
                     <a href="{{ url_for('ficha', id=vehiculo.id) }}" class="swiper-slide">
-                        {% if vehiculo.tipo == 'camion' %}
-                            <i class="fas fa-truck"></i>
-                        {% elif vehiculo.tipo == 'remolque' %}
-                            <i class="fas fa-trailer"></i>
-                        {% elif vehiculo.tipo == 'coche' %}
-                            <i class="fas fa-car"></i>
+                        {% set vencimiento = flota_vencimientos[vehiculo.matricula] %}
+                        {% if 'Seguro:' in vencimiento %}
+                            <i class="fas fa-shield-alt"></i>
+                        {% elif 'Extintor:' in vencimiento %}
+                            <i class="fas fa-fire-extinguisher"></i>
+                        {% elif 'ITV:' in vencimiento %}
+                            <i class="fas fa-wrench"></i>
+                        {% elif 'Tacógrafo:' in vencimiento %}
+                            <i class="fas fa-id-card"></i>
+                        {% elif 'Rodaje:' in vencimiento %}
+                            <i class="fas fa-file-alt"></i>
                         {% else %}
                             <i class="fas fa-question-circle"></i>
                         {% endif %}

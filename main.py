@@ -199,7 +199,7 @@ def home():
             avisos_itv = []
             avisos_itv.append(temporal.date().strftime("%d-%m-%Y"))
             avisos_itv.append(v.matricula)
-            avisos_itv.append("caduda la ITV")
+            avisos_itv.append("caduca la ITV")
             avisos.append(avisos_itv)
     for v in todos_seguros:
         temporal = v.venc_seguro

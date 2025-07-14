@@ -9,12 +9,12 @@ def register_rodajes_routes(app):
     @app.route('/rodajes')
     @login_required
     def lista_rodajes():
-        todos_rodajes = db.session.query(Rodaje).filter(Rodaje.activo == True).all()
+        todos_rodajes = db.session.query(Rodaje).filter(Rodaje.activo == True).order_by(Rodaje.venc_rodaje.asc()).all()
         return render_template('rodajes.html', lista_rodajes=todos_rodajes)
 
     @app.route('/rodajes_todos')
     def lista_rodajes_todos():
-        todos_rodajes = db.session.query(Rodaje).all()
+        todos_rodajes = db.session.query(Rodaje).order_by(Rodaje.venc_rodaje.asc()).all()
         return render_template('rodajes.html', lista_rodajes=todos_rodajes)
 
     @app.route('/formulario_rodaje')

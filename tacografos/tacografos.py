@@ -8,12 +8,12 @@ def register_tacografos_routes(app):
     @app.route('/tacografos')
     @login_required
     def lista_tacografos():
-        todos_tacografos = db.session.query(Tacografo).filter(Tacografo.activo == True).all()
+        todos_tacografos = db.session.query(Tacografo).filter(Tacografo.activo == True).order_by(Tacografo.venc_tacografo.asc()).all()
         return render_template('tacografos.html', lista_tacografos = todos_tacografos)
 
     @app.route('/tacografos_todos')
     def lista_tacografos_todos():
-        todos_tacografos = db.session.query(Tacografo).all()
+        todos_tacografos = db.session.query(Tacografo).order_by(Tacografo.venc_tacografo.asc()).all()
         return render_template('tacografos.html', lista_tacografos=todos_tacografos)
 
     @app.route('/formulario_tacografo')

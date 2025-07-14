@@ -4,153 +4,102 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Listado de extintores</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
     <style>
-        /* Modern styles */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f4f7f6;
             margin: 0;
             padding: 0;
         }
-
         .top-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 30px;
-            background: linear-gradient(to right, #ffffff, #343a40); /* Degradado de blanco a gris */
+            padding: 2px 30px;
+            background: linear-gradient(to right, #ffffff, #343a40);
             color: white;
-        }
-
-        .top-bar img {
             height: 50px;
+            box-sizing: border-box;
         }
-
+        .top-bar img {
+            width: 200px;
+            height: 45px;
+            object-fit: contain;
+        }
         .top-user {
             font-weight: bold;
-            font-size: 18px;
+            font-size: 14px;
+            margin-left: auto;
+            margin-right: 20px;
         }
-
         .top-button {
-            padding: 10px 20px;
+            padding: 2px 8px;
             background-color: #dc3545;
             color: white;
             text-decoration: none;
             border-radius: 5px;
             transition: background-color 0.3s;
         }
-
-        .top-button:hover {
-            background-color: #c82333;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 50px auto;
-            text-align: center;
-        }
-
-        h1 {
-            font-size: 36px;
-            color: #333;
-            margin-bottom: 20px;
-        }
-
-        .button, .button_red {
-            padding: 15px 30px;
-            background-color: #007bff;
-            color: white;
-            text-decoration: none;
-            font-size: 18px;
-            border-radius: 5px;
-            margin: 10px;
-            transition: background-color 0.3s;
-        }
-
-        .button_red {
-            background-color: #dc3545;
-        }
-
-        .button:hover {
-            background-color: #0056b3;
-        }
-
-        .button_red:hover {
-            background-color: #c82333;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            background-color: white;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        table th, table td {
-            padding: 15px;
-            text-align: center;
-            border-bottom: 1px solid #ddd;
-        }
-
-        table th {
-            background-color: #007bff;
-            color: white;
-        }
-
-        table tr:hover {
-            background-color: #f1f1f1;
-        }
-
-        .boton-editar, .boton-borrar {
-            background-color: transparent;
-            border: none;
-            cursor: pointer;
-            font-size: 18px;
-            transition: color 0.3s;
-        }
-
-        .boton-editar:hover, .boton-borrar:hover {
-            color: #0056b3;
-        }
-
-        footer {
-            padding: 20px;
+        .nav-bar {
             background-color: #343a40;
+            padding: 5px 30px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        .nav-bar a {
             color: white;
-            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            padding: 5px 15px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
         }
-
-        .banda-roja {
-            height: 10px;
-            background-color: #dc3545;
+        .nav-bar a:hover {
+            background-color: #495057;
         }
-
         @media screen and (max-width: 768px) {
-            .container {
-                padding: 20px;
+            .nav-bar, .top-bar {
+                flex-direction: column;
+                align-items: center;
+                height: auto;
             }
-
-            table th, table td {
-                padding: 10px;
+            .top-button {
+                margin-top: 10px;
             }
         }
     </style>
 </head>
 <body>
     <div class="top-bar">
-       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
-       <span class="top-user">{{ current_user.username }}</span>
-       <a href="/logout" class="top-button">Cerrar sesión</a>
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+        <span class="top-user">{{ current_user.username }}</span>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
     </div>
-
+    <div class="nav-bar">
+        <a href="/vehiculos">Vehículo</a>
+        <a href="/talleres">Talleres</a>
+        <a href="/itv">ITV</a>
+        <a href="/seguros">Seguros</a>
+        <a href="/tacografos">Tacógrafos</a>
+        <a href="/rodajes">Rodajes</a>
+        <a href="/extintores">Extintores</a>
+        <a href="/selector">Gasoil/Add</a>
+        <a href="/transpaletas">Transpaletas</a>
+        {% if current_user.username == "jmurillo" or current_user.username == "rocio" %}
+        <a href="/manager">Manager</a>
+        <a href="/tareas">Tareas</a>
+        {% endif %}
+    </div>
     <div class="container">
-        <h1>Listado de extintores</h1>
-	<a class="button" href="/formulario_extintor">Añadir extintor</a>
+        <h1>Listado de Extintores - ordenados por próxima revisión</h1>
+        <a class="button" href="/formulario_extintor">Añadir extintor</a>
         <a class="button_red" href="/index">Volver</a>
 
+    </br></br>
         <table>
             <thead>
                 <tr>
@@ -181,7 +130,7 @@
                     <td>
                         <form action="/borrar_extintor/{{ e.id }}" method="POST">
                             <input type="hidden" name="id" value="{{ e.id }}">
-                            <input type="hidden" name="clase" value="Rodaje">
+                            <input type="hidden" name="clase" value="Extintor">
                             <button type="submit" class="boton-borrar"><i class="fas fa-trash-alt"></i></button>
                         </form>
                     </td>
@@ -189,9 +138,12 @@
                     <td></td>
                     {% endif %}
                 </tr>
-                {% endfor %}
+            {% endfor %}
             </tbody>
         </table>
+
+        <div>{{mensaje}}</div>
+
         <br>
         <a class="button" href="/formulario_extintor">Añadir extintor</a>
         <a class="button_red" href="/index">Volver</a>

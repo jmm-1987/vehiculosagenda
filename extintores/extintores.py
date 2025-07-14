@@ -8,7 +8,7 @@ def register_extintores_routes(app):
     @app.route('/extintores')
     @login_required
     def lista_extintores():
-        todos_extintores = db.session.query(Extintor).all()
+        todos_extintores = db.session.query(Extintor).order_by(Extintor.venc_ext.asc()).all()
         return render_template('extintores.html', lista_extintores=todos_extintores)
 
     @app.route('/formulario_extintor')
