@@ -8,11 +8,19 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
     <style>
+        html, body {
+            height: 100%;
+        }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
-            margin: 0;
-            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            flex: 1 0 auto;
+        }
+        footer {
+            flex-shrink: 0;
         }
         .top-bar {
             display: flex;
@@ -37,7 +45,7 @@
         }
         .top-button {
             padding: 2px 8px;
-            background-color: #dc3545;
+            background-color: #c51500;
             color: white;
             text-decoration: none;
             border-radius: 5px;
@@ -100,13 +108,13 @@
             cursor: pointer;
         }
         .button_red {
-            background-color: #dc3545;
+            background-color: #c51500;
         }
         .button:hover {
             background-color: #0056b3;
         }
         .button_red:hover {
-            background-color: #c82333;
+            background-color: #a11200;
         }
         table {
             width: 100%;
@@ -114,6 +122,13 @@
             margin-top: 20px;
             background-color: white;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: visible;
+            position: relative;
+            z-index: 1;
+        }
+        table td, table th {
+            overflow: visible;
+            position: relative;
         }
         table th, table td {
             padding: 12px;
@@ -121,7 +136,7 @@
             border-bottom: 1px solid #ddd;
         }
         table th {
-            background-color: #007bff;
+            background-color: #c51500;
             color: white;
         }
         table tr:hover {
@@ -135,14 +150,14 @@
             transition: color 0.3s;
         }
         .boton-editar:hover, .boton-ver:hover, .boton-borrar:hover {
-            color: #0056b3;
+            color: #c51500;
         }
         .fas.fa-check.verde {
             color: #28a745;
         }
         .banda-roja {
             height: 10px;
-            background-color: #dc3545;
+            background-color: #c51500;
         }
         footer {
             padding: 20px;
@@ -166,6 +181,46 @@
             .top-button {
                 margin-top: 10px;
             }
+        }
+        table th.fechas-col, table td.fechas-col {
+            min-width: 180px;
+            width: 200px;
+        }
+        table th.problema-col, table td.problema-col {
+            max-width: 120px;
+            min-width: 80px;
+            width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            position: relative;
+        }
+        table td.problema-col:hover::after {
+            content: attr(data-fulltext);
+            position: absolute;
+            left: 50%;
+            top: 100%;
+            transform: translateX(-50%);
+            background: #fff8e1;
+            color: #333;
+            border: 2px solid #c51500;
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+            padding: 10px 18px;
+            white-space: pre-line;
+            z-index: 9999;
+            min-width: 220px;
+            max-width: 500px;
+            font-size: 15px;
+            pointer-events: none;
+            margin-top: 6px;
+        }
+        .fechas-inline {
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
@@ -210,28 +265,39 @@
             <thead>
                 <tr>
                     <th>Matrícula</th>
-                    <th>Problema</th>
+                    <th class="problema-col">Problema</th>
                     <th>Taller</th>
-                    <th>Fecha visita</th>
-                    <th>Fecha entrega</th>
+                    <th class="fechas-col" colspan="2">Fechas</th>
                     <th>Precio</th>
-                    <th>Acciones</th>
+                    <th colspan="2">Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 {% for t in lista_talleres %}
                 <tr>
                     <td><a href="/ver_taller/{{ t.id }}">{{ t.matricula }}</a></td>
-                    <td>{{ t.problema }}</td>
+                    <td class="problema-col" title="{{ t.problema|e }}">{{ t.problema }}</td>
                     <td>{{ t.taller }}</td>
-                    <td>{{ t.fecha_visita }}</td>
-                    <td>{{ t.fecha_entrega }}</td>
-                    <td>{{ t.importe }}</td>
-                    <td>
-                        <a href="/form_editar_taller/{{ t.id }}">
-                            <button type="submit" class="boton-editar"><i class="fas fa-pencil-alt"></i></button>
-                        </a>
+                    <td class="fechas-col" colspan="2">
+                        <div class="fechas-inline">
+                            <span>{% if t.fecha_visita %}{{ t.fecha_visita.strftime('%d-%m-%Y') }}{% else %}-{% endif %}</span>
+                            <span>{% if t.fecha_entrega %}{{ t.fecha_entrega.strftime('%d-%m-%Y') }}{% else %}-{% endif %}</span>
+                        </div>
                     </td>
+                    <td>{{ t.importe }}</td>
+                    <td><a href="/form_editar_taller/{{ t.id }}">
+                        <button type="submit" class="boton-editar"><i class="fas fa-pencil-alt"></i></button>
+                    </a></td>
+                    {% if current_user.username == "jmurillo" or current_user.username == "javimurillo" %}
+                    <td>
+                        <form action="/borrar_taller/{{ t.id }}" method="POST">
+                            <input type="hidden" name="id" value="{{ t.id }}">
+                            <button type="submit" class="boton-borrar"><i class="fas fa-trash-alt"></i></button>
+                        </form>
+                    </td>
+                    {% else %}
+                    <td></td>
+                    {% endif %}
                 </tr>
                 {% endfor %}
             </tbody>

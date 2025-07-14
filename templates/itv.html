@@ -126,7 +126,7 @@
                     {% else %}
                     <td> - </td>
                     {% endif %}
-                    <td>{{ i.obs_itv }}</td>
+                    <td title="{{ i.obs_itv|e }}">{{ i.obs_itv }}</td>
                     {% if not i.nombre_doc %}
                     <td>
                         <form action="/subir_doc" method="POST" enctype="multipart/form-data">

@@ -119,7 +119,7 @@
                     <td>{{ r.matricula }}</td>
                     <td>{{ r.pago_rodaje.strftime('%d-%m-%Y') }}</td>
                     <td>{{ r.venc_rodaje.strftime('%d-%m-%Y') }}</td>
-                    <td>{{ r.obs_rodaje }}</td>
+                    <td title="{{ r.obs_rodaje|e }}">{{ r.obs_rodaje }}</td>
                     <td>{{ r.imp_rodaje }}</td>
                     {% if not r.nombre_doc %}
                     <td>

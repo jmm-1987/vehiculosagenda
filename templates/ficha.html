@@ -195,7 +195,7 @@
                                 <td>{{ i.fecha_itv.strftime('%d-%m-%Y') }}</td>
                                 <td>{{ i.venc_itv.strftime('%d-%m-%Y') }}</td>
                                 <td>{{ i.cita_itv.strftime('%d-%m-%Y') }}</td>
-                                <td>{{ i.obs_itv }}</td>
+                                <td title="{{ i.obs_itv|e }}">{{ i.obs_itv }}</td>
                             </tr>
                         {% endfor %}
                         </tbody>

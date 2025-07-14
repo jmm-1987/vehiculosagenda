@@ -62,7 +62,7 @@
                     <td>{{ r.litros_ticket }} l</td>
                     <td>{{ r.precio_ticket }} €</td>
                     <td>{{ r.precio_litro_ticket }} €/l</td>
-                    <td>{{ r.obs_ticket }}</td>
+                    <td title="{{ r.obs_ticket|e }}">{{ r.obs_ticket }}</td>
                     <td>{% if r.facturado == True %}Sí{% else %}No{% endif %}</td>
                     <td>{% if r.marcado == False %}
                     <form action="/marcar_ticket" method="POST">

@@ -122,7 +122,7 @@
                     <td>{{ e.rev_ext.strftime('%d-%m-%Y') }}</td>
                     <td>{{ e.venc_ret_ext.strftime('%d-%m-%Y') }}</td>
                     <td>{{ e.venc_ext.strftime('%d-%m-%Y') }}</td>
-                    <td>{{ e.obs_ext }}</td>
+                    <td title="{{ e.obs_ext|e }}">{{ e.obs_ext }}</td>
                     <td><a href="form_editar_extintor/{{ e.id }}" target="_blank">
                         <button type="submit" class="boton-editar"><i class="fas fa-pencil"></i></button>
                     </a></td>

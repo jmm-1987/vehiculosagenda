@@ -123,10 +123,10 @@
                     <td>{{ seguro.matricula }}</td>
                     <td>{{ seguro.venc_seguro.strftime('%d-%m-%Y') }}</td>
                     <td>{{ seguro.cia_seguro }}</td>
-                    <td>{{ seguro.cob_seguro }}</td>
+                    <td title="{{ seguro.cob_seguro|e }}">{{ seguro.cob_seguro }}</td>
                     <td>{{ seguro.fra_seguro }}</td>
                     <td>{{ seguro.pri_seguro }}€</td>
-                    <td>{{ seguro.obs_seguro }}</td>
+                    <td title="{{ seguro.obs_seguro|e }}">{{ seguro.obs_seguro }}</td>
                     {% if not seguro.nombre_doc %}
                     <td>
                         <form action="/subir_doc" method="POST" enctype="multipart/form-data">

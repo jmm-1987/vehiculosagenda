@@ -81,7 +81,7 @@ h2 {
     display: inline-block;
     padding: 10px 20px;
     margin: 0 10px;
-    background-color: #FF0000;
+    background-color: #c51500;
     color: #fff;
     text-decoration: none;
     border-radius: 5px;
@@ -112,8 +112,8 @@ h2 {
     background-color: #0056b3;
 }
 
-.button_red: hover{
-    background-color: #0000b3;
+.button_red:hover{
+    background-color: #a11200;
 }
 
 tbody {
@@ -158,7 +158,7 @@ tr.facturado {
 }
 
 tr.no_activo {
-    background-color: #f52d2d ;
+    background-color: #c51500 ;
 }
 
 
@@ -184,12 +184,20 @@ th {
 }
 
 .boton-borrar {
-    background-color: red; /* Cambia el color de fondo */
+    background-color: #c51500; /* Cambia el color de fondo */
     color: white; /* Cambia el color del texto */
     border: none; /* Quita el borde */
     padding: 10px 20px; /* Ajusta el relleno */
     cursor: pointer; /* Cambia el cursor al pasar sobre el botón */
     border-radius: 5px; /* Agrega esquinas redondeadas */
+}
+
+td, th {
+    border: 1px solid #c51500;
+}
+
+.avisos .blink {
+    color: #c51500;
 }
 
 

@@ -118,7 +118,7 @@
                     <td>{{ t.matricula }}</td>
                     <td>{{ t.rev_tacografo.strftime('%d-%m-%Y') }}</td>
                     <td>{{ t.venc_tacografo.strftime('%d-%m-%Y') }}</td>
-                    <td>{{ t.obs_tacografo }}</td>
+                    <td title="{{ t.obs_tacografo|e }}">{{ t.obs_tacografo }}</td>
                     {% if not t.nombre_doc %}
                     <td>
                         <form action="/subir_doc" method="POST" enctype="multipart/form-data">
