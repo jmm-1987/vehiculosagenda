@@ -30,6 +30,7 @@ from ficheros.ficheros import register_func_subir_fichero
 from ficheros.ficheros_ts import register_func_subir_fichero_ts
 from ficheros.ficheros_pallex import register_func_subir_fichero_pallex
 from ficheros.ficheros_xpo import register_func_subir_fichero_xpo
+from ficheros.ficheros_carreras import register_func_subir_fichero_carreras
 from sqlalchemy import func
 
 iniciar_scheduler()
@@ -75,7 +76,7 @@ register_func_subir_fichero_ts(app)
 register_ftp_transfer_routes(app)
 register_func_subir_fichero_pallex(app)
 register_func_subir_fichero_xpo(app)
-
+register_func_subir_fichero_carreras(app)
 
 
 @app.route('/')

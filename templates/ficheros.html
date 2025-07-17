@@ -23,57 +23,96 @@
       </div>
     </header>
 
-    <main class="container mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-      <!-- Bloque reutilizable -->
-      <div class="bg-white shadow-md rounded-2xl p-6 border border-gray-200">
-        <h2 class="text-2xl font-bold mb-2">XPO csv liquidación salidas</h2>
-        <p class="text-sm mb-4">Solo admite CSV</p>
-        <p class="text-base mb-4">Sube los ficheros CSV de la liquidación de salidas de XPO. El fichero será tratado para devolvértelo en Excel con las agrupaciones correspondientes.</p>
-        <form action="/subir_fichero" method="POST" enctype="multipart/form-data">
-          <input type="file" name="fichero" accept=".csv" multiple class="mb-2">
-          <button class="bg-red-600 text-white px-4 py-2 rounded font-bold w-full">Procesar</button>
-        </form>
-      </div>
-
-      <div class="bg-white shadow-md rounded-2xl p-6 border border-gray-200">
-        <h2 class="text-2xl font-bold mb-2">TRANSAHER liquidación columna exp</h2>
-        <p class="text-sm mb-4">Solo admite Excel</p>
-        <p class="text-base mb-4">Sube el fichero Excel de la liquidación de llegadas de Transaher. Te devolverá un Excel con el campo de la expedición listo para Nereid</p>
-        <form action="/subir_fichero_ts" method="POST" enctype="multipart/form-data">
-          <input type="file" name="fichero" accept=".xlsx" class="mb-2">
-          <button class="bg-blue-500 text-white px-4 py-2 rounded font-bold w-full">Procesar</button>
-        </form>
-      </div>
-
-      <div class="bg-white shadow-md rounded-2xl p-6 border border-gray-200">
-        <h2 class="text-2xl font-bold mb-2">PALLEX liquidación</h2>
-        <p class="text-sm mb-4">Solo admite Excel (.xlsx)</p>
-        <p class="text-base mb-4">Sube hasta 3 ficheros Excel de la liquidación de las salidas por PALLEX. Procesa para importar los costes a Nereid y agrupa los importes por tipo de línea.</p>
-        <form action="/subir_fichero_pallex" method="POST" enctype="multipart/form-data">
-          <input type="file" name="ficheros" accept=".xlsx" multiple class="mb-2">
-          <button class="bg-yellow-400 text-white px-4 py-2 rounded font-bold w-full">Procesar</button>
-        </form>
-      </div>
-
-      <div class="bg-white shadow-md rounded-2xl p-6 border border-gray-200">
-        <h2 class="text-2xl font-bold mb-2">XPO liquidación</h2>
-        <p class="text-sm mb-4">Solo admite CSV</p>
-        <p class="text-base mb-4">Sube el fichero en CSV de la liquidación de las salidas por XPO. Procesa para importar los costes a Nereid</p>
-        <form action="/subir_fichero_xpo" method="POST" enctype="multipart/form-data">
-          <input type="file" name="fichero" accept=".csv" multiple class="mb-2">
-          <button class="bg-red-700 text-white px-4 py-2 rounded font-bold w-full">Procesar</button>
-        </form>
-      </div>
-
-      <div class="bg-white shadow-md rounded-2xl p-6 border border-gray-200">
-        <h2 class="text-2xl font-bold mb-2">Fichero importes Nereid</h2>
-        <p class="text-sm mb-4">Solo admite XLSX</p>
-        <p class="text-base mb-4">Fichero que proviene del script de Nereid. Añade columnas al final y cambia la estructura del fichero.</p>
-        <form action="/subir_fichero_imp" method="POST" enctype="multipart/form-data">
-          <input type="file" name="fichero" accept=".xlsx" multiple class="mb-2">
-          <button class="bg-red-600 text-white px-4 py-2 rounded font-bold w-full">Procesar</button>
-        </form>
-      </div>
+    <main class="container mx-auto px-4 py-6 grid grid-cols-1 gap-8">
+      <!-- Tratamientos varios -->
+      <section class="mb-6 bg-[#f7f7fa] rounded-xl shadow border border-[#e0e0e0] p-4 max-w-5xl mx-auto">
+        <div class="flex items-center mb-3">
+          <span class="inline-block w-2 h-8 rounded-l bg-[#c51500] mr-3"></span>
+          <h2 class="text-lg font-bold flex-1">Tratamientos varios</h2>
+        </div>
+        <div class="flex flex-wrap gap-4 justify-center">
+          <div class="bg-white shadow rounded-lg p-4 border border-[#c51500] max-w-xs w-full flex flex-col items-center">
+            <span class="inline-block bg-[#c51500] text-white text-xs px-2 py-1 rounded-full mb-2">XPO</span>
+            <h3 class="text-base font-bold mb-1 text-center">XPO csv liquidación salidas</h3>
+            <p class="text-xs mb-2 text-gray-500">Solo admite CSV</p>
+            <p class="text-sm mb-2 text-center">Sube los ficheros CSV de la liquidación de salidas de XPO. El fichero será tratado para devolvértelo en Excel con las agrupaciones correspondientes.</p>
+            <form action="/subir_fichero" method="POST" enctype="multipart/form-data" class="w-full flex flex-col items-center">
+              <input type="file" name="fichero" accept=".csv" multiple class="mb-2 text-xs">
+              <button class="bg-[#c51500] text-white px-3 py-1 rounded font-bold w-full text-sm">Procesar</button>
+            </form>
+          </div>
+          <div class="bg-white shadow rounded-lg p-4 border border-[#3b82f6] max-w-xs w-full flex flex-col items-center">
+            <span class="inline-block bg-[#3b82f6] text-white text-xs px-2 py-1 rounded-full mb-2">TRANSAHER</span>
+            <h3 class="text-base font-bold mb-1 text-center">TRANSAHER liquidación columna exp</h3>
+            <p class="text-xs mb-2 text-gray-500">Solo admite Excel</p>
+            <p class="text-sm mb-2 text-center">Sube el fichero Excel de la liquidación de llegadas de Transaher. Te devolverá un Excel con el campo de la expedición listo para Nereid</p>
+            <form action="/subir_fichero_ts" method="POST" enctype="multipart/form-data" class="w-full flex flex-col items-center">
+              <input type="file" name="fichero" accept=".xlsx" class="mb-2 text-xs">
+              <button class="bg-[#3b82f6] text-white px-3 py-1 rounded font-bold w-full text-sm">Procesar</button>
+            </form>
+          </div>
+          <div class="bg-white shadow rounded-lg p-4 border border-[#e69803] max-w-xs w-full flex flex-col items-center">
+            <span class="inline-block bg-[#e69803] text-white text-xs px-2 py-1 rounded-full mb-2">NEREID</span>
+            <h3 class="text-base font-bold mb-1 text-center">Fichero importes Nereid</h3>
+            <p class="text-xs mb-2 text-gray-500">Solo admite XLSX</p>
+            <p class="text-sm mb-2 text-center">Fichero que proviene del script de Nereid. Añade columnas al final y cambia la estructura del fichero.</p>
+            <form action="/subir_fichero_imp" method="POST" enctype="multipart/form-data" class="w-full flex flex-col items-center">
+              <input type="file" name="fichero" accept=".xlsx" multiple class="mb-2 text-xs">
+              <button class="bg-[#e69803] text-white px-3 py-1 rounded font-bold w-full text-sm">Procesar</button>
+            </form>
+          </div>
+        </div>
+      </section>
+      <!-- Importación liquidaciones a Nereid -->
+      <section class="mb-6 bg-[#fff8f2] rounded-xl shadow border border-[#e69803] p-4 max-w-3xl mx-auto">
+        <div class="flex items-center mb-3">
+          <span class="inline-block w-2 h-8 rounded-l bg-[#e69803] mr-3"></span>
+          <h2 class="text-lg font-bold flex-1">Importación liquidaciones a Nereid</h2>
+        </div>
+        <div class="flex flex-wrap gap-4 justify-center">
+          <div class="bg-white shadow rounded-lg p-4 border border-[#111518] max-w-xs w-full flex flex-col items-center">
+            <span class="inline-block bg-[#111518] text-white text-xs px-2 py-1 rounded-full mb-2">PALLEX</span>
+            <h3 class="text-base font-bold mb-1 text-center">PALLEX liquidación</h3>
+            <p class="text-xs mb-2 text-gray-500">Solo admite Excel (.xlsx)</p>
+            <p class="text-sm mb-2 text-center">Sube hasta 3 ficheros Excel de la liquidación de las salidas por PALLEX. Procesa para importar los costes a Nereid y agrupa los importes por tipo de línea.</p>
+            <form action="/subir_fichero_pallex" method="POST" enctype="multipart/form-data" class="w-full flex flex-col items-center">
+              <input type="file" name="ficheros" accept=".xlsx" multiple class="mb-2 text-xs">
+              <button class="bg-[#111518] text-white px-3 py-1 rounded font-bold w-full text-sm">Procesar</button>
+            </form>
+          </div>
+          <div class="bg-white shadow rounded-lg p-4 border border-[#c51500] max-w-xs w-full flex flex-col items-center">
+            <span class="inline-block bg-[#c51500] text-white text-xs px-2 py-1 rounded-full mb-2">XPO</span>
+            <h3 class="text-base font-bold mb-1 text-center">XPO liquidación</h3>
+            <p class="text-xs mb-2 text-gray-500">Solo admite CSV</p>
+            <p class="text-sm mb-2 text-center">Sube el fichero en CSV de la liquidación de las salidas por XPO. Procesa para importar los costes a Nereid</p>
+            <form action="/subir_fichero_xpo" method="POST" enctype="multipart/form-data" class="w-full flex flex-col items-center">
+              <input type="file" name="fichero" accept=".csv" multiple class="mb-2 text-xs">
+              <button class="bg-[#c51500] text-white px-3 py-1 rounded font-bold w-full text-sm">Procesar</button>
+            </form>
+          </div>
+        </div>
+      </section>
+      <!-- Comprobación liquidaciones -->
+      <section class="mb-6 bg-[#f7f7fa] rounded-xl shadow border border-[#e0e0e0] p-4 max-w-5xl mx-auto">
+        <div class="flex items-center mb-3">
+          <span class="inline-block w-2 h-8 rounded-l bg-[#c51500] mr-3"></span>
+          <h2 class="text-lg font-bold flex-1">Comprobación de liquidaciones</h2>
+        </div>
+        <div class="flex flex-wrap gap-4 justify-center">
+          <div class="bg-white shadow rounded-lg p-4 border border-[#1e3a8a] max-w-xs w-full flex flex-col items-center">
+            <span class="inline-block bg-[#1e3a8a] text-white text-xs px-2 py-1 rounded-full mb-2">CARRERAS</span>
+            <h3 class="text-base font-bold mb-1 text-center">Carreras</h3>
+            <p class="text-sm text-gray-500 text-center mb-2">Sube un fichero de referencia y hasta 6 ficheros para comparar. Se añadirá el importe si el albarán existe en el de referencia.</p>
+            <form action="/procesar_carreras" method="POST" enctype="multipart/form-data" class="w-full flex flex-col items-center">
+              <label class="text-xs font-semibold mb-1 w-full text-left">Fichero de referencia:</label>
+              <input type="file" name="fichero_carreras" accept=".xlsx,.csv" class="mb-2 text-xs w-full">
+              <label class="text-xs font-semibold mb-1 w-full text-left">Ficheros para comparar (máx. 6):</label>
+              <input type="file" name="ficheros_comparacion" accept=".xlsx,.csv" class="mb-2 text-xs w-full" multiple>
+              <button class="bg-[#1e3a8a] text-white px-3 py-1 rounded font-bold w-full text-sm">Procesar</button>
+            </form>
+          </div>
+        </div>
+      </section>
     </main>
 
     <footer class="flex justify-end px-10 py-4">
