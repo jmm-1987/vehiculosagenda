@@ -1,0 +1,58 @@
+═══════════════════════════════════════════════════════════
+    ACCESO DESDE MÓVIL - SCANNER FTP
+═══════════════════════════════════════════════════════════
+
+✅ CONFIGURACIÓN COMPLETADA CON SSL/HTTPS
+
+📱 Para acceder desde tu móvil:
+
+   1. Conecta tu móvil a la misma red WiFi que tu PC
+   
+   2. Abre el navegador en tu móvil (Chrome recomendado)
+   
+   3. Accede a:
+      
+      🔐 https://192.168.1.7:5000
+      
+      (IMPORTANTE: Usa HTTPS, no HTTP)
+
+⚠️ ADVERTENCIA DE SEGURIDAD:
+
+   Al ser un certificado autofirmado, tu navegador mostrará
+   una advertencia de seguridad. Es NORMAL.
+   
+   Para continuar:
+   
+   📱 Chrome Android:
+      - Click en "Avanzado"
+      - Click en "Acceder a 192.168.1.7 (sitio no seguro)"
+   
+   📱 Safari iOS:
+      - Click en "Mostrar detalles"
+      - Click en "Visitar este sitio web"
+      - Confirma en "Visitar sitio web"
+
+🎯 ACCESO DIRECTO AL SCANNER:
+
+   https://192.168.1.7:5000/scanner_clientes
+
+📋 CREDENCIALES:
+
+   Usuario: [tu usuario]
+   Contraseña: [tu contraseña]
+
+🔧 SI NO FUNCIONA LA CÁMARA:
+
+   1. Verifica que hayas aceptado la advertencia de seguridad
+   2. Cuando el navegador pida permisos de cámara, acepta
+   3. En algunos casos puede requerir cerrar y reabrir la página
+   4. Asegúrate de usar Chrome (mejor compatibilidad)
+
+💡 IMPORTANTE:
+
+   - La cámara solo funciona con HTTPS (por seguridad)
+   - Acepta los permisos de cámara cuando los pida
+   - En producción deberías usar un certificado SSL válido
+
+═══════════════════════════════════════════════════════════
+

@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner Clientes - FTP Upload</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            padding: 10px;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 10px;
+            margin-top: 5px;
+            font-size: 2em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+        
+        @media (max-width: 1024px) {
+            body {
+                padding: 5px;
+            }
+            
+            h1 {
+                font-size: 1.2em;
+                margin-bottom: 5px;
+                margin-top: 3px;
+            }
+        }
+
+        .clientes-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 15px;
+            flex: 1;
+            align-content: stretch;
+            height: 100%;
+        }
+        
+        @media (max-width: 1024px) {
+            .clientes-grid {
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-rows: repeat(4, 1fr);
+                gap: 8px;
+            }
+        }
+
+        .cliente-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .cliente-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .cliente-logo {
+            max-width: 90%;
+            max-height: 90%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .cliente-logo-placeholder {
+            width: 100px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f0f0f0;
+            border-radius: 8px;
+        }
+        
+        @media (max-width: 1024px) {
+            .cliente-card {
+                padding: 10px;
+                border-radius: 8px;
+            }
+            
+            .cliente-logo {
+                max-width: 95%;
+                max-height: 95%;
+            }
+            
+            .cliente-logo-placeholder {
+                width: 60px;
+                height: 50px;
+            }
+            
+            .cliente-logo-placeholder i {
+                font-size: 30px !important;
+            }
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            position: relative;
+            animation: slideIn 0.3s;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        @media (max-width: 1024px) {
+            .modal-content {
+                margin: 2% auto;
+                padding: 15px;
+                width: 95%;
+                max-height: 95vh;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #000;
+        }
+
+        .modal-header {
+            margin-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+
+        .modal-header h2 {
+            color: #667eea;
+            font-size: 1.2em;
+            margin: 0;
+        }
+
+        .step-indicator {
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #667eea;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 1024px) {
+            .modal-header {
+                margin-bottom: 5px;
+                padding-bottom: 3px;
+            }
+            
+            .modal-header h2 {
+                font-size: 1em;
+            }
+            
+            .step-indicator {
+                margin-bottom: 5px;
+                font-size: 0.8em;
+            }
+        }
+
+        .camera-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        #video, #canvas {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            max-height: 400px;
+            object-fit: cover;
+        }
+        
+        @media (max-width: 1024px) {
+            #video, #canvas {
+                max-height: 250px;
+            }
+        }
+
+        #canvas {
+            display: none;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            margin: 20px auto;
+            display: block;
+        }
+
+        .codigo-display {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .codigo-display p {
+            margin: 0 0 5px 0;
+            font-size: 0.9em;
+        }
+
+        .codigo-display strong {
+            color: #667eea;
+            font-size: 1.1em;
+        }
+        
+        @media (max-width: 1024px) {
+            .codigo-display {
+                padding: 8px;
+                margin: 8px 0;
+            }
+            
+            .codigo-display p {
+                font-size: 0.8em;
+            }
+            
+            .codigo-display strong {
+                font-size: 1em;
+            }
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        @media (max-width: 1024px) {
+            .button-group {
+                gap: 8px;
+                margin-top: 10px;
+            }
+        }
+
+        .btn {
+            padding: 20px 35px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 2.5em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            min-width: 80px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        @media (max-width: 1024px) {
+            .btn {
+                padding: 15px 20px;
+                font-size: 2em;
+                min-width: 60px;
+                min-height: 60px;
+            }
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .mensaje {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: bold;
+            animation: slideIn 0.3s;
+        }
+
+        .mensaje-exito {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .mensaje-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            width: 45px;
+            height: 45px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 1.8em;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+
+        .back-button:hover {
+            background: #f0f0f0;
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        @media (max-width: 1024px) {
+            .back-button {
+                width: 35px;
+                height: 35px;
+                font-size: 1.3em;
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/index" class="back-button">←</a>
+        <h1>📸 Scanner de Clientes - Subida FTP</h1>
+        
+        <div class="clientes-grid">
+            <div class="cliente-card" onclick="abrirScanner(1)">
+                <img src="{{ url_for('static', filename='scanner/logoxpologistics.jpg') }}" alt="XPO Logistics" class="cliente-logo">
+            </div>
+            <div class="cliente-card" onclick="abrirScanner(2)">
+                <img src="{{ url_for('static', filename='scanner/logosurpaq.jpg') }}" alt="Surpaq" class="cliente-logo">
+            </div>
+            <div class="cliente-card" onclick="abrirScanner(3)">
+                <img src="{{ url_for('static', filename='scanner/tsb.jpg') }}" alt="TSB" class="cliente-logo">
+            </div>
+            <div class="cliente-card" onclick="abrirScanner(4)">
+                <img src="{{ url_for('static', filename='scanner/alditraex.png') }}" alt="Alditraex" class="cliente-logo">
+            </div>
+            <div class="cliente-card" onclick="abrirScanner(5)">
+                <img src="{{ url_for('static', filename='scanner/ntl.jpg') }}" alt="NTL" class="cliente-logo">
+            </div>
+            <div class="cliente-card" onclick="abrirScanner(6)">
+                <img src="{{ url_for('static', filename='scanner/simoes.jpg') }}" alt="Simoes" class="cliente-logo">
+            </div>
+            <div class="cliente-card" onclick="abrirScanner(7)">
+                <img src="{{ url_for('static', filename='scanner/esser.webp') }}" alt="Esser" class="cliente-logo">
+            </div>
+            <div class="cliente-card" onclick="abrirScanner(8)">
+                <img src="{{ url_for('static', filename='scanner/bdtrans.png') }}" alt="BD Trans" class="cliente-logo">
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="scannerModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="cerrarModal()">&times;</span>
+            <div class="modal-header">
+                <h2><span id="clienteNumero"></span></h2>
+            </div>
+            
+            <div class="step-indicator" id="stepIndicator">1️⃣ Código de Barras</div>
+            
+            <div id="mensajeContainer"></div>
+            
+            <div class="camera-container">
+                <video id="video" autoplay playsinline></video>
+                <canvas id="canvas"></canvas>
+                <img id="previewImage" class="preview-image hidden" />
+            </div>
+            
+            <div id="inputManualContainer" class="hidden" style="margin: 20px 0;">
+                <label for="codigoManual" style="display: block; margin-bottom: 10px; font-weight: bold;">
+                    Introduce el código de barras manualmente:
+                </label>
+                <input 
+                    type="text" 
+                    id="codigoManual" 
+                    placeholder="Escribe el código aquí..." 
+                    style="width: 100%; padding: 12px; font-size: 16px; border: 2px solid #667eea; border-radius: 8px; box-sizing: border-box;"
+                    autofocus
+                />
+            </div>
+            
+            <div id="codigoDisplay" class="codigo-display hidden">
+                <strong id="codigoTexto"></strong>
+            </div>
+            
+            <div class="button-group" id="botonesAccion"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
+    <script>
+        let stream = null;
+        let clienteActual = null;
+        let codigoBarrasActual = null;
+        let codeReader = null;
+        let estadoActual = 'init'; // init, scanning_barcode, barcode_confirmed, taking_photo, photo_preview
+
+        // Mapeo de nombres de clientes
+        const nombresClientes = {
+            1: 'XPO Logistics',
+            2: 'Surpaq',
+            3: 'TSB',
+            4: 'Alditraex',
+            5: 'NTL',
+            6: 'Simões',
+            7: 'Esser',
+            8: 'BD Trans'
+        };
+
+        function abrirScanner(clienteId) {
+            clienteActual = clienteId;
+            const nombreCliente = nombresClientes[clienteId] || `Cliente ${clienteId}`;
+            document.getElementById('clienteNumero').textContent = nombreCliente;
+            document.getElementById('scannerModal').style.display = 'block';
+            estadoActual = 'scanning_barcode';
+            mostrarMensaje('', '');
+            iniciarEscanerCodigoBarras();
+        }
+
+        function cerrarModal() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            if (codeReader) {
+                codeReader.reset();
+            }
+            document.getElementById('scannerModal').style.display = 'none';
+            document.getElementById('codigoDisplay').classList.add('hidden');
+            document.getElementById('previewImage').classList.add('hidden');
+            document.getElementById('inputManualContainer').classList.add('hidden');
+            document.getElementById('video').style.display = 'block';
+            document.getElementById('codigoManual').value = '';
+            estadoActual = 'init';
+            codigoBarrasActual = null;
+        }
+
+        async function iniciarEscanerCodigoBarras() {
+            try {
+                document.getElementById('stepIndicator').textContent = '1️⃣ Código de Barras';
+                document.getElementById('video').style.display = 'block';
+                document.getElementById('previewImage').classList.add('hidden');
+                document.getElementById('codigoDisplay').classList.add('hidden');
+                document.getElementById('inputManualContainer').classList.add('hidden');
+                
+                // Inicializar lector de códigos de barras
+                codeReader = new ZXing.BrowserMultiFormatReader();
+                
+                // Configurar botones
+                actualizarBotones([
+                    { texto: '⌨️', clase: 'btn-primary', funcion: 'mostrarInputManual()' },
+                    { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
+                ]);
+
+                const videoElement = document.getElementById('video');
+                
+                // Iniciar decodificación continua
+                codeReader.decodeFromVideoDevice(null, videoElement, (result, err) => {
+                    if (result && estadoActual === 'scanning_barcode') {
+                        codigoBarrasActual = result.text;
+                        mostrarCodigoEscaneado(result.text);
+                        codeReader.reset();
+                        estadoActual = 'barcode_confirmed';
+                    }
+                    if (err && err.name === 'NotAllowedError') {
+                        mostrarMensaje('⚠️ Permisos de cámara denegados. Puedes introducir el código manualmente.', 'error');
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error al iniciar escáner:', error);
+                let mensajeError = 'Error al acceder a la cámara. ';
+                
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    mensajeError += '⚠️ Permisos denegados. Puedes introducir el código manualmente.';
+                } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                    mensajeError += '📷 No se encontró ninguna cámara. Usa la opción manual.';
+                } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+                    mensajeError += '🔒 La cámara está siendo usada por otra aplicación.';
+                } else if (error.name === 'OverconstrainedError') {
+                    mensajeError += '⚙️ La cámara no cumple con los requisitos necesarios.';
+                } else if (error.name === 'NotSupportedError') {
+                    mensajeError += '🔐 HTTPS es necesario. Usa la opción manual o accede por HTTPS.';
+                } else {
+                    mensajeError += `Detalles: ${error.message || error.name}`;
+                }
+                
+                mostrarMensaje(mensajeError, 'error');
+                
+                // Si hay error con la cámara, mostrar opción manual directamente
+                actualizarBotones([
+                    { texto: '⌨️', clase: 'btn-primary', funcion: 'mostrarInputManual()' },
+                    { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
+                ]);
+            }
+        }
+        
+        function mostrarInputManual() {
+            // Detener el escáner si está activo
+            if (codeReader) {
+                codeReader.reset();
+            }
+            
+            // Ocultar video y mostrar input manual
+            document.getElementById('video').style.display = 'none';
+            document.getElementById('inputManualContainer').classList.remove('hidden');
+            document.getElementById('stepIndicator').textContent = '⌨️ Introducir Código';
+            
+            // Enfocar el input
+            const input = document.getElementById('codigoManual');
+            input.value = '';
+            input.focus();
+            
+            // Detectar Enter en el input
+            input.onkeypress = function(e) {
+                if (e.key === 'Enter') {
+                    confirmarCodigoManual();
+                }
+            };
+            
+            actualizarBotones([
+                { texto: '✓', clase: 'btn-success', funcion: 'confirmarCodigoManual()' },
+                { texto: '📷', clase: 'btn-secondary', funcion: 'volverAEscanear()' },
+                { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
+            ]);
+        }
+        
+        function confirmarCodigoManual() {
+            const input = document.getElementById('codigoManual');
+            const codigo = input.value.trim();
+            
+            if (!codigo) {
+                mostrarMensaje('⚠️ Por favor, introduce un código de barras', 'error');
+                return;
+            }
+            
+            codigoBarrasActual = codigo;
+            document.getElementById('inputManualContainer').classList.add('hidden');
+            mostrarCodigoEscaneado(codigo);
+            estadoActual = 'barcode_confirmed';
+        }
+        
+        function volverAEscanear() {
+            document.getElementById('inputManualContainer').classList.add('hidden');
+            estadoActual = 'scanning_barcode';
+            iniciarEscanerCodigoBarras();
+        }
+
+        function mostrarCodigoEscaneado(codigo) {
+            document.getElementById('video').style.display = 'none';
+            document.getElementById('inputManualContainer').classList.add('hidden');
+            document.getElementById('codigoDisplay').classList.remove('hidden');
+            document.getElementById('codigoTexto').textContent = codigo;
+            document.getElementById('stepIndicator').textContent = '2️⃣ Confirmar';
+            
+            actualizarBotones([
+                { texto: '✓', clase: 'btn-success', funcion: 'confirmarCodigo()' },
+                { texto: '✗', clase: 'btn-danger', funcion: 'reintentarCodigoBarras()' }
+            ]);
+        }
+
+        function reintentarCodigoBarras() {
+            codigoBarrasActual = null;
+            estadoActual = 'scanning_barcode';
+            iniciarEscanerCodigoBarras();
+        }
+
+        async function confirmarCodigo() {
+            // Validar código en el servidor
+            try {
+                const response = await fetch('/validar_codigo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ codigo: codigoBarrasActual })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    mostrarMensaje(data.mensaje, 'exito');
+                    setTimeout(() => {
+                        iniciarCamara();
+                    }, 1000);
+                } else {
+                    mostrarMensaje(data.mensaje, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                mostrarMensaje('Error al validar código', 'error');
+            }
+        }
+
+        async function iniciarCamara() {
+            try {
+                document.getElementById('stepIndicator').textContent = '3️⃣ Fotografía';
+                document.getElementById('video').style.display = 'block';
+                document.getElementById('codigoDisplay').classList.remove('hidden');
+                document.getElementById('previewImage').classList.add('hidden');
+                
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                estadoActual = 'taking_photo';
+                
+                actualizarBotones([
+                    { texto: '📷', clase: 'btn-primary', funcion: 'capturarFoto()' },
+                    { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
+                ]);
+                
+            } catch (error) {
+                console.error('Error al acceder a la cámara:', error);
+                let mensajeError = '📷 Error al acceder a la cámara. ';
+                
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    mensajeError += '⚠️ Permisos denegados. Permite el acceso a la cámara.';
+                } else if (error.name === 'NotFoundError') {
+                    mensajeError += 'No se encontró cámara en el dispositivo.';
+                } else if (error.name === 'NotReadableError') {
+                    mensajeError += 'La cámara está siendo usada por otra aplicación.';
+                } else if (error.name === 'NotSupportedError') {
+                    mensajeError += '🔐 Se requiere HTTPS. Usa https://192.168.1.7:5000';
+                } else {
+                    mensajeError += error.message;
+                }
+                
+                mostrarMensaje(mensajeError, 'error');
+            }
+        }
+
+        function capturarFoto() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const preview = document.getElementById('previewImage');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const imagenDataURL = canvas.toDataURL('image/jpeg', 0.9);
+            
+            preview.src = imagenDataURL;
+            preview.classList.remove('hidden');
+            video.style.display = 'none';
+            
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            
+            estadoActual = 'photo_preview';
+            document.getElementById('stepIndicator').textContent = '4️⃣ Enviar';
+            
+            actualizarBotones([
+                { texto: '✓', clase: 'btn-success', funcion: 'enviarFoto()' },
+                { texto: '✗', clase: 'btn-danger', funcion: 'iniciarCamara()' }
+            ]);
+        }
+
+        async function enviarFoto() {
+            mostrarLoading();
+            
+            try {
+                const imagenDataURL = document.getElementById('previewImage').src;
+                
+                const response = await fetch('/subir_imagen_scanner', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        imagen: imagenDataURL,
+                        codigo: codigoBarrasActual,
+                        cliente_id: clienteActual
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    mostrarMensaje(data.mensaje, 'exito');
+                    actualizarBotones([
+                        { texto: '✓', clase: 'btn-success', funcion: 'cerrarModal()' }
+                    ]);
+                } else {
+                    mostrarMensaje(data.mensaje, 'error');
+                    actualizarBotones([
+                        { texto: '🔄', clase: 'btn-danger', funcion: 'enviarFoto()' },
+                        { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
+                    ]);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                mostrarMensaje('Error al enviar la imagen', 'error');
+            }
+        }
+
+        function actualizarBotones(botones) {
+            const container = document.getElementById('botonesAccion');
+            container.innerHTML = '';
+            
+            botones.forEach(btn => {
+                const button = document.createElement('button');
+                button.className = `btn ${btn.clase}`;
+                button.textContent = btn.texto;
+                button.setAttribute('onclick', btn.funcion);
+                container.appendChild(button);
+            });
+        }
+
+        function mostrarMensaje(texto, tipo) {
+            const container = document.getElementById('mensajeContainer');
+            if (!texto) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            const claseCSS = tipo === 'exito' ? 'mensaje-exito' : 'mensaje-error';
+            container.innerHTML = `<div class="mensaje ${claseCSS}">${texto}</div>`;
+        }
+
+        function mostrarLoading() {
+            const container = document.getElementById('mensajeContainer');
+            container.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Enviando imagen al servidor FTP...</p>
+                </div>
+            `;
+        }
+
+        // Cerrar modal al hacer clic fuera
+        window.onclick = function(event) {
+            const modal = document.getElementById('scannerModal');
+            if (event.target == modal) {
+                cerrarModal();
+            }
+        }
+    </script>
+</body>
+</html>
+

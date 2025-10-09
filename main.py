@@ -31,6 +31,7 @@ from ficheros.ficheros_ts import register_func_subir_fichero_ts
 from ficheros.ficheros_pallex import register_func_subir_fichero_pallex
 from ficheros.ficheros_xpo import register_func_subir_fichero_xpo
 from ficheros.ficheros_carreras import register_func_subir_fichero_carreras
+from scanner_ftp.scanner_ftp import register_scanner_ftp_routes
 from sqlalchemy import func
 
 iniciar_scheduler()
@@ -77,6 +78,7 @@ register_ftp_transfer_routes(app)
 register_func_subir_fichero_pallex(app)
 register_func_subir_fichero_xpo(app)
 register_func_subir_fichero_carreras(app)
+register_scanner_ftp_routes(app)
 
 
 @app.route('/')
@@ -253,7 +255,12 @@ def descargar_db():
 
 if __name__ == '__main__':
     db.Base.metadata.create_all(db.engine)
-    app.run(debug=True)
+    # Usar SSL para permitir acceso a la cámara desde móviles
+    # Opción 1: Con certificados generados (descomentar si los certificados existen)
+    # app.run(debug=True, host='0.0.0.0', port=5000, ssl_context=('cert.pem', 'key.pem'))
+    
+    # Opción 2: SSL adhoc (más simple, genera certificados temporales automáticamente)
+    app.run(debug=True, host='0.0.0.0', port=5000, ssl_context='adhoc')
 
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

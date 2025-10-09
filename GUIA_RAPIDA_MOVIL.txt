@@ -1,0 +1,110 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║         📱 GUÍA RÁPIDA - ACCESO DESDE MÓVIL                  ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+
+🎯 PASO 1: VERIFICAR CONEXIÓN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Tu PC está en: 192.168.1.7
+✅ El servidor está corriendo en puerto 5000
+
+▶ Asegúrate de que tu MÓVIL esté conectado a la MISMA RED WIFI que tu PC
+
+
+🌐 PASO 2: ACCEDER DESDE EL MÓVIL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Abre Chrome en tu móvil y escribe:
+
+   🔗 http://192.168.1.7:5000
+
+   ⚠️ IMPORTANTE: Usa 192.168.1.7 (NO 127.0.0.1)
+
+
+🔐 PASO 3: INICIAR SESIÓN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Inicia sesión con tu usuario y contraseña normales
+
+
+🧪 PASO 4: PROBAR LA CÁMARA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Primero, haz una prueba simple:
+
+   🔗 http://192.168.1.7:5000/test_camera
+
+Esto te dirá si tu navegador puede acceder a la cámara.
+
+Haz click en "📷 Probar Cámara" y:
+   ✅ Si funciona → Todo OK, ve al paso 5
+   ❌ Si NO funciona → Lee el error y sigue las instrucciones
+
+
+📸 PASO 5: USAR EL SCANNER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   🔗 http://192.168.1.7:5000/scanner_clientes
+
+O usa el menú: "📸 Scanner FTP"
+
+
+⚠️ SI LA CÁMARA NO FUNCIONA CON HTTP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Algunos navegadores requieren HTTPS para la cámara.
+
+Prueba con HTTPS:
+
+   🔗 https://192.168.1.7:5000
+
+Tu navegador mostrará una ADVERTENCIA DE SEGURIDAD.
+Esto es NORMAL porque usamos un certificado autofirmado.
+
+📱 En Chrome Android:
+   1. Click en "Avanzado"
+   2. Click en "Acceder a 192.168.1.7 (sitio no seguro)"
+
+📱 En Safari iOS:
+   1. Click en "Mostrar detalles"
+   2. Click en "Visitar este sitio web"
+   3. Confirma
+
+
+🔧 SOLUCIÓN DE PROBLEMAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ "No se puede conectar"
+   → Verifica que estés en la misma WiFi
+   → Verifica que el servidor esté corriendo (en el PC)
+   → Prueba hacer ping: ping 192.168.1.7
+
+❌ "Permisos de cámara denegados"
+   → Configuración de Chrome → Configuración del sitio → Cámara
+   → Permite el acceso para este sitio
+
+❌ "La cámara no se abre"
+   → Cierra otras apps que usen la cámara
+   → Recarga la página
+   → Prueba con HTTPS en lugar de HTTP
+
+
+💡 RESUMEN RÁPIDO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Misma WiFi ✓
+2. http://192.168.1.7:5000 ✓
+3. Login ✓
+4. Probar: /test_camera ✓
+5. Usar: /scanner_clientes ✓
+
+Si la cámara no funciona → Usar HTTPS
+
+
+═══════════════════════════════════════════════════════════════
+
+¿Problemas? Revisa los mensajes de error en /test_camera
+

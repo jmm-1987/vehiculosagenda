@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Cámara</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .info {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            margin: 10px 0;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: white;
+        }
+        video {
+            width: 100%;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test de Cámara</h1>
+    
+    <div class="info" id="protocolInfo"></div>
+    <div class="info" id="mediaInfo"></div>
+    
+    <button onclick="testCamera()">📷 Probar Cámara</button>
+    
+    <video id="video" autoplay playsinline style="display:none;"></video>
+    
+    <div id="result"></div>
+    
+    <hr>
+    <a href="/scanner_clientes">← Volver al Scanner</a>
+    
+    <script>
+        // Mostrar información del protocolo
+        const protocol = window.location.protocol;
+        const protocolDiv = document.getElementById('protocolInfo');
+        if (protocol === 'https:') {
+            protocolDiv.className = 'info success';
+            protocolDiv.innerHTML = '✅ Usando HTTPS - La cámara debería funcionar';
+        } else {
+            protocolDiv.className = 'info error';
+            protocolDiv.innerHTML = '⚠️ Usando HTTP - La cámara puede no funcionar en algunos navegadores';
+        }
+        
+        // Verificar soporte de MediaDevices
+        const mediaDiv = document.getElementById('mediaInfo');
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            mediaDiv.className = 'info success';
+            mediaDiv.innerHTML = '✅ Tu navegador soporta acceso a la cámara';
+        } else {
+            mediaDiv.className = 'info error';
+            mediaDiv.innerHTML = '❌ Tu navegador NO soporta acceso a la cámara';
+        }
+        
+        async function testCamera() {
+            const video = document.getElementById('video');
+            const result = document.getElementById('result');
+            
+            result.innerHTML = '<div class="info">⏳ Intentando acceder a la cámara...</div>';
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                
+                video.srcObject = stream;
+                video.style.display = 'block';
+                result.innerHTML = '<div class="info success">✅ ¡Cámara funcionando correctamente!</div>';
+                
+            } catch (error) {
+                console.error('Error:', error);
+                let mensaje = '<div class="info error"><strong>❌ Error al acceder a la cámara:</strong><br><br>';
+                
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    mensaje += '⚠️ <strong>Permisos denegados.</strong><br>';
+                    mensaje += '- Verifica los permisos de cámara en tu navegador<br>';
+                    mensaje += '- En Chrome: Configuración → Privacidad y seguridad → Configuración del sitio → Cámara';
+                } else if (error.name === 'NotFoundError') {
+                    mensaje += '📷 No se encontró ninguna cámara en tu dispositivo';
+                } else if (error.name === 'NotReadableError') {
+                    mensaje += '🔒 La cámara está siendo usada por otra aplicación';
+                } else if (error.name === 'NotSupportedError' || error.name === 'TypeError') {
+                    mensaje += '🔐 <strong>Se requiere HTTPS</strong><br>';
+                    mensaje += 'Accede usando: <strong>https://192.168.1.7:5000</strong>';
+                } else {
+                    mensaje += 'Error: ' + error.name + '<br>';
+                    mensaje += 'Mensaje: ' + error.message;
+                }
+                
+                mensaje += '</div>';
+                result.innerHTML = mensaje;
+            }
+        }
+        
+        // Información adicional
+        document.body.innerHTML += `
+            <div class="info" style="margin-top: 20px;">
+                <strong>📋 Información del Sistema:</strong><br>
+                Navegador: ${navigator.userAgent}<br>
+                Protocolo: ${window.location.protocol}<br>
+                Host: ${window.location.host}
+            </div>
+        `;
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,34 @@
+═══════════════════════════════════════════════
+  INSTRUCCIONES PARA REINICIAR EL SERVIDOR
+═══════════════════════════════════════════════
+
+⚠️ IMPORTANTE: Debes reiniciar el servidor manualmente
+
+📋 PASOS:
+
+1. Ve a la terminal donde está ejecutándose el servidor
+
+2. Presiona: Ctrl + C
+   (Esto detendrá el servidor Flask actual)
+
+3. Ejecuta nuevamente:
+   python main.py
+
+4. Verifica que ahora diga:
+   * Running on https://127.0.0.1:5000
+   * Running on https://192.168.1.7:5000
+   
+   ¡Fíjate que debe decir HTTPS!
+
+5. Accede desde tu móvil a:
+   https://192.168.1.7:5000
+   
+   (con HTTPS, no HTTP)
+
+═══════════════════════════════════════════════
+
+⚠️ Si ves un error al iniciar sobre SSL, ejecuta:
+   pip install pyopenssl
+
+═══════════════════════════════════════════════
+
