@@ -2,8 +2,9 @@ from flask import Flask, render_template, session, request, redirect, url_for, s
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 import db
 from ftp_transfer.ftp_transfer import register_ftp_transfer_routes, iniciar_scheduler
-from models import Itv, Seguro, Tacografo, Rodaje, Extintor, Usuario, Vehiculo, Taller
+from models import Itv, Seguro, Tacografo, Rodaje, Extintor, Usuario, Vehiculo, Taller, IncidenciaAldipod
 from datetime import datetime, timedelta
+import json
 from vehiculos.vehiculos import register_vehiculos_routes
 from itv.itv import register_itv_routes
 from seguros.seguros import register_seguros_routes
@@ -35,6 +36,13 @@ from scanner_ftp.scanner_ftp import register_scanner_ftp_routes
 from sqlalchemy import func
 
 iniciar_scheduler()
+
+# Asegurar columnas nuevas en SQLite al arranque (sin migraciones)
+try:
+    from db import ensure_column_exists
+    ensure_column_exists('incidencia_aldipod', 'tipo_documento', 'VARCHAR(100)', 'INCIDENCIA')
+except Exception:
+    pass
 
 #Arranque app
 app = Flask(__name__)
@@ -111,6 +119,18 @@ def logout():
 @app.route('/index')
 @login_required
 def home():
+    # Redirección por rol
+    try:
+        with open('static/roles_config.json', 'r') as f:
+            roles = json.load(f)
+        username = request.args.get('user') or (session.get('_user_id') and db.session.query(Usuario).filter_by(id=session.get('_user_id')).first().username)
+        rol = roles.get('roles', {}).get(username)
+        if rol in ['repartidor', 'almacen']:
+            return redirect(url_for('scanner_clientes'))
+        if rol == 'oficina':
+            return redirect(url_for('registro_incidencias_aldipod'))
+    except Exception:
+        pass
     avisos = []
     ahora = datetime.now().date()
     todas_itv = db.session.query(Itv).all()

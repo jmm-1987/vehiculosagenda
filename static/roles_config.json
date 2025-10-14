@@ -1,0 +1,9 @@
+{
+  "roles": {
+    "admin": "oficina",
+    "oficina": "oficina",
+    "repartidor": "repartidor",
+    "almacen": "almacen"
+  }
+}
+

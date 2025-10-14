@@ -281,3 +281,21 @@ class Tarea(db.Base):
         self.realizada = realizada
         self.nombre_doc = nombre_doc
         self.usuario= usuario
+
+class IncidenciaAldipod(db.Base):
+    __tablename__ = "incidencia_aldipod"
+    id = Column(Integer, primary_key=True)
+    fecha = Column(DateTime, nullable=False)
+    usuario = Column(String(100))
+    cliente = Column(String(100), nullable=False)
+    referencia = Column(String(200), nullable=False)
+    enlace_imagen = Column(String(500), nullable=False)
+    tipo_documento = Column(String(100), nullable=False, default="INCIDENCIA")
+    
+    def __init__(self, fecha, usuario, cliente, referencia, enlace_imagen, tipo_documento="INCIDENCIA"):
+        self.fecha = fecha
+        self.usuario = usuario
+        self.cliente = cliente
+        self.referencia = referencia
+        self.enlace_imagen = enlace_imagen
+        self.tipo_documento = tipo_documento
