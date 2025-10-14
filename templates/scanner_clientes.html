@@ -68,6 +68,9 @@
         @media (max-width: 1024px) {
             body {
                 padding: 5px;
+                height: auto;             /* evita recortes verticales */
+                min-height: 100vh;
+                overflow-y: auto;         /* permite scroll si hace falta */
             }
             
             h1 {
@@ -86,6 +89,21 @@
             .top-bar {
                 height: 44px;
                 padding: 2px 12px;
+            }
+            .container {
+                height: auto;             /* libera altura forzada */
+            }
+            .clientes-grid {
+                gap: 6px;                 /* menos separación */
+                height: auto;             /* evita recortes */
+            }
+            .cliente-card {
+                padding: 6px;             /* tarjetas más compactas */
+                border-radius: 6px;
+            }
+            .cliente-logo {
+                max-width: 85%;
+                max-height: 65px;         /* reduce logo para que quepan 4 filas */
             }
         }
 
