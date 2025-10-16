@@ -4,7 +4,7 @@ Funciones auxiliares para el scanner de códigos de barras y subida FTP
 import ftplib
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import db
 from models import IncidenciaAldipod
 
@@ -242,8 +242,12 @@ def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo):
         tipo_documento = 'INCIDENCIA'
     
     try:
+        # Crear fecha con zona horaria de España (UTC+2)
+        now_utc = datetime.now(timezone.utc)
+        now_spain = now_utc.astimezone(timezone(timedelta(hours=2)))
+        
         incidencia = IncidenciaAldipod(
-            fecha=datetime.now(),
+            fecha=now_spain,
             usuario=usuario,
             cliente=nombre_cliente,
             referencia=referencia,

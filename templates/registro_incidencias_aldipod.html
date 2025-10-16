@@ -275,16 +275,6 @@
     <div class="container">
         <h1><i class="fas fa-clipboard-list"></i> Registro de Incidencias ALDIPOD</h1>
 
-        <div class="stats-cards">
-            <div class="stat-card">
-                <h3>Total Incidencias</h3>
-                <div class="number">{{ incidencias|length }}</div>
-            </div>
-            <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                <h3>Hoy</h3>
-                <div class="number">{{ incidencias|selectattr('fecha')|list|length if incidencias else 0 }}</div>
-            </div>
-        </div>
 
         <div class="filter-section">
             <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
@@ -295,11 +285,20 @@
                 <input type="text" id="filtroTipo" placeholder="Tipo" onkeyup="filtrarTablaAvanzado()">
                 <input type="text" id="searchInput" placeholder="🔍 Buscar por cliente, referencia o usuario..." onkeyup="filtrarTablaAvanzado()">
                 <label style="display:flex; gap:6px; align-items:center; margin-left:10px; cursor:pointer;">
-                    <input type="checkbox" id="filtroSoloNoComunicadas" onchange="filtrarTablaAvanzado()">
-                    <span>Solo no comunicadas</span>
+                    <input type="checkbox" id="filtroMostrarComunicadas" onchange="filtrarTablaAvanzado()">
+                    <span>Mostrar comunicadas</span>
                 </label>
                 <button type="button" onclick="marcarSeleccionadasComoComunicadas()" id="btnMarcarComunicadas" style="padding:8px 12px; background:#28a745; color:white; border:none; border-radius:6px; cursor:pointer; margin-left:10px;" disabled>Marcar seleccionadas como comunicadas (<span id="contadorSeleccionadas">0</span>)</button>
-                <button type="button" onclick="exportVisibleToCSV()" style="margin-left:auto; padding:8px 12px; background:#343a40; color:white; border:none; border-radius:6px; cursor:pointer;">Exportar CSV</button>
+                <div style="margin-left:auto; display:flex; gap:10px;">
+                    <div style="padding:8px 12px; background:#007bff; color:white; border-radius:6px; text-align:center; min-width:120px;">
+                        <div style="font-size:12px; opacity:0.9;">Total Incidencias</div>
+                        <div style="font-size:16px; font-weight:bold;" id="totalIncidencias">0</div>
+                    </div>
+                    <div style="padding:8px 12px; background:#ffc107; color:#212529; border-radius:6px; text-align:center; min-width:120px;">
+                        <div style="font-size:12px; opacity:0.9;">Hoy</div>
+                        <div style="font-size:16px; font-weight:bold;" id="incidenciasHoy">0</div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -321,7 +320,7 @@
                 </thead>
                 <tbody>
                     {% for incidencia in incidencias %}
-                    <tr data-fecha="{{ incidencia.fecha.strftime('%Y-%m-%d') }}" data-cliente="{{ incidencia.cliente }}" data-usuario="{{ incidencia.usuario }}" data-tipo="{{ incidencia.tipo_documento }}" class="{% if incidencia.comunicada %}row-comunicada{% endif %}">
+                    <tr data-fecha="{{ incidencia.fecha.strftime('%Y-%m-%d') }}" data-cliente="{{ incidencia.cliente }}" data-usuario="{{ incidencia.usuario }}" data-tipo="{{ incidencia.tipo_documento }}" data-id="{{ incidencia.id }}" class="{% if incidencia.comunicada %}row-comunicada{% endif %}">
                         <td><input type="checkbox" class="row-select" data-id="{{ incidencia.id }}" onchange="actualizarContadorSeleccionadas()"></td>
                         <td>{{ incidencia.fecha.strftime('%d/%m/%Y') }}</td>
                         <td>{{ incidencia.fecha.strftime('%H:%M:%S') }}</td>
@@ -339,12 +338,7 @@
                         </td>
                         <td><strong>{{ incidencia.referencia }}</strong></td>
                         <td>{{ incidencia.tipo_documento }}</td>
-                        <td>
-                            <label style="display:flex; gap:6px; align-items:center; cursor:pointer;">
-                                <input type="checkbox" {% if incidencia.comunicada %}checked disabled{% endif %} {% if not incidencia.comunicada %}title="Seleccionar para marcar como comunicada"{% else %}title="Ya comunicada"{% endif %}>
-                                <span>{{ 'Sí' if incidencia.comunicada else 'No' }}</span>
-                            </label>
-                        </td>
+                        <td>{{ 'Sí' if incidencia.comunicada else 'No' }}</td>
                         <td>
                             <a href="/descargar_imagen/{{ incidencia.referencia}}" class="enlace-imagen" download>
                                 <i class="fas fa-download"></i> Descargar
@@ -372,7 +366,7 @@
             const usuario = (document.getElementById('filtroUsuario').value || '').toLowerCase();
             const tipo = (document.getElementById('filtroTipo').value || '').toLowerCase();
 
-            const soloNoComunicadas = document.getElementById('filtroSoloNoComunicadas').checked;
+            const mostrarComunicadas = document.getElementById('filtroMostrarComunicadas').checked;
             const table = document.getElementById('incidenciasTable');
             const tr = table.getElementsByTagName('tr');
 
@@ -391,7 +385,8 @@
                 if (usuario && !dataUsuario.includes(usuario)) visible = false;
                 if (tipo && !dataTipo.includes(tipo)) visible = false;
 
-                if (soloNoComunicadas && row.classList.contains('row-comunicada')) visible = false;
+                // Por defecto solo mostrar no comunicadas (ocultar comunicadas)
+                if (!mostrarComunicadas && row.classList.contains('row-comunicada')) visible = false;
 
                 if (texto) {
                     const cells = row.getElementsByTagName('td');
@@ -408,26 +403,6 @@
             actualizarContadorSeleccionadas();
         }
 
-        function actualizarContadorSeleccionadas() {
-            const seleccionadas = Array.from(document.querySelectorAll('.row-select:checked'));
-            const contador = document.getElementById('contadorSeleccionadas');
-            const btnMarcar = document.getElementById('btnMarcarComunicadas');
-            contador.textContent = seleccionadas.length;
-            btnMarcar.disabled = seleccionadas.length === 0;
-        }
-
-        function toggleSelectAll() {
-            const selectAll = document.getElementById('selectAll');
-            const rowSelects = Array.from(document.querySelectorAll('.row-select'));
-            const visibleRows = rowSelects.filter(checkbox => 
-                checkbox.closest('tr').style.display !== 'none'
-            );
-            
-            visibleRows.forEach(checkbox => {
-                checkbox.checked = selectAll.checked;
-            });
-            actualizarContadorSeleccionadas();
-        }
 
         function escapeCSV(value) {
             if (value == null) return '';
@@ -512,6 +487,26 @@
             }
         }
 
+        function actualizarContadorSeleccionadas() {
+            const seleccionadas = Array.from(document.querySelectorAll('.row-select:checked'));
+            const contador = document.getElementById('contadorSeleccionadas');
+            const btnMarcar = document.getElementById('btnMarcarComunicadas');
+            contador.textContent = seleccionadas.length;
+            btnMarcar.disabled = seleccionadas.length === 0;
+        }
+
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const rowSelects = Array.from(document.querySelectorAll('.row-select'));
+            const visibleRows = rowSelects.filter(checkbox => 
+                checkbox.closest('tr').style.display !== 'none'
+            );
+            
+            visibleRows.forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+            });
+            actualizarContadorSeleccionadas();
+        }
 
         async function marcarSeleccionadasComoComunicadas() {
             const seleccionadas = Array.from(document.querySelectorAll('.row-select:checked'));
@@ -521,57 +516,91 @@
                 return;
             }
             
-            if (!confirm(`¿Marcar ${seleccionadas.length} incidencias seleccionadas como comunicadas?`)) {
+            if (!confirm(`¿Estás seguro de que quieres marcar ${seleccionadas.length} incidencia(s) como comunicadas?`)) {
                 return;
             }
             
             const btnMarcar = document.getElementById('btnMarcarComunicadas');
             btnMarcar.disabled = true;
-            btnMarcar.textContent = 'Marcando...';
+            btnMarcar.textContent = 'Procesando...';
             
             try {
                 const promises = seleccionadas.map(async (checkbox) => {
-                    const id = checkbox.getAttribute('data-id');
                     const row = checkbox.closest('tr');
+                    const incidenciaId = checkbox.getAttribute('data-id');
                     
-                    const res = await fetch('/incidencia_aldipod/comunicada', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id: parseInt(id), comunicada: true })
-                    });
-                    const data = await res.json();
-                    if (!data.ok) throw new Error(data.error || 'Error al actualizar');
-                    
-                    // Actualizar UI
-                    const comunicadaCheckbox = row.querySelector('td:nth-child(8) input[type="checkbox"]');
-                    const comunicadaSpan = row.querySelector('td:nth-child(8) span');
-                    comunicadaCheckbox.checked = true;
-                    comunicadaCheckbox.disabled = true;
-                    comunicadaCheckbox.title = 'Ya comunicada';
-                    comunicadaCheckbox.closest('label').style.cursor = 'not-allowed';
-                    row.classList.add('row-comunicada');
-                    comunicadaSpan.textContent = 'Sí';
-                    
-                    // Deseleccionar la fila
-                    checkbox.checked = false;
+                    try {
+                        const response = await fetch('/incidencia_aldipod/comunicada', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                id: parseInt(incidenciaId),
+                                comunicada: true
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (!data.ok) {
+                            throw new Error(data.error || 'Error desconocido');
+                        }
+                        
+                        // Actualizar UI
+                        row.classList.add('row-comunicada');
+                        const comunicadaCell = row.querySelector('td:nth-child(8)');
+                        if (comunicadaCell) {
+                            comunicadaCell.textContent = 'Sí';
+                        }
+                        
+                        // Deseleccionar la fila
+                        checkbox.checked = false;
+                    } catch (error) {
+                        console.error('Error al marcar incidencia como comunicada:', error);
+                        alert(`Error al marcar incidencia ${incidenciaId}: ${error.message}`);
+                    }
                 });
                 
                 await Promise.all(promises);
-                actualizarContadorSeleccionadas();
-                alert(`${seleccionadas.length} incidencias marcadas como comunicadas.`);
                 
-            } catch (e) {
-                alert('Error al marcar algunas incidencias: ' + e.message);
+                alert('Incidencias marcadas como comunicadas correctamente.');
+                
+            } catch (error) {
+                console.error('Error general:', error);
+                alert('Error al procesar las incidencias.');
             } finally {
                 btnMarcar.disabled = false;
                 btnMarcar.innerHTML = 'Marcar seleccionadas como comunicadas (<span id="contadorSeleccionadas">0</span>)';
+                actualizarContadorSeleccionadas();
             }
         }
 
-        // Inicializar contador al cargar la página
+        function actualizarContadores() {
+            const table = document.getElementById('incidenciasTable');
+            const rows = table.querySelectorAll('tbody tr');
+            
+            // Total de incidencias
+            const totalIncidencias = rows.length;
+            document.getElementById('totalIncidencias').textContent = totalIncidencias;
+            
+            // Incidencias de hoy
+            const hoy = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            const incidenciasHoy = Array.from(rows).filter(row => {
+                const fechaFila = row.getAttribute('data-fecha');
+                return fechaFila === hoy;
+            }).length;
+            document.getElementById('incidenciasHoy').textContent = incidenciasHoy;
+        }
+
+        // Inicializar contadores al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
             actualizarContadorSeleccionadas();
+            actualizarContadores();
+            // Aplicar filtro por defecto (solo mostrar no comunicadas)
+            filtrarTablaAvanzado();
         });
+
     </script>
 </body>
 </html>
