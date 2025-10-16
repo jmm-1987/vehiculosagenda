@@ -54,10 +54,10 @@ def register_scanner_ftp_routes(app):
         db.session.commit()
         return jsonify({"ok": True})
     
-    @app.route('/descargar_imagen/<int:incidencia_id>')
+    @app.route('/descargar_imagen/<referencia>')
     @login_required
-    def descargar_imagen_incidencia(incidencia_id):
-        """Descarga una imagen de incidencia desde FTP"""
+    def descargar_imagen_incidencia(referencia):
+        """Descarga una imagen de incidencia desde FTP usando la referencia"""
         import db
         from models import IncidenciaAldipod
         from flask import send_file
@@ -65,7 +65,7 @@ def register_scanner_ftp_routes(app):
         import os
         from ftplib import FTP
         
-        incidencia = db.session.query(IncidenciaAldipod).filter_by(id=incidencia_id).first()
+        incidencia = db.session.query(IncidenciaAldipod).filter_by(referencia=referencia).first()
         if not incidencia:
             return "Incidencia no encontrada", 404
         
