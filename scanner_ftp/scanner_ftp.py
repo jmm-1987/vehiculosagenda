@@ -36,6 +36,81 @@ def register_scanner_ftp_routes(app):
         
         return render_template('registro_incidencias_aldipod.html', incidencias=incidencias)
     
+    @app.route('/incidencia_aldipod/comunicada', methods=['POST'])
+    @login_required
+    def marcar_incidencia_comunicada():
+        """Marca o desmarca una incidencia como comunicada"""
+        import db
+        from models import IncidenciaAldipod
+        data = request.get_json(silent=True) or {}
+        incidencia_id = data.get('id')
+        estado = data.get('comunicada')
+        if incidencia_id is None or estado is None:
+            return jsonify({"ok": False, "error": "Parámetros inválidos"}), 400
+        incidencia = db.session.query(IncidenciaAldipod).filter_by(id=incidencia_id).first()
+        if not incidencia:
+            return jsonify({"ok": False, "error": "Incidencia no encontrada"}), 404
+        incidencia.comunicada = bool(estado)
+        db.session.commit()
+        return jsonify({"ok": True})
+    
+    @app.route('/descargar_imagen/<int:incidencia_id>')
+    @login_required
+    def descargar_imagen_incidencia(incidencia_id):
+        """Descarga una imagen de incidencia desde FTP"""
+        import db
+        from models import IncidenciaAldipod
+        from flask import send_file
+        import tempfile
+        import os
+        from ftplib import FTP
+        
+        incidencia = db.session.query(IncidenciaAldipod).filter_by(id=incidencia_id).first()
+        if not incidencia:
+            return "Incidencia no encontrada", 404
+        
+        try:
+            # Parsear URL FTP
+            enlace = incidencia.enlace_imagen
+            if not enlace.startswith('ftp://'):
+                return "Enlace no válido", 400
+            
+            # Extraer componentes del URL FTP
+            url_parts = enlace.replace('ftp://', '').split('/')
+            host = url_parts[0]
+            file_path = '/'.join(url_parts[1:])
+            filename = url_parts[-1]
+            
+            # Cargar configuración FTP
+            from .funciones_scanner import cargar_configuracion_ftp
+            config = cargar_configuracion_ftp()
+            if not config:
+                return "Configuración FTP no encontrada", 500
+            
+            # Conectar a FTP
+            ftp = FTP(host)
+            ftp.login(config.get('username', ''), config.get('password', ''))
+            
+            # Crear archivo temporal
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f'_{filename}')
+            
+            # Descargar archivo
+            with open(temp_file.name, 'wb') as f:
+                ftp.retrbinary(f'RETR {file_path}', f.write)
+            
+            ftp.quit()
+            
+            # Enviar archivo
+            return send_file(
+                temp_file.name,
+                as_attachment=True,
+                download_name=filename,
+                mimetype='application/octet-stream'
+            )
+            
+        except Exception as e:
+            return f"Error al descargar imagen: {str(e)}", 500
+    
     @app.route('/test_camera')
     @login_required
     def test_camera():

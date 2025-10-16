@@ -219,20 +219,20 @@ def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo):
     clientes_map = {
         1: 'XPO Logistics',
         '1': 'XPO Logistics',
-        2: 'Pallex',
-        '2': 'Pallex',
+        2: 'Surpaq',
+        '2': 'Surpaq',
         3: 'TSB',
         '3': 'TSB',
-        4: 'Cliente 4',
-        '4': 'Cliente 4',
-        5: 'Cliente 5',
-        '5': 'Cliente 5',
-        6: 'Cliente 6',
-        '6': 'Cliente 6',
-        7: 'Cliente 7',
-        '7': 'Cliente 7',
-        8: 'Cliente 8',
-        '8': 'Cliente 8'
+        4: 'Alditraex',
+        '4': 'Alditraex',
+        5: 'NTL',
+        '5': 'NTL',
+        6: 'Simoes',
+        '6': 'Simoes',
+        7: 'Essers',
+        '7': 'Essers',
+        8: 'BDtrans',
+        '8': 'BDtrans'
     }
     
     nombre_cliente = clientes_map.get(cliente_id, f'Cliente {cliente_id}')

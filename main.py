@@ -41,6 +41,7 @@ iniciar_scheduler()
 try:
     from db import ensure_column_exists
     ensure_column_exists('incidencia_aldipod', 'tipo_documento', 'VARCHAR(100)', 'INCIDENCIA')
+    ensure_column_exists('incidencia_aldipod', 'comunicada', 'BOOLEAN', 0)
 except Exception:
     pass
 

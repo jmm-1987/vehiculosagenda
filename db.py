@@ -25,9 +25,15 @@ def ensure_column_exists(table_name: str, column_name: str, column_type_sql: str
             if column_name not in columns:
                 # Añadir la columna
                 if default_value is not None:
-                    conn.execute(
-                        f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type_sql} DEFAULT '{default_value}'"
-                    )
+                    # Para valores booleanos, no usar comillas
+                    if isinstance(default_value, bool) or (isinstance(default_value, int) and default_value in [0, 1]):
+                        conn.execute(
+                            f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type_sql} DEFAULT {default_value}"
+                        )
+                    else:
+                        conn.execute(
+                            f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type_sql} DEFAULT '{default_value}'"
+                        )
                 else:
                     conn.execute(
                         f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type_sql}"
@@ -35,9 +41,15 @@ def ensure_column_exists(table_name: str, column_name: str, column_type_sql: str
             # Rellenar valores nulos con el default si procede
             if default_value is not None:
                 try:
-                    conn.execute(
-                        f"UPDATE {table_name} SET {column_name} = '{default_value}' WHERE {column_name} IS NULL"
-                    )
+                    # Para valores booleanos, no usar comillas
+                    if isinstance(default_value, bool) or (isinstance(default_value, int) and default_value in [0, 1]):
+                        conn.execute(
+                            f"UPDATE {table_name} SET {column_name} = {default_value} WHERE {column_name} IS NULL"
+                        )
+                    else:
+                        conn.execute(
+                            f"UPDATE {table_name} SET {column_name} = '{default_value}' WHERE {column_name} IS NULL"
+                        )
                 except Exception:
                     pass
     except Exception:

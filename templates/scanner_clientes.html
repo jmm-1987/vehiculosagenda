@@ -581,9 +581,6 @@
                 />
             </div>
             
-            <div id="codigoDisplay" class="codigo-display hidden">
-                <strong id="codigoTexto"></strong>
-            </div>
             
             <div class="button-group" id="botonesAccion"></div>
         </div>
@@ -627,7 +624,6 @@
                 codeReader.reset();
             }
             document.getElementById('scannerModal').style.display = 'none';
-            document.getElementById('codigoDisplay').classList.add('hidden');
             document.getElementById('previewImage').classList.add('hidden');
             document.getElementById('inputManualContainer').classList.add('hidden');
             document.getElementById('video').style.display = 'block';
@@ -641,7 +637,6 @@
                 document.getElementById('stepIndicator').textContent = '1️⃣ Código de Barras';
                 document.getElementById('video').style.display = 'block';
                 document.getElementById('previewImage').classList.add('hidden');
-                document.getElementById('codigoDisplay').classList.add('hidden');
                 document.getElementById('inputManualContainer').classList.add('hidden');
                 
                 // Inicializar lector de códigos de barras
@@ -750,8 +745,6 @@
         function mostrarCodigoEscaneado(codigo) {
             document.getElementById('video').style.display = 'none';
             document.getElementById('inputManualContainer').classList.add('hidden');
-            document.getElementById('codigoDisplay').classList.remove('hidden');
-            document.getElementById('codigoTexto').textContent = codigo;
             document.getElementById('stepIndicator').textContent = '2️⃣ Confirmar';
             
             actualizarBotones([
@@ -797,7 +790,6 @@
             try {
                 document.getElementById('stepIndicator').textContent = '3️⃣ Fotografía';
                 document.getElementById('video').style.display = 'block';
-                document.getElementById('codigoDisplay').classList.remove('hidden');
                 document.getElementById('previewImage').classList.add('hidden');
                 
                 stream = await navigator.mediaDevices.getUserMedia({ 
