@@ -125,7 +125,7 @@ def home():
             roles = json.load(f)
         username = request.args.get('user') or (session.get('_user_id') and db.session.query(Usuario).filter_by(id=session.get('_user_id')).first().username)
         rol = roles.get('roles', {}).get(username)
-        if rol in ['repartidor', 'almacen']:
+        if rol in ['rep', 'almacen']:
             return redirect(url_for('scanner_clientes'))
         if rol == 'oficina':
             return redirect(url_for('registro_incidencias_aldipod'))

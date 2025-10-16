@@ -2,7 +2,7 @@
   "roles": {
     "admin": "oficina",
     "oficina": "oficina",
-    "repartidor": "repartidor",
+    "rep": "rep",
     "almacen": "almacen"
   }
 }
