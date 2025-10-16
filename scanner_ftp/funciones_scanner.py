@@ -77,34 +77,26 @@ def subir_archivo_ftp(archivo_local, nombre_remoto, cliente_id=None):
         with open(archivo_local, 'rb') as file:
             ftp.storbinary(f'STOR {nombre_remoto}', file)
 
-        # Adicional: subir copia a BACKUP (mismo FTP). Usamos el padre del directorio configurado + '/BACKUP'
-        if destino_principal:
-            # Calcular padre de destino_principal
-            partes = [p for p in destino_principal.split('/') if p]
-            if len(partes) > 1:
-                padre = '/'.join(partes[:-1])
-                backup_dir = f"{padre}/BACKUP"
-            else:
-                backup_dir = 'BACKUP'
-            # Crear/cambiar al directorio BACKUP y subir copia
+        # Adicional: subir copia a BACKUP específico: ALDIPOD/BACKUP
+        backup_dir = 'ALDIPOD/BACKUP'
+        try:
+            # Volver a root antes de navegar
+            ftp.cwd('/')
+        except:
+            pass
+        # Crear la ruta al backup de forma incremental
+        partes_backup = [p for p in backup_dir.split('/') if p]
+        ruta_acumulada = ''
+        for p in partes_backup:
+            ruta_acumulada = f"{ruta_acumulada}/{p}" if ruta_acumulada else p
             try:
-                # Volver a root antes de navegar
-                ftp.cwd('/')
+                ftp.cwd(ruta_acumulada)
             except:
-                pass
-            # Crear la ruta al backup de forma incremental
-            partes_backup = [p for p in backup_dir.split('/') if p]
-            ruta_acumulada = ''
-            for p in partes_backup:
-                ruta_acumulada = f"{ruta_acumulada}/{p}" if ruta_acumulada else p
-                try:
-                    ftp.cwd(ruta_acumulada)
-                except:
-                    ftp.mkd(ruta_acumulada)
-                    ftp.cwd(ruta_acumulada)
-            # Subir copia
-            with open(archivo_local, 'rb') as file:
-                ftp.storbinary(f'STOR {nombre_remoto}', file)
+                ftp.mkd(ruta_acumulada)
+                ftp.cwd(ruta_acumulada)
+        # Subir copia al backup
+        with open(archivo_local, 'rb') as file:
+            ftp.storbinary(f'STOR {nombre_remoto}', file)
         
         ftp.quit()
         return True, f"Archivo {nombre_remoto} subido correctamente (principal y BACKUP)"
@@ -241,17 +233,10 @@ def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo):
     config = cargar_configuracion_ftp()
     if config:
         host = config.get('host', '')
-        directory = config.get('directory', '')
-        # Construir ruta BACKUP a partir del padre del directorio configurado
-        partes = [p for p in directory.split('/') if p]
-        if len(partes) > 1:
-            padre = '/'.join(partes[:-1])
-            backup_dir = f"{padre}/BACKUP"
-        else:
-            backup_dir = 'BACKUP'
+        # El enlace debe apuntar al directorio de backup donde se descargan las imágenes
+        backup_dir = 'ALDIPOD/BACKUP'
         enlace = f"ftp://{host}/{backup_dir}/{nombre_archivo}"
-        # Determinar tipo_documento por carpeta destino. Por ahora, ALDIPOD/INCIDENCIAS => INCIDENCIA
-        tipo_documento = 'INCIDENCIA' if 'INCIDENCIAS' in directory.upper() else 'DESCONOCIDO'
+        tipo_documento = 'INCIDENCIA'
     else:
         enlace = nombre_archivo
         tipo_documento = 'INCIDENCIA'
