@@ -72,8 +72,10 @@ def register_scanner_ftp_routes(app):
         try:
             # Parsear URL FTP
             enlace = incidencia.enlace_imagen
+            print(f"DEBUG: Enlace de imagen: {enlace}")  # Debug
+            
             if not enlace.startswith('ftp://'):
-                return "Enlace no válido", 400
+                return f"Enlace no válido: {enlace}", 400
             
             # Extraer componentes del URL FTP
             url_parts = enlace.replace('ftp://', '').split('/')
@@ -81,15 +83,29 @@ def register_scanner_ftp_routes(app):
             file_path = '/'.join(url_parts[1:])
             filename = url_parts[-1]
             
+            print(f"DEBUG: Host: {host}, File path: {file_path}, Filename: {filename}")  # Debug
+            
             # Cargar configuración FTP
             from .funciones_scanner import cargar_configuracion_ftp
             config = cargar_configuracion_ftp()
             if not config:
                 return "Configuración FTP no encontrada", 500
             
+            print(f"DEBUG: Config FTP: {config}")  # Debug
+            
             # Conectar a FTP
             ftp = FTP(host)
-            ftp.login(config.get('username', ''), config.get('password', ''))
+            ftp.login(config.get('user', ''), config.get('password', ''))
+            print("DEBUG: Conectado a FTP exitosamente")  # Debug
+            
+            # Verificar si el archivo existe
+            try:
+                file_size = ftp.size(file_path)
+                print(f"DEBUG: Archivo encontrado, tamaño: {file_size} bytes")  # Debug
+            except:
+                print(f"DEBUG: No se pudo obtener tamaño del archivo: {file_path}")  # Debug
+                ftp.quit()
+                return f"Archivo no encontrado en FTP: {file_path}", 404
             
             # Crear archivo temporal
             temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f'_{filename}')
@@ -100,15 +116,31 @@ def register_scanner_ftp_routes(app):
             
             ftp.quit()
             
+            # Verificar que el archivo se descargó correctamente
+            if os.path.getsize(temp_file.name) == 0:
+                os.unlink(temp_file.name)
+                return "Archivo descargado está vacío", 500
+            
+            print(f"DEBUG: Archivo descargado exitosamente: {temp_file.name}")  # Debug
+            
             # Enviar archivo
-            return send_file(
+            response = send_file(
                 temp_file.name,
                 as_attachment=True,
                 download_name=filename,
-                mimetype='application/octet-stream'
+                mimetype='image/jpeg'
             )
             
+            # Limpiar archivo temporal después de enviar
+            try:
+                os.unlink(temp_file.name)
+            except:
+                pass
+            
+            return response
+            
         except Exception as e:
+            print(f"DEBUG: Error en descarga: {str(e)}")  # Debug
             return f"Error al descargar imagen: {str(e)}", 500
     
     @app.route('/test_camera')
@@ -116,6 +148,41 @@ def register_scanner_ftp_routes(app):
     def test_camera():
         """Página de prueba para verificar el acceso a la cámara"""
         return render_template('test_camera.html')
+    
+    @app.route('/test_ftp')
+    @login_required
+    def test_ftp():
+        """Prueba la conectividad FTP"""
+        from .funciones_scanner import cargar_configuracion_ftp
+        from ftplib import FTP
+        
+        try:
+            config = cargar_configuracion_ftp()
+            if not config:
+                return jsonify({'success': False, 'error': 'Configuración FTP no encontrada'})
+            
+            ftp = FTP(config.get('host', ''))
+            ftp.login(config.get('user', ''), config.get('password', ''))
+            
+            # Listar directorio backup
+            backup_files = []
+            try:
+                ftp.cwd('/ALDIPOD/BACKUP')
+                backup_files = ftp.nlst()
+            except:
+                pass
+            
+            ftp.quit()
+            
+            return jsonify({
+                'success': True, 
+                'message': 'Conexión FTP exitosa',
+                'host': config.get('host', ''),
+                'backup_files': backup_files[:10]  # Solo los primeros 10
+            })
+            
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)})
     
     @app.route('/validar_codigo', methods=['POST'])
     @login_required

@@ -340,7 +340,7 @@
                         <td>{{ incidencia.tipo_documento }}</td>
                         <td>{{ 'Sí' if incidencia.comunicada else 'No' }}</td>
                         <td>
-                            <a href="/descargar_imagen/{{ incidencia.referencia}}" class="enlace-imagen" download>
+                            <a href="/descargar_imagen/{{ incidencia.referencia}}" class="enlace-imagen" download onclick="mostrarURLDescarga({{ incidencia.enlace_imagen | tojson }});">
                                 <i class="fas fa-download"></i> Descargar
                             </a>
                         </td>
@@ -358,6 +358,15 @@
     </div>
 
     <script>
+        function mostrarURLDescarga(url) {
+            try {
+                console.log('URL descarga:', url);
+                // Mostrar no bloqueante; si prefieres modal/Toast se puede cambiar
+                alert('URL a descargar:\n' + url);
+            } catch (e) {
+                // Silenciar errores de UI para no bloquear la descarga
+            }
+        }
         function filtrarTablaAvanzado() {
             const texto = (document.getElementById('searchInput').value || '').toLowerCase();
             const desde = document.getElementById('filtroDesde').value;

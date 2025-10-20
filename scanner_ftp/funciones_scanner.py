@@ -77,26 +77,14 @@ def subir_archivo_ftp(archivo_local, nombre_remoto, cliente_id=None):
         with open(archivo_local, 'rb') as file:
             ftp.storbinary(f'STOR {nombre_remoto}', file)
 
-        # Adicional: subir copia a BACKUP específico: ALDIPOD/BACKUP
-        backup_dir = 'ALDIPOD/BACKUP'
+        # Adicional: subir copia a BACKUP específico: /ALDIPOD/BACKUP (sin crear subcarpetas)
         try:
-            # Volver a root antes de navegar
-            ftp.cwd('/')
-        except:
-            pass
-        # Crear la ruta al backup de forma incremental
-        partes_backup = [p for p in backup_dir.split('/') if p]
-        ruta_acumulada = ''
-        for p in partes_backup:
-            ruta_acumulada = f"{ruta_acumulada}/{p}" if ruta_acumulada else p
-            try:
-                ftp.cwd(ruta_acumulada)
-            except:
-                ftp.mkd(ruta_acumulada)
-                ftp.cwd(ruta_acumulada)
-        # Subir copia al backup
-        with open(archivo_local, 'rb') as file:
-            ftp.storbinary(f'STOR {nombre_remoto}', file)
+            ftp.cwd('/ALDIPOD/BACKUP')
+            with open(archivo_local, 'rb') as file:
+                ftp.storbinary(f'STOR {nombre_remoto}', file)
+        except Exception as e:
+            ftp.quit()
+            return False, f"Error al subir a /ALDIPOD/BACKUP: {str(e)}"
         
         ftp.quit()
         return True, f"Archivo {nombre_remoto} subido correctamente (principal y BACKUP)"
@@ -234,7 +222,7 @@ def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo):
     if config:
         host = config.get('host', '')
         # El enlace debe apuntar al directorio de backup donde se descargan las imágenes
-        backup_dir = 'ALDIPOD/BACKUP'
+        backup_dir = '/ALDIPOD/BACKUP'
         enlace = f"ftp://{host}/{backup_dir}/{nombre_archivo}"
         tipo_documento = 'INCIDENCIA'
     else:
