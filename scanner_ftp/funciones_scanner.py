@@ -224,6 +224,7 @@ def guardar_imagen_temporal(imagen_data, nombre_archivo):
 def crear_pdf_temporal(imagenes_base64: List[str], nombre_pdf: str) -> Tuple[bool, str, str]:
     """
     Crea un PDF temporal a partir de una lista de imágenes en base64.
+    Cada imagen ocupa la mitad superior de una página A4, centrada, manteniendo proporción.
     Devuelve (success, ruta_pdf, error_message)
     """
     try:
@@ -236,58 +237,55 @@ def crear_pdf_temporal(imagenes_base64: List[str], nombre_pdf: str) -> Tuple[boo
 
         ruta_pdf = os.path.join(directorio_temp, nombre_pdf)
 
-        # Crear documento PDF A4 con 2 imágenes por página (media página cada una)
+        # Tamaño A4 en puntos (1pt = 1/72in)
+        try:
+            a4_rect = fitz.paper_rect("a4")  # disponible en PyMuPDF
+            a4_width, a4_height = a4_rect.width, a4_rect.height
+        except Exception:
+            a4_width, a4_height = 595.2756, 841.8898  # fallback
+        top_half_rect = fitz.Rect(0, 0, a4_width, a4_height / 2)
+
+        # Crear documento PDF
         pdf_doc = fitz.open()
-        a4_rect = fitz.paper_rect("a4")  # tamaño A4 en puntos
-        page = None
-        place_top = True
-        margin = 20  # margen en puntos
-
         for idx, img_b64 in enumerate(imagenes_base64):
-            if 'base64,' in img_b64:
-                img_b64 = img_b64.split('base64,')[1]
-            img_bytes = base64.b64decode(img_b64)
-
-            # Guardar imagen temporalmente en disco (soporte formatos variados)
-            tmp_img_path = os.path.join(directorio_temp, f"_pdf_img_{idx}.jpg")
-            with open(tmp_img_path, 'wb') as f:
-                f.write(img_bytes)
-
             try:
-                # Crear nueva página para cada par de imágenes
-                if page is None or not place_top:
-                    page = pdf_doc.new_page(width=a4_rect.width, height=a4_rect.height)
+                if 'base64,' in img_b64:
+                    img_b64 = img_b64.split('base64,')[1]
+                img_bytes = base64.b64decode(img_b64)
 
-                # Calcular rectángulos superior e inferior con márgenes
-                if place_top:
-                    target_rect = fitz.Rect(
-                        margin,
-                        margin,
-                        a4_rect.width - margin,
-                        a4_rect.height / 2 - margin
-                    )
-                else:
-                    target_rect = fitz.Rect(
-                        margin,
-                        a4_rect.height / 2 + margin,
-                        a4_rect.width - margin,
-                        a4_rect.height - margin
-                    )
+                # Crear página A4
+                page = pdf_doc.new_page(width=a4_width, height=a4_height)
 
-                # Insertar imagen manteniendo proporción dentro del rectángulo destino
-                page.insert_image(target_rect, filename=tmp_img_path, keep_proportion=True)
+                # Insertar imagen ajustando a la mitad superior manteniendo aspecto y centrada
+                # Primero, obtener dimensiones naturales de la imagen
+                # Detectar tipo de imagen por cabecera
+                filetype = "jpeg"
+                if img_bytes.startswith(b"\x89PNG"):
+                    filetype = "png"
+                elif img_bytes[6:10] == b"JFIF" or img_bytes.startswith(b"\xff\xd8\xff"):
+                    filetype = "jpeg"
+                # Abrir imagen para obtener dimensiones
+                img_doc = fitz.open(stream=img_bytes, filetype=filetype)
+                img_rect = img_doc[0].rect
+                img_w, img_h = img_rect.width, img_rect.height
+                img_doc.close()
 
-                # Alternar posición: top -> bottom -> nueva página
-                if place_top:
-                    place_top = False
-                else:
-                    place_top = True
-                    page = None
-            finally:
-                try:
-                    os.remove(tmp_img_path)
-                except:
-                    pass
+                # Calcular escala para encajar en mitad superior
+                max_w, max_h = top_half_rect.width, top_half_rect.height
+                scale = min(max_w / img_w, max_h / img_h)
+                draw_w = img_w * scale
+                draw_h = img_h * scale
+                # Centrar horizontalmente y alinear arriba (y=0)
+                x0 = (max_w - draw_w) / 2
+                y0 = 0
+                target_rect = fitz.Rect(x0, y0, x0 + draw_w, y0 + draw_h)
+
+                # Insertar la imagen desde los bytes
+                page.insert_image(target_rect, stream=img_bytes)
+            except Exception as e_item:
+                # Continuar con el resto aunque una imagen falle
+                print(f"WARNING: Error insertando imagen en PDF: {e_item}")
+                continue
 
         pdf_doc.save(ruta_pdf)
         pdf_doc.close()
