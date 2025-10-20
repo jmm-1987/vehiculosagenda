@@ -94,16 +94,19 @@ def register_scanner_ftp_routes(app):
             print(f"DEBUG: Config FTP: {config}")  # Debug
             
             # Conectar a FTP
-            ftp = FTP(host)
-            ftp.login(config.get('user', ''), config.get('password', ''))
-            print("DEBUG: Conectado a FTP exitosamente")  # Debug
+            try:
+                ftp = FTP(host)
+                ftp.login(config.get('user', ''), config.get('password', ''))
+                print("DEBUG: Conectado a FTP exitosamente")  # Debug
+            except Exception as conn_err:
+                return f"No se pudo conectar al FTP ({host}). Posible bloqueo de red/puerto o credenciales incorrectas: {str(conn_err)}", 500
             
             # Verificar si el archivo existe
             try:
                 file_size = ftp.size(file_path)
                 print(f"DEBUG: Archivo encontrado, tamaño: {file_size} bytes")  # Debug
-            except:
-                print(f"DEBUG: No se pudo obtener tamaño del archivo: {file_path}")  # Debug
+            except Exception as size_err:
+                print(f"DEBUG: No se pudo obtener tamaño del archivo: {file_path} -> {size_err}")  # Debug
                 ftp.quit()
                 return f"Archivo no encontrado en FTP: {file_path}", 404
             

@@ -222,7 +222,7 @@ def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo):
     if config:
         host = config.get('host', '')
         # El enlace debe apuntar al directorio de backup donde se descargan las imágenes
-        backup_dir = '/ALDIPOD/BACKUP'
+        backup_dir = 'ALDIPOD/BACKUP'
         enlace = f"ftp://{host}/{backup_dir}/{nombre_archivo}"
         tipo_documento = 'INCIDENCIA'
     else:
