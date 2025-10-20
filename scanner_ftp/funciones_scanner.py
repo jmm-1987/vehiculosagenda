@@ -76,18 +76,68 @@ def subir_archivo_ftp(archivo_local, nombre_remoto, cliente_id=None):
         # Subir el archivo al destino principal
         with open(archivo_local, 'rb') as file:
             ftp.storbinary(f'STOR {nombre_remoto}', file)
-
-        # Adicional: subir copia a BACKUP específico: /ALDIPOD/BACKUP (sin crear subcarpetas)
-        try:
-            ftp.cwd('/ALDIPOD/BACKUP')
-            with open(archivo_local, 'rb') as file:
-                ftp.storbinary(f'STOR {nombre_remoto}', file)
-        except Exception as e:
-            ftp.quit()
-            return False, f"Error al subir a /ALDIPOD/BACKUP: {str(e)}"
         
+        # Cerrar conexión FTP principal
         ftp.quit()
-        return True, f"Archivo {nombre_remoto} subido correctamente (principal y BACKUP)"
+        
+        # Adicional: subir copia a servidor SFTP de backup
+        try:
+            import paramiko
+            import stat
+            
+            # Configuración del servidor SFTP de backup
+            sftp_host = 'home613353667.1and1-data.host'
+            sftp_user = 'u83991941-tsb'
+            sftp_pass = 'tsb010Tx.MX'
+            sftp_port = 22
+            sftp_dir = 'ALDIPOD_BACKUP'
+            
+            print(f"DEBUG SFTP: Intentando conectar a {sftp_host}:{sftp_port} con usuario {sftp_user}")
+            
+            # Conectar por SFTP
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(sftp_host, port=sftp_port, username=sftp_user, password=sftp_pass, timeout=30)
+            print("DEBUG SFTP: Conexión SSH exitosa")
+            
+            sftp = ssh.open_sftp()
+            print("DEBUG SFTP: Conexión SFTP exitosa")
+            
+            # Crear directorio si no existe
+            try:
+                sftp.mkdir(sftp_dir)
+                print(f"DEBUG SFTP: Directorio {sftp_dir} creado")
+            except FileExistsError:
+                print(f"DEBUG SFTP: Directorio {sftp_dir} ya existe")
+            except OSError as mkdir_err:
+                if "File exists" in str(mkdir_err) or "Failure" in str(mkdir_err):
+                    print(f"DEBUG SFTP: Directorio {sftp_dir} ya existe (OSError)")
+                else:
+                    print(f"DEBUG SFTP: Error al crear directorio: {mkdir_err}")
+            except Exception as mkdir_err:
+                print(f"DEBUG SFTP: Error al crear directorio: {mkdir_err}")
+            
+            # Subir archivo
+            remote_path = f"{sftp_dir}/{nombre_remoto}"
+            print(f"DEBUG SFTP: Subiendo archivo a {remote_path}")
+            sftp.put(archivo_local, remote_path)
+            print(f"DEBUG SFTP: Archivo subido exitosamente")
+            
+            sftp.close()
+            ssh.close()
+            print("DEBUG SFTP: Conexiones cerradas correctamente")
+            
+        except ImportError:
+            print("WARNING: paramiko no está instalado. No se puede subir backup SFTP.")
+        except paramiko.AuthenticationException as auth_err:
+            print(f"WARNING: Error de autenticación SFTP: {auth_err}")
+        except paramiko.SSHException as ssh_err:
+            print(f"WARNING: Error SSH/SFTP: {ssh_err}")
+        except Exception as sftp_error:
+            print(f"WARNING: Error al subir backup SFTP: {type(sftp_error).__name__}: {str(sftp_error)}")
+            # No fallar la operación principal por error de backup
+        
+        return True, f"Archivo {nombre_remoto} subido correctamente (principal y SFTP backup)"
         
     except ftplib.all_errors as e:
         return False, f"Error FTP: {str(e)}"
@@ -217,17 +267,12 @@ def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo):
     
     nombre_cliente = clientes_map.get(cliente_id, f'Cliente {cliente_id}')
     
-    # Cargar configuración FTP para construir el enlace
-    config = cargar_configuracion_ftp()
-    if config:
-        host = config.get('host', '')
-        # El enlace debe apuntar al directorio de backup donde se descargan las imágenes
-        backup_dir = 'ALDIPOD/BACKUP'
-        enlace = f"ftp://{host}/{backup_dir}/{nombre_archivo}"
-        tipo_documento = 'INCIDENCIA'
-    else:
-        enlace = nombre_archivo
-        tipo_documento = 'INCIDENCIA'
+    # Construir enlace al servidor SFTP de backup (más confiable para descargas)
+    sftp_host = 'home613353667.1and1-data.host'
+    sftp_user = 'u83991941-tsb'
+    sftp_dir = 'ALDIPOD_BACKUP'
+    enlace = f"sftp://{sftp_user}@{sftp_host}/{sftp_dir}/{nombre_archivo}"
+    tipo_documento = 'INCIDENCIA'
     
     try:
         # Crear fecha con zona horaria de España (UTC+2)

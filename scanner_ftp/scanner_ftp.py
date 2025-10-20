@@ -70,54 +70,105 @@ def register_scanner_ftp_routes(app):
             return "Incidencia no encontrada", 404
         
         try:
-            # Parsear URL FTP
+            # Parsear URL SFTP/FTP
             enlace = incidencia.enlace_imagen
             print(f"DEBUG: Enlace de imagen: {enlace}")  # Debug
             
-            if not enlace.startswith('ftp://'):
-                return f"Enlace no válido: {enlace}", 400
-            
-            # Extraer componentes del URL FTP
-            url_parts = enlace.replace('ftp://', '').split('/')
-            host = url_parts[0]
-            file_path = '/'.join(url_parts[1:])
-            filename = url_parts[-1]
-            
-            print(f"DEBUG: Host: {host}, File path: {file_path}, Filename: {filename}")  # Debug
-            
-            # Cargar configuración FTP
-            from .funciones_scanner import cargar_configuracion_ftp
-            config = cargar_configuracion_ftp()
-            if not config:
-                return "Configuración FTP no encontrada", 500
-            
-            print(f"DEBUG: Config FTP: {config}")  # Debug
-            
-            # Conectar a FTP
-            try:
-                ftp = FTP(host)
-                ftp.login(config.get('user', ''), config.get('password', ''))
-                print("DEBUG: Conectado a FTP exitosamente")  # Debug
-            except Exception as conn_err:
-                return f"No se pudo conectar al FTP ({host}). Posible bloqueo de red/puerto o credenciales incorrectas: {str(conn_err)}", 500
-            
-            # Verificar si el archivo existe
-            try:
-                file_size = ftp.size(file_path)
-                print(f"DEBUG: Archivo encontrado, tamaño: {file_size} bytes")  # Debug
-            except Exception as size_err:
-                print(f"DEBUG: No se pudo obtener tamaño del archivo: {file_path} -> {size_err}")  # Debug
+            if enlace.startswith('sftp://'):
+                # Manejar enlaces SFTP
+                import paramiko
+                
+                # Extraer componentes del URL SFTP: sftp://user@host/path/file
+                url_parts = enlace.replace('sftp://', '').split('/')
+                user_host = url_parts[0]
+                if '@' in user_host:
+                    user, host = user_host.split('@')
+                else:
+                    user, host = '', user_host
+                file_path = '/'.join(url_parts[1:])
+                filename = url_parts[-1]
+                
+                print(f"DEBUG: SFTP Host: {host}, User: {user}, File path: {file_path}, Filename: {filename}")  # Debug
+                
+                # Configuración SFTP de backup
+                sftp_config = {
+                    'host': 'home613353667.1and1-data.host',
+                    'user': 'u83991941-tsb',
+                    'password': 'tsb010Tx.MX',
+                    'port': 22
+                }
+                
+                # Conectar por SFTP
+                ssh = paramiko.SSHClient()
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                ssh.connect(sftp_config['host'], port=sftp_config['port'], 
+                           username=sftp_config['user'], password=sftp_config['password'])
+                
+                sftp = ssh.open_sftp()
+                
+                # Verificar si el archivo existe
+                try:
+                    file_stat = sftp.stat(file_path)
+                    print(f"DEBUG: Archivo encontrado, tamaño: {file_stat.st_size} bytes")  # Debug
+                except FileNotFoundError:
+                    sftp.close()
+                    ssh.close()
+                    return f"Archivo no encontrado en SFTP: {file_path}", 404
+                
+                # Crear archivo temporal
+                temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f'_{filename}')
+                
+                # Descargar archivo
+                sftp.get(file_path, temp_file.name)
+                
+                sftp.close()
+                ssh.close()
+                
+            elif enlace.startswith('ftp://'):
+                # Manejar enlaces FTP (compatibilidad hacia atrás)
+                # Extraer componentes del URL FTP
+                url_parts = enlace.replace('ftp://', '').split('/')
+                host = url_parts[0]
+                file_path = '/'.join(url_parts[1:])
+                filename = url_parts[-1]
+                
+                print(f"DEBUG: FTP Host: {host}, File path: {file_path}, Filename: {filename}")  # Debug
+                
+                # Cargar configuración FTP
+                from .funciones_scanner import cargar_configuracion_ftp
+                config = cargar_configuracion_ftp()
+                if not config:
+                    return "Configuración FTP no encontrada", 500
+                
+                print(f"DEBUG: Config FTP: {config}")  # Debug
+                
+                # Conectar a FTP
+                try:
+                    ftp = FTP(host)
+                    ftp.login(config.get('user', ''), config.get('password', ''))
+                    print("DEBUG: Conectado a FTP exitosamente")  # Debug
+                except Exception as conn_err:
+                    return f"No se pudo conectar al FTP ({host}). Posible bloqueo de red/puerto o credenciales incorrectas: {str(conn_err)}", 500
+                
+                # Verificar si el archivo existe
+                try:
+                    file_size = ftp.size(file_path)
+                    print(f"DEBUG: Archivo encontrado, tamaño: {file_size} bytes")  # Debug
+                except Exception as size_err:
+                    print(f"DEBUG: No se pudo obtener tamaño del archivo: {file_path} -> {size_err}")  # Debug
+                    ftp.quit()
+                    return f"Archivo no encontrado en FTP: {file_path}", 404
+                
+                # Crear archivo temporal
+                temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f'_{filename}')
+                
+                # Descargar archivo
+                with open(temp_file.name, 'wb') as f:
+                    ftp.retrbinary(f'RETR {file_path}', f.write)
+                
                 ftp.quit()
-                return f"Archivo no encontrado en FTP: {file_path}", 404
-            
-            # Crear archivo temporal
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f'_{filename}')
-            
-            # Descargar archivo
-            with open(temp_file.name, 'wb') as f:
-                ftp.retrbinary(f'RETR {file_path}', f.write)
-            
-            ftp.quit()
+            else:
+                return f"Enlace no válido: {enlace}", 400
             
             # Verificar que el archivo se descargó correctamente
             if os.path.getsize(temp_file.name) == 0:
@@ -155,37 +206,78 @@ def register_scanner_ftp_routes(app):
     @app.route('/test_ftp')
     @login_required
     def test_ftp():
-        """Prueba la conectividad FTP"""
+        """Prueba la conectividad FTP y SFTP"""
         from .funciones_scanner import cargar_configuracion_ftp
         from ftplib import FTP
         
+        results = {}
+        
+        # Test FTP original
         try:
             config = cargar_configuracion_ftp()
             if not config:
-                return jsonify({'success': False, 'error': 'Configuración FTP no encontrada'})
+                results['ftp'] = {'success': False, 'error': 'Configuración FTP no encontrada'}
+            else:
+                ftp = FTP(config.get('host', ''))
+                ftp.login(config.get('user', ''), config.get('password', ''))
+                
+                # Listar directorio backup
+                backup_files = []
+                try:
+                    ftp.cwd('/ALDIPOD/BACKUP')
+                    backup_files = ftp.nlst()
+                except:
+                    pass
+                
+                ftp.quit()
+                
+                results['ftp'] = {
+                    'success': True, 
+                    'message': 'Conexión FTP exitosa',
+                    'host': config.get('host', ''),
+                    'backup_files': backup_files[:10]
+                }
+                
+        except Exception as e:
+            results['ftp'] = {'success': False, 'error': str(e)}
+        
+        # Test SFTP backup
+        try:
+            import paramiko
             
-            ftp = FTP(config.get('host', ''))
-            ftp.login(config.get('user', ''), config.get('password', ''))
+            sftp_host = 'home613353667.1and1-data.host'
+            sftp_user = 'u83991941-tsb'
+            sftp_pass = 'tsb010Tx.MX'
+            sftp_port = 22
+            sftp_dir = 'ALDIPOD_BACKUP'
             
-            # Listar directorio backup
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(sftp_host, port=sftp_port, username=sftp_user, password=sftp_pass, timeout=30)
+            
+            sftp = ssh.open_sftp()
+            
+            # Listar archivos en directorio backup
             backup_files = []
             try:
-                ftp.cwd('/ALDIPOD/BACKUP')
-                backup_files = ftp.nlst()
-            except:
-                pass
+                backup_files = sftp.listdir(sftp_dir)
+            except FileNotFoundError:
+                backup_files = []
             
-            ftp.quit()
+            sftp.close()
+            ssh.close()
             
-            return jsonify({
-                'success': True, 
-                'message': 'Conexión FTP exitosa',
-                'host': config.get('host', ''),
-                'backup_files': backup_files[:10]  # Solo los primeros 10
-            })
+            results['sftp'] = {
+                'success': True,
+                'message': 'Conexión SFTP exitosa',
+                'host': sftp_host,
+                'backup_files': backup_files[:10]
+            }
             
         except Exception as e:
-            return jsonify({'success': False, 'error': str(e)})
+            results['sftp'] = {'success': False, 'error': str(e)}
+        
+        return jsonify(results)
     
     @app.route('/validar_codigo', methods=['POST'])
     @login_required
