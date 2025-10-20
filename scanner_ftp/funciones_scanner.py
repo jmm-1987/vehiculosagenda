@@ -7,6 +7,7 @@ import os
 from datetime import datetime, timezone, timedelta
 import db
 from models import IncidenciaAldipod
+from typing import List, Tuple
 
 def cargar_configuracion_ftp():
     """Carga la configuración del FTP desde el archivo JSON"""
@@ -180,8 +181,16 @@ def limpiar_nombre_archivo(codigo_barras, cliente_id=None):
     for char in caracteres_invalidos:
         nombre_limpio = nombre_limpio.replace(char, '_')
     
-    # Todos los clientes usan solo el código de barras sin timestamp
+    # Todos los clientes usan solo el código de barras sin timestamp (extensión por defecto .jpg)
     return f"{nombre_limpio}.jpg"
+
+def generar_nombre_pdf(codigo_barras: str) -> str:
+    """Genera un nombre de archivo PDF a partir del código de barras."""
+    caracteres_invalidos = '<>:"/\\|?*'
+    nombre_limpio = codigo_barras.strip()
+    for char in caracteres_invalidos:
+        nombre_limpio = nombre_limpio.replace(char, '_')
+    return f"{nombre_limpio}.pdf"
 
 def guardar_imagen_temporal(imagen_data, nombre_archivo):
     """
@@ -211,6 +220,80 @@ def guardar_imagen_temporal(imagen_data, nombre_archivo):
         f.write(base64.b64decode(imagen_data))
     
     return ruta_completa
+
+def crear_pdf_temporal(imagenes_base64: List[str], nombre_pdf: str) -> Tuple[bool, str, str]:
+    """
+    Crea un PDF temporal a partir de una lista de imágenes en base64.
+    Devuelve (success, ruta_pdf, error_message)
+    """
+    try:
+        import base64
+        import fitz  # PyMuPDF
+        # Directorio temporal
+        directorio_temp = 'static/temp_scanner'
+        if not os.path.exists(directorio_temp):
+            os.makedirs(directorio_temp)
+
+        ruta_pdf = os.path.join(directorio_temp, nombre_pdf)
+
+        # Crear documento PDF A4 con 2 imágenes por página (media página cada una)
+        pdf_doc = fitz.open()
+        a4_rect = fitz.paper_rect("a4")  # tamaño A4 en puntos
+        page = None
+        place_top = True
+        margin = 20  # margen en puntos
+
+        for idx, img_b64 in enumerate(imagenes_base64):
+            if 'base64,' in img_b64:
+                img_b64 = img_b64.split('base64,')[1]
+            img_bytes = base64.b64decode(img_b64)
+
+            # Guardar imagen temporalmente en disco (soporte formatos variados)
+            tmp_img_path = os.path.join(directorio_temp, f"_pdf_img_{idx}.jpg")
+            with open(tmp_img_path, 'wb') as f:
+                f.write(img_bytes)
+
+            try:
+                # Crear nueva página para cada par de imágenes
+                if page is None or not place_top:
+                    page = pdf_doc.new_page(width=a4_rect.width, height=a4_rect.height)
+
+                # Calcular rectángulos superior e inferior con márgenes
+                if place_top:
+                    target_rect = fitz.Rect(
+                        margin,
+                        margin,
+                        a4_rect.width - margin,
+                        a4_rect.height / 2 - margin
+                    )
+                else:
+                    target_rect = fitz.Rect(
+                        margin,
+                        a4_rect.height / 2 + margin,
+                        a4_rect.width - margin,
+                        a4_rect.height - margin
+                    )
+
+                # Insertar imagen manteniendo proporción dentro del rectángulo destino
+                page.insert_image(target_rect, filename=tmp_img_path, keep_proportion=True)
+
+                # Alternar posición: top -> bottom -> nueva página
+                if place_top:
+                    place_top = False
+                else:
+                    place_top = True
+                    page = None
+            finally:
+                try:
+                    os.remove(tmp_img_path)
+                except:
+                    pass
+
+        pdf_doc.save(ruta_pdf)
+        pdf_doc.close()
+        return True, ruta_pdf, ''
+    except Exception as e:
+        return False, '', str(e)
 
 def limpiar_archivos_temporales():
     """

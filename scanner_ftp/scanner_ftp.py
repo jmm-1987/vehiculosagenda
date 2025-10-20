@@ -178,11 +178,13 @@ def register_scanner_ftp_routes(app):
             print(f"DEBUG: Archivo descargado exitosamente: {temp_file.name}")  # Debug
             
             # Enviar archivo
+            # Setear mimetype según la extensión
+            mimetype = 'application/pdf' if filename.lower().endswith('.pdf') else 'image/jpeg'
             response = send_file(
                 temp_file.name,
                 as_attachment=True,
                 download_name=filename,
-                mimetype='image/jpeg'
+                mimetype=mimetype
             )
             
             # Limpiar archivo temporal después de enviar
@@ -300,47 +302,37 @@ def register_scanner_ftp_routes(app):
     @app.route('/subir_imagen_scanner', methods=['POST'])
     @login_required
     def subir_imagen_scanner():
-        """Recibe la imagen y el código de barras, y sube al FTP"""
+        """Recibe una o varias imágenes y el código, genera un PDF si hay varias y sube."""
+        from .funciones_scanner import crear_pdf_temporal, generar_nombre_pdf
         data = request.get_json()
-        imagen_data = data.get('imagen', '')
+        imagen_data = data.get('imagen')  # string base64 (compat)
+        imagenes = data.get('imagenes')   # lista de strings base64
         codigo_barras = data.get('codigo', '')
         cliente_id = data.get('cliente_id', None)
-        
-        if not imagen_data or not codigo_barras:
-            return jsonify({
-                'success': False,
-                'mensaje': 'Faltan datos: imagen o código de barras'
-            })
-        
+
+        if (not imagen_data and not imagenes) or not codigo_barras:
+            return jsonify({'success': False,'mensaje': 'Faltan datos: imagen(es) o código de barras'})
+
         try:
-            # Limpiar nombre de archivo
-            nombre_archivo = limpiar_nombre_archivo(codigo_barras, cliente_id)
-            
-            # Guardar imagen temporalmente
-            ruta_temporal = guardar_imagen_temporal(imagen_data, nombre_archivo)
-            
-            # Subir al FTP
-            success, mensaje = subir_archivo_ftp(ruta_temporal, nombre_archivo, cliente_id)
-            
-            # Si la subida fue exitosa, registrar la incidencia
+            usuario = current_user.username if current_user.is_authenticated else "Anónimo"
+
+            # Normalizar a lista siempre
+            imagenes_norm = imagenes if (imagenes and isinstance(imagenes, list)) else ([imagen_data] if imagen_data else [])
+            # Generar PDF siempre
+            nombre_pdf = generar_nombre_pdf(codigo_barras)
+            ok, ruta_pdf, err = crear_pdf_temporal(imagenes_norm, nombre_pdf)
+            if not ok:
+                return jsonify({'success': False, 'mensaje': f'Error creando PDF: {err}'})
+
+            # Subir PDF
+            success, mensaje = subir_archivo_ftp(ruta_pdf, nombre_pdf, cliente_id)
             if success:
-                usuario = current_user.username if current_user.is_authenticated else "Anónimo"
-                registrar_incidencia(usuario, cliente_id, codigo_barras, nombre_archivo)
-            
-            # Limpiar archivo temporal
+                registrar_incidencia(usuario, cliente_id, codigo_barras, nombre_pdf)
             try:
-                os.remove(ruta_temporal)
+                os.remove(ruta_pdf)
             except:
                 pass
-            
-            return jsonify({
-                'success': success,
-                'mensaje': mensaje
-            })
-            
+            return jsonify({'success': success, 'mensaje': mensaje})
         except Exception as e:
-            return jsonify({
-                'success': False,
-                'mensaje': f'Error al procesar la imagen: {str(e)}'
-            })
+            return jsonify({'success': False,'mensaje': f'Error al procesar la imagen: {str(e)}'})
 

@@ -592,6 +592,7 @@
         let codigoBarrasActual = null;
         let codeReader = null;
         let estadoActual = 'init'; // init, scanning_barcode, barcode_confirmed, taking_photo, photo_preview
+        let imagenesCapturadas = []; // base64 strings acumuladas
 
         // Mapeo de nombres de clientes
         const nombresClientes = {
@@ -624,6 +625,7 @@
             }
             document.getElementById('scannerModal').style.display = 'none';
             document.getElementById('previewImage').classList.add('hidden');
+            imagenesCapturadas = [];
             document.getElementById('inputManualContainer').classList.add('hidden');
             document.getElementById('video').style.display = 'block';
             document.getElementById('codigoManual').value = '';
@@ -799,10 +801,11 @@
                 video.srcObject = stream;
                 estadoActual = 'taking_photo';
                 
-                actualizarBotones([
-                    { texto: '📷', clase: 'btn-primary', funcion: 'capturarFoto()' },
-                    { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
-                ]);
+            actualizarBotones([
+                { texto: '📷', clase: 'btn-primary', funcion: 'capturarFoto()' },
+                { texto: '⤴', clase: 'btn-secondary', funcion: 'enviarFotosAcumuladas()' },
+                { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
+            ]);
                 
             } catch (error) {
                 console.error('Error al acceder a la cámara:', error);
@@ -836,40 +839,39 @@
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             
             const imagenDataURL = canvas.toDataURL('image/jpeg', 0.9);
+            imagenesCapturadas.push(imagenDataURL);
             
             preview.src = imagenDataURL;
             preview.classList.remove('hidden');
-            video.style.display = 'none';
             
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-            }
-            
-            estadoActual = 'photo_preview';
-            document.getElementById('stepIndicator').textContent = '4️⃣ Enviar';
+            // Mantener la cámara activa para capturar más
+            estadoActual = 'taking_photo';
+            document.getElementById('stepIndicator').textContent = `3️⃣ Fotografía (${imagenesCapturadas.length} capturada(s))`;
             
             actualizarBotones([
-                { texto: '✓', clase: 'btn-success', funcion: 'enviarFoto()' },
-                { texto: '✗', clase: 'btn-danger', funcion: 'iniciarCamara()' }
+                { texto: '📷', clase: 'btn-primary', funcion: 'capturarFoto()' },
+                { texto: '⤴', clase: 'btn-success', funcion: 'enviarFotosAcumuladas()' },
+                { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
             ]);
         }
 
-        async function enviarFoto() {
+        async function enviarFotosAcumuladas() {
             mostrarLoading();
             
             try {
-                const imagenDataURL = document.getElementById('previewImage').src;
-                
+                // Siempre enviar como lista para generar PDF
+                const body = {
+                    imagenes: imagenesCapturadas.length > 0 ? imagenesCapturadas : [document.getElementById('previewImage').src],
+                    codigo: codigoBarrasActual,
+                    cliente_id: clienteActual
+                };
+
                 const response = await fetch('/subir_imagen_scanner', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        imagen: imagenDataURL,
-                        codigo: codigoBarrasActual,
-                        cliente_id: clienteActual
-                    })
+                    body: JSON.stringify(body)
                 });
                 
                 const data = await response.json();
@@ -882,13 +884,13 @@
                 } else {
                     mostrarMensaje(data.mensaje, 'error');
                     actualizarBotones([
-                        { texto: '🔄', clase: 'btn-danger', funcion: 'enviarFoto()' },
+                        { texto: '🔄', clase: 'btn-danger', funcion: 'enviarFotosAcumuladas()' },
                         { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
                     ]);
                 }
             } catch (error) {
                 console.error('Error:', error);
-                mostrarMensaje('Error al enviar la imagen', 'error');
+                mostrarMensaje('Error al enviar la(s) imagen(es)', 'error');
             }
         }
 
