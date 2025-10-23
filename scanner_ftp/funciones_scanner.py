@@ -221,12 +221,14 @@ def guardar_imagen_temporal(imagen_data, nombre_archivo):
     
     return ruta_completa
 
-def crear_pdf_temporal(imagenes_base64: List[str], nombre_pdf: str) -> Tuple[bool, str, str]:
+def crear_pdf_temporal(imagenes_base64: List[str], nombre_pdf: str, medidas_por_foto=None) -> Tuple[bool, str, str]:
     """
     Crea un PDF temporal a partir de una lista de imágenes en base64.
     Cada imagen ocupa la mitad superior de una página A4, centrada, manteniendo proporción.
+    Si se proporcionan medidas por foto, se añaden debajo de cada imagen correspondiente.
     Devuelve (success, ruta_pdf, error_message)
     """
+    print(f"DEBUG: crear_pdf_temporal llamado con medidas_por_foto: {medidas_por_foto}")
     try:
         import base64
         import fitz  # PyMuPDF
@@ -282,6 +284,70 @@ def crear_pdf_temporal(imagenes_base64: List[str], nombre_pdf: str) -> Tuple[boo
 
                 # Insertar la imagen desde los bytes
                 page.insert_image(target_rect, stream=img_bytes)
+                
+                # Si hay medidas para esta foto específica, añadirlas debajo de la imagen
+                print(f"DEBUG: idx={idx}, tipo={type(idx)}")
+                print(f"DEBUG: medidas_por_foto={medidas_por_foto}, tipo={type(medidas_por_foto)}")
+                if medidas_por_foto:
+                    print(f"DEBUG: len(medidas_por_foto)={len(medidas_por_foto)}")
+                    if idx < len(medidas_por_foto):
+                        print(f"DEBUG: medidas_por_foto[{idx}]={medidas_por_foto[idx]}")
+                
+                # Verificación más robusta
+                medidas_para_esta_foto = None
+                if medidas_por_foto:
+                    try:
+                        # Convertir idx a entero si es necesario
+                        idx_int = int(idx)
+                        if idx_int < len(medidas_por_foto) and medidas_por_foto[idx_int] is not None:
+                            medidas_para_esta_foto = medidas_por_foto[idx_int]
+                            print(f"DEBUG: Medidas encontradas para foto {idx_int + 1}: {medidas_para_esta_foto}")
+                    except (ValueError, TypeError, IndexError) as e:
+                        print(f"DEBUG: Error accediendo a medidas para foto {idx}: {e}")
+                
+                if medidas_para_esta_foto:
+                    medidas = medidas_para_esta_foto
+                    print(f"DEBUG: Añadiendo medidas para foto {idx + 1}: {medidas}")
+                    medidas_texto = f"Medidas: {medidas['ancho']}cm x {medidas['largo']}cm x {medidas['alto']}cm"
+                    print(f"DEBUG: Texto de medidas: {medidas_texto}")
+                    
+                    # Insertar texto con medidas usando método más robusto
+                    try:
+                        # Calcular posición central horizontal manualmente
+                        texto_y = target_rect.y1 + 30  # Más espacio debajo de la imagen
+                        
+                        # Calcular ancho aproximado del texto para centrarlo
+                        texto_ancho_aprox = len(medidas_texto) * 7  # Aproximación
+                        texto_x = (a4_width - texto_ancho_aprox) / 2
+                        
+                        # Asegurar que no se salga de los límites
+                        texto_x = max(50, min(texto_x, a4_width - 50))
+                        
+                        page.insert_text(
+                            (texto_x, texto_y),
+                            medidas_texto,
+                            fontsize=14,
+                            color=(0, 0, 0)  # Negro
+                        )
+                        print(f"DEBUG: Texto insertado con insert_text en posición ({texto_x}, {texto_y})")
+                        print(f"DEBUG: Texto: '{medidas_texto}', Ancho aprox: {texto_ancho_aprox}")
+                    except Exception as e_texto:
+                        print(f"DEBUG: Error con insert_text: {e_texto}")
+                        # Fallback con insert_textbox
+                        try:
+                            texto_rect = fitz.Rect(0, target_rect.y1 + 20, a4_width, target_rect.y1 + 50)
+                            page.insert_textbox(
+                                texto_rect,
+                                medidas_texto,
+                                fontsize=12,
+                                color=(0, 0, 0),
+                                align=fitz.TEXT_ALIGN_CENTER
+                            )
+                            print(f"DEBUG: Texto insertado con insert_textbox como fallback")
+                        except Exception as e_fallback:
+                            print(f"DEBUG: Error con fallback: {e_fallback}")
+                else:
+                    print(f"DEBUG: No hay medidas para la foto {idx + 1}")
             except Exception as e_item:
                 # Continuar con el resto aunque una imagen falle
                 print(f"WARNING: Error insertando imagen en PDF: {e_item}")
@@ -316,7 +382,7 @@ def limpiar_archivos_temporales():
                 except:
                     pass
 
-def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo):
+def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo, tipo_documento="INCIDENCIA", medidas=None):
     """
     Registra una incidencia en la base de datos
     
@@ -325,7 +391,11 @@ def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo):
         cliente_id: identificador del cliente (1-8)
         referencia: código de barras escaneado
         nombre_archivo: nombre del archivo subido
+        tipo_documento: tipo de documento (INCIDENCIA o MEDIDAS)
+        medidas: medidas para el documento (puede ser un diccionario simple o array de medidas por foto)
     """
+    print(f"DEBUG: registrar_incidencia llamado con medidas: {medidas}")
+    print(f"DEBUG: tipo de medidas: {type(medidas)}")
     # Mapeo de cliente_id a nombre de cliente
     clientes_map = {
         1: 'XPO Logistics',
@@ -367,7 +437,22 @@ def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo):
     sftp_user = 'u83991941-tsb'
     sftp_dir = 'ALDIPOD_BACKUP'
     enlace = f"sftp://{sftp_user}@{sftp_host}/{sftp_dir}/{nombre_archivo}"
-    tipo_documento = 'INCIDENCIA'
+    
+    # Si es tipo MEDIDAS y hay medidas, añadirlas al nombre del archivo para identificación
+    if tipo_documento == 'MEDIDAS' and medidas:
+        # Manejar tanto medidas simples como medidas por foto
+        if isinstance(medidas, list) and len(medidas) > 0:
+            # Es un array de medidas por foto, usar la primera foto como referencia
+            primera_medida = medidas[0]
+            if primera_medida:
+                medidas_str = f"_{primera_medida['ancho']}x{primera_medida['largo']}x{primera_medida['alto']}cm"
+                nombre_archivo_con_medidas = nombre_archivo.replace('.pdf', f'{medidas_str}.pdf')
+                enlace = f"sftp://{sftp_user}@{sftp_host}/{sftp_dir}/{nombre_archivo_con_medidas}"
+        elif isinstance(medidas, dict):
+            # Es un diccionario simple de medidas
+            medidas_str = f"_{medidas['ancho']}x{medidas['largo']}x{medidas['alto']}cm"
+            nombre_archivo_con_medidas = nombre_archivo.replace('.pdf', f'{medidas_str}.pdf')
+            enlace = f"sftp://{sftp_user}@{sftp_host}/{sftp_dir}/{nombre_archivo_con_medidas}"
     
     try:
         # Crear fecha con zona horaria de España (UTC+2)

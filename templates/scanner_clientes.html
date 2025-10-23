@@ -522,9 +522,44 @@
         </div>
     </div>
     <div class="container">
-        <h1>📸 Aldipod</h1>
+        <h1 id="ubicacion-principal">📸 Aldipod</h1>
         
-        <div class="clientes-grid">
+        <!-- Opciones para usuario almacen -->
+        <div id="opcionesAlmacen" style="display: none; margin-bottom: 30px;">
+            <h2 style="text-align: center; color: #333; margin-bottom: 20px;">Selecciona el tipo de registro:</h2>
+            <div style="display: flex; justify-content: center; gap: 30px;">
+                <button onclick="seleccionarTipo('INCIDENCIA')" style="
+                    padding: 20px 40px;
+                    background: linear-gradient(135deg, #28a745, #20c997);
+                    color: white;
+                    border: none;
+                    border-radius: 10px;
+                    font-size: 18px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+                    transition: transform 0.2s;
+                " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    📋 INCIDENCIA
+                </button>
+                <button onclick="seleccionarTipo('MEDIDAS')" style="
+                    padding: 20px 40px;
+                    background: linear-gradient(135deg, #007bff, #6610f2);
+                    color: white;
+                    border: none;
+                    border-radius: 10px;
+                    font-size: 18px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+                    transition: transform 0.2s;
+                " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    📏 MEDIDAS
+                </button>
+            </div>
+        </div>
+        
+        <div class="clientes-grid" id="clientesGrid">
             <div class="cliente-card" onclick="abrirScanner(1)">
                 <img src="{{ url_for('static', filename='scanner/logoxpologistics.jpg') }}" alt="XPO Logistics" class="cliente-logo">
             </div>
@@ -607,13 +642,48 @@
                 ubicacion = 'Mérida';
             }
             
-            // Actualizar los títulos
-            document.getElementById('ubicacion-titulo').textContent = ubicacion;
-            document.getElementById('ubicacion-principal').textContent = `📸 ${ubicacion}`;
+            // Actualizar los títulos (con verificación de existencia)
+            const ubicacionTitulo = document.getElementById('ubicacion-titulo');
+            const ubicacionPrincipal = document.getElementById('ubicacion-principal');
+            
+            if (ubicacionTitulo) {
+                ubicacionTitulo.textContent = ubicacion;
+            }
+            
+            if (ubicacionPrincipal) {
+                ubicacionPrincipal.textContent = `📸 ${ubicacion}`;
+            }
+            
+            // Si el usuario es almacen, mostrar opciones
+            if (usuarioActual === 'almacen') {
+                const opcionesElement = document.getElementById('opcionesAlmacen');
+                const clientesElement = document.getElementById('clientesGrid');
+                
+                if (opcionesElement) {
+                    opcionesElement.style.display = 'block';
+                }
+                if (clientesElement) {
+                    clientesElement.style.display = 'none';
+                }
+            }
+        }
+        
+        // Función para seleccionar tipo de registro
+        function seleccionarTipo(tipo) {
+            tipoRegistro = tipo;
+            document.getElementById('opcionesAlmacen').style.display = 'none';
+            document.getElementById('clientesGrid').style.display = 'grid';
+            
+            // Actualizar título según el tipo
+            if (tipo === 'MEDIDAS') {
+                document.getElementById('ubicacion-principal').textContent = `📏 ${document.getElementById('ubicacion-principal').textContent.split(' ')[1]} - MEDIDAS`;
+            }
         }
         
         // Ejecutar al cargar la página
-        document.addEventListener('DOMContentLoaded', detectarUbicacion);
+        document.addEventListener('DOMContentLoaded', function() {
+            detectarUbicacion();
+        });
         
         let stream = null;
         let clienteActual = null;
@@ -621,6 +691,8 @@
         let codeReader = null;
         let estadoActual = 'init'; // init, scanning_barcode, barcode_confirmed, taking_photo, photo_preview
         let imagenesCapturadas = []; // base64 strings acumuladas
+        let medidasPorFoto = []; // array de medidas correspondientes a cada foto
+        let tipoRegistro = 'INCIDENCIA'; // INCIDENCIA o MEDIDAS
 
         // Mapeo de nombres de clientes
         const nombresClientes = {
@@ -869,8 +941,13 @@
             const imagenDataURL = canvas.toDataURL('image/jpeg', 0.9);
             imagenesCapturadas.push(imagenDataURL);
             
-            // Siempre mostrar mensaje emergente después de cada foto
-            mostrarMensajeEmergente();
+            // Si es tipo MEDIDAS, pedir medidas para esta foto específica
+            if (tipoRegistro === 'MEDIDAS') {
+                mostrarFormularioMedidasPorFoto(imagenesCapturadas.length - 1); // índice de la foto actual
+            } else {
+                // Para INCIDENCIA, usar el flujo original
+                mostrarMensajeEmergente();
+            }
         }
 
         function mostrarMensajeEmergente() {
@@ -955,6 +1032,361 @@
         }
 
         async function enviarFotosAcumuladas() {
+            // Si es tipo MEDIDAS, mostrar formulario de medidas primero
+            if (tipoRegistro === 'MEDIDAS') {
+                mostrarFormularioMedidas();
+                return;
+            }
+            
+            // Para INCIDENCIA, enviar directamente
+            enviarDatos();
+        }
+
+        function mostrarFormularioMedidasPorFoto(indiceFoto) {
+            // Crear modal para medidas de esta foto específica
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.7);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+            `;
+            
+            const contenido = document.createElement('div');
+            contenido.style.cssText = `
+                background: white;
+                padding: 30px;
+                border-radius: 10px;
+                text-align: center;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                max-width: 500px;
+                width: 90%;
+            `;
+            
+            contenido.innerHTML = `
+                <h3 style="margin-bottom: 20px; color: #333;">📏 Medidas de la foto ${indiceFoto + 1}</h3>
+                <p style="margin-bottom: 25px; color: #666;">Introduce las medidas en centímetros:</p>
+                <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label style="min-width: 60px; font-weight: bold;">Ancho:</label>
+                        <input type="number" id="ancho_${indiceFoto}" placeholder="cm" style="
+                            padding: 8px 12px;
+                            border: 2px solid #ddd;
+                            border-radius: 6px;
+                            font-size: 16px;
+                            width: 100px;
+                        " required>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label style="min-width: 60px; font-weight: bold;">Largo:</label>
+                        <input type="number" id="largo_${indiceFoto}" placeholder="cm" style="
+                            padding: 8px 12px;
+                            border: 2px solid #ddd;
+                            border-radius: 6px;
+                            font-size: 16px;
+                            width: 100px;
+                        " required>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label style="min-width: 60px; font-weight: bold;">Alto:</label>
+                        <input type="number" id="alto_${indiceFoto}" placeholder="cm" style="
+                            padding: 8px 12px;
+                            border: 2px solid #ddd;
+                            border-radius: 6px;
+                            font-size: 16px;
+                            width: 100px;
+                        " required>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <button id="btnGuardarMedidas_${indiceFoto}" style="
+                        padding: 12px 24px;
+                        background: #28a745;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 16px;
+                        font-weight: bold;
+                    ">✅ Guardar medidas</button>
+                </div>
+            `;
+            
+            modal.appendChild(contenido);
+            document.body.appendChild(modal);
+            
+            // Event listener para guardar medidas
+            document.getElementById(`btnGuardarMedidas_${indiceFoto}`).onclick = function() {
+                const ancho = document.getElementById(`ancho_${indiceFoto}`).value;
+                const largo = document.getElementById(`largo_${indiceFoto}`).value;
+                const alto = document.getElementById(`alto_${indiceFoto}`).value;
+                
+                if (!ancho || !largo || !alto) {
+                    alert('Por favor, introduce todas las medidas');
+                    return;
+                }
+                
+                // Guardar medidas para esta foto
+                // Asegurar que el array tenga el tamaño correcto
+                while (medidasPorFoto.length <= indiceFoto) {
+                    medidasPorFoto.push(null);
+                }
+                medidasPorFoto[indiceFoto] = {
+                    ancho: ancho,
+                    largo: largo,
+                    alto: alto
+                };
+                
+                console.log(`Medidas guardadas para foto ${indiceFoto + 1}:`, medidasPorFoto[indiceFoto]);
+                
+                document.body.removeChild(modal);
+                
+                // Después de guardar medidas, mostrar opciones
+                mostrarOpcionesDespuesDeMedidas();
+            };
+        }
+
+        function mostrarOpcionesDespuesDeMedidas() {
+            // Crear modal para opciones después de guardar medidas
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.7);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+            `;
+            
+            const contenido = document.createElement('div');
+            contenido.style.cssText = `
+                background: white;
+                padding: 30px;
+                border-radius: 10px;
+                text-align: center;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                max-width: 400px;
+                width: 90%;
+            `;
+            
+            contenido.innerHTML = `
+                <h3 style="margin-bottom: 20px; color: #333;">📸 Foto ${imagenesCapturadas.length} con medidas guardadas</h3>
+                <p style="margin-bottom: 25px; color: #666;">¿Qué deseas hacer?</p>
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <button id="btnEnviarMedidas" style="
+                        padding: 12px 24px;
+                        background: #28a745;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 16px;
+                        font-weight: bold;
+                    ">⤴ Enviar</button>
+                    <button id="btnAnadirOtraMedidas" style="
+                        padding: 12px 24px;
+                        background: #007bff;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 16px;
+                        font-weight: bold;
+                    ">📷 Añadir otra foto</button>
+                </div>
+            `;
+            
+            modal.appendChild(contenido);
+            document.body.appendChild(modal);
+            
+            // Event listeners
+            document.getElementById('btnEnviarMedidas').onclick = function() {
+                document.body.removeChild(modal);
+                enviarFotosConMedidas();
+            };
+            
+            document.getElementById('btnAnadirOtraMedidas').onclick = function() {
+                document.body.removeChild(modal);
+                // Ocultar preview y continuar capturando
+                const preview = document.getElementById('previewImage');
+                preview.classList.add('hidden');
+                
+                estadoActual = 'taking_photo';
+                document.getElementById('stepIndicator').textContent = `3️⃣ Fotografía (${imagenesCapturadas.length} capturada(s))`;
+                
+                actualizarBotones([
+                    { texto: '📷', clase: 'btn-primary', funcion: 'capturarFoto()' },
+                    { texto: '⤴', clase: 'btn-success', funcion: 'enviarFotosConMedidas()' },
+                    { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
+                ]);
+            };
+        }
+
+        function mostrarFormularioMedidas() {
+            // Crear modal para medidas
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.7);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+            `;
+            
+            const contenido = document.createElement('div');
+            contenido.style.cssText = `
+                background: white;
+                padding: 30px;
+                border-radius: 10px;
+                text-align: center;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                max-width: 500px;
+                width: 90%;
+            `;
+            
+            contenido.innerHTML = `
+                <h3 style="margin-bottom: 20px; color: #333;">📏 Medidas del objeto</h3>
+                <p style="margin-bottom: 25px; color: #666;">Introduce las medidas en centímetros:</p>
+                <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label style="min-width: 60px; font-weight: bold;">Ancho:</label>
+                        <input type="number" id="ancho" placeholder="cm" style="
+                            padding: 8px 12px;
+                            border: 2px solid #ddd;
+                            border-radius: 6px;
+                            font-size: 16px;
+                            width: 100px;
+                        " required>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label style="min-width: 60px; font-weight: bold;">Largo:</label>
+                        <input type="number" id="largo" placeholder="cm" style="
+                            padding: 8px 12px;
+                            border: 2px solid #ddd;
+                            border-radius: 6px;
+                            font-size: 16px;
+                            width: 100px;
+                        " required>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label style="min-width: 60px; font-weight: bold;">Alto:</label>
+                        <input type="number" id="alto" placeholder="cm" style="
+                            padding: 8px 12px;
+                            border: 2px solid #ddd;
+                            border-radius: 6px;
+                            font-size: 16px;
+                            width: 100px;
+                        " required>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <button id="btnEnviarMedidas" style="
+                        padding: 12px 24px;
+                        background: #28a745;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 16px;
+                        font-weight: bold;
+                    ">📤 Enviar</button>
+                    <button id="btnCancelarMedidas" style="
+                        padding: 12px 24px;
+                        background: #6c757d;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 16px;
+                        font-weight: bold;
+                    ">✖ Cancelar</button>
+                </div>
+            `;
+            
+            modal.appendChild(contenido);
+            document.body.appendChild(modal);
+            
+            // Event listeners
+            document.getElementById('btnEnviarMedidas').onclick = function() {
+                const ancho = document.getElementById('ancho').value;
+                const largo = document.getElementById('largo').value;
+                const alto = document.getElementById('alto').value;
+                
+                if (!ancho || !largo || !alto) {
+                    alert('Por favor, introduce todas las medidas');
+                    return;
+                }
+                
+                document.body.removeChild(modal);
+                enviarDatos(ancho, largo, alto);
+            };
+            
+            document.getElementById('btnCancelarMedidas').onclick = function() {
+                document.body.removeChild(modal);
+            };
+        }
+
+        async function enviarFotosConMedidas() {
+            mostrarLoading();
+            
+            try {
+                // Preparar datos con medidas por foto
+                const body = {
+                    imagenes: imagenesCapturadas,
+                    codigo: codigoBarrasActual,
+                    cliente_id: clienteActual,
+                    tipo_registro: tipoRegistro,
+                    medidas_por_foto: medidasPorFoto
+                };
+                
+                console.log('Enviando fotos con medidas:', body);
+                console.log('medidasPorFoto completo:', medidasPorFoto);
+                console.log('medidasPorFoto length:', medidasPorFoto.length);
+
+                const response = await fetch('/subir_imagen_scanner', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    mostrarMensaje(data.mensaje, 'exito');
+                    actualizarBotones([
+                        { texto: '✓', clase: 'btn-success', funcion: 'cerrarModal()' }
+                    ]);
+                } else {
+                    mostrarMensaje(data.mensaje, 'error');
+                    actualizarBotones([
+                        { texto: '🔄', clase: 'btn-danger', funcion: 'enviarFotosConMedidas()' },
+                        { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
+                    ]);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                mostrarMensaje('Error al enviar la(s) imagen(es)', 'error');
+            }
+        }
+
+        async function enviarDatos(ancho = null, largo = null, alto = null) {
             mostrarLoading();
             
             try {
@@ -962,8 +1394,16 @@
                 const body = {
                     imagenes: imagenesCapturadas.length > 0 ? imagenesCapturadas : [document.getElementById('previewImage').src],
                     codigo: codigoBarrasActual,
-                    cliente_id: clienteActual
+                    cliente_id: clienteActual,
+                    tipo_registro: tipoRegistro,
+                    medidas: tipoRegistro === 'MEDIDAS' ? {
+                        ancho: ancho,
+                        largo: largo,
+                        alto: alto
+                    } : null
                 };
+                
+                console.log('DEBUG Frontend - Enviando datos:', body);
 
                 const response = await fetch('/subir_imagen_scanner', {
                     method: 'POST',

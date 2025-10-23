@@ -345,25 +345,35 @@ def register_scanner_ftp_routes(app):
         imagenes = data.get('imagenes')   # lista de strings base64
         codigo_barras = data.get('codigo', '')
         cliente_id = data.get('cliente_id', None)
+        tipo_registro = data.get('tipo_registro', 'INCIDENCIA')
+        medidas = data.get('medidas', None)  # Para compatibilidad con flujo anterior
+        medidas_por_foto = data.get('medidas_por_foto', None)  # Nuevo flujo con medidas por foto
 
         if (not imagen_data and not imagenes) or not codigo_barras:
             return jsonify({'success': False,'mensaje': 'Faltan datos: imagen(es) o código de barras'})
 
         try:
             usuario = current_user.username if current_user.is_authenticated else "Anónimo"
+            print(f"DEBUG: Usuario: {usuario}")
+            print(f"DEBUG: Tipo registro: {tipo_registro}")
+            print(f"DEBUG: Medidas recibidas: {medidas}")
+            print(f"DEBUG: Medidas por foto recibidas: {medidas_por_foto}")
 
             # Normalizar a lista siempre
             imagenes_norm = imagenes if (imagenes and isinstance(imagenes, list)) else ([imagen_data] if imagen_data else [])
             # Generar PDF siempre
             nombre_pdf = generar_nombre_pdf(codigo_barras)
-            ok, ruta_pdf, err = crear_pdf_temporal(imagenes_norm, nombre_pdf)
+            
+            # Usar medidas_por_foto si está disponible, sino usar medidas (compatibilidad)
+            medidas_a_usar = medidas_por_foto if medidas_por_foto else medidas
+            ok, ruta_pdf, err = crear_pdf_temporal(imagenes_norm, nombre_pdf, medidas_a_usar)
             if not ok:
                 return jsonify({'success': False, 'mensaje': f'Error creando PDF: {err}'})
 
             # Subir PDF
             success, mensaje = subir_archivo_ftp(ruta_pdf, nombre_pdf, cliente_id)
             if success:
-                registrar_incidencia(usuario, cliente_id, codigo_barras, nombre_pdf)
+                registrar_incidencia(usuario, cliente_id, codigo_barras, nombre_pdf, tipo_registro, medidas_a_usar)
             try:
                 os.remove(ruta_pdf)
             except:
