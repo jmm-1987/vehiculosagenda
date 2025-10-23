@@ -23,6 +23,7 @@
             color: white;
             height: 50px;
             box-sizing: border-box;
+            position: relative;
         }
 
         .top-bar img {
@@ -34,9 +35,8 @@
         .top-user {
             font-weight: bold;
             font-size: 14px;
-            margin-left: auto;
-            margin-right: 20px;
-            color: #343a40;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
         }
 
         .top-button {
@@ -208,6 +208,16 @@
             color: white;
         }
 
+        .badge-ubicacion {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: bold;
+            min-width: 30px;
+            text-align: center;
+        }
+
         .no-data {
             text-align: center;
             padding: 40px;
@@ -268,12 +278,13 @@
         <a href="/index">
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo Alditraex">
         </a>
-        <div class="top-user">Usuario</div>
+        <span class="top-user" style="position: absolute; left: 50%; transform: translateX(-50%);">{{ current_user.username if current_user.is_authenticated else 'No logueado' }}</span>
         <a href="/logout" class="top-button">Cerrar Sesión</a>
     </div>
 
     <div class="container">
         <h1><i class="fas fa-clipboard-list"></i> Registro de Incidencias ALDIPOD</h1>
+
 
 
         <div class="filter-section">
@@ -283,6 +294,7 @@
                 <input type="text" id="filtroCliente" placeholder="Cliente" onkeyup="filtrarTablaAvanzado()">
                 <input type="text" id="filtroUsuario" placeholder="Usuario" onkeyup="filtrarTablaAvanzado()">
                 <input type="text" id="filtroTipo" placeholder="Tipo" onkeyup="filtrarTablaAvanzado()">
+                <input type="text" id="filtroUbicacion" placeholder="Ubicación (M/N)" onkeyup="filtrarTablaAvanzado()">
                 <input type="text" id="searchInput" placeholder="🔍 Buscar por cliente, referencia o usuario..." onkeyup="filtrarTablaAvanzado()">
                 <label style="display:flex; gap:6px; align-items:center; margin-left:10px; cursor:pointer;">
                     <input type="checkbox" id="filtroMostrarComunicadas" onchange="filtrarTablaAvanzado()">
@@ -314,13 +326,14 @@
                         <th onclick="sortTable(4)">Cliente <i class="fas fa-sort"></i></th>
                         <th onclick="sortTable(5)">Referencia <i class="fas fa-sort"></i></th>
                         <th onclick="sortTable(6)">Tipo <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(7)">Ubicación <i class="fas fa-sort"></i></th>
                         <th>Comunicada</th>
                         <th>Imagen</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for incidencia in incidencias %}
-                    <tr data-fecha="{{ incidencia.fecha.strftime('%Y-%m-%d') }}" data-cliente="{{ incidencia.cliente }}" data-usuario="{{ incidencia.usuario }}" data-tipo="{{ incidencia.tipo_documento }}" data-id="{{ incidencia.id }}" class="{% if incidencia.comunicada %}row-comunicada{% endif %}">
+                    <tr data-fecha="{{ incidencia.fecha.strftime('%Y-%m-%d') }}" data-cliente="{{ incidencia.cliente }}" data-usuario="{{ incidencia.usuario }}" data-tipo="{{ incidencia.tipo_documento }}" data-ubicacion="{{ incidencia.ubicacion }}" data-id="{{ incidencia.id }}" class="{% if incidencia.comunicada %}row-comunicada{% endif %}">
                         <td><input type="checkbox" class="row-select" data-id="{{ incidencia.id }}" onchange="actualizarContadorSeleccionadas()"></td>
                         <td>{{ incidencia.fecha.strftime('%d/%m/%Y') }}</td>
                         <td>{{ incidencia.fecha.strftime('%H:%M:%S') }}</td>
@@ -338,9 +351,18 @@
                         </td>
                         <td><strong>{{ incidencia.referencia }}</strong></td>
                         <td>{{ incidencia.tipo_documento }}</td>
+                        <td>
+                            {% if incidencia.ubicacion == 'Navalmoral' %}
+                                <span class="badge badge-ubicacion" style="background-color: #17a2b8; color: white;">N</span>
+                            {% elif incidencia.ubicacion == 'Mérida' %}
+                                <span class="badge badge-ubicacion" style="background-color: #28a745; color: white;">M</span>
+                            {% else %}
+                                <span class="badge badge-ubicacion" style="background-color: #6c757d; color: white;">{{ incidencia.ubicacion or 'Sin ubicación' }}</span>
+                            {% endif %}
+                        </td>
                         <td>{{ 'Sí' if incidencia.comunicada else 'No' }}</td>
                         <td>
-                            <a href="/descargar_imagen/{{ incidencia.referencia}}" class="enlace-imagen" download onclick="mostrarURLDescarga({{ incidencia.enlace_imagen | tojson }});">
+                            <a href="/descargar_imagen/{{ incidencia.referencia}}" class="enlace-imagen" download onclick="mostrarURLDescarga('{{ incidencia.enlace_imagen }}');">
                                 <i class="fas fa-download"></i> Descargar
                             </a>
                         </td>
@@ -374,6 +396,7 @@
             const cliente = (document.getElementById('filtroCliente').value || '').toLowerCase();
             const usuario = (document.getElementById('filtroUsuario').value || '').toLowerCase();
             const tipo = (document.getElementById('filtroTipo').value || '').toLowerCase();
+            const ubicacion = (document.getElementById('filtroUbicacion').value || '').toLowerCase();
 
             const mostrarComunicadas = document.getElementById('filtroMostrarComunicadas').checked;
             const table = document.getElementById('incidenciasTable');
@@ -385,6 +408,7 @@
                 const dataCliente = (row.getAttribute('data-cliente') || '').toLowerCase();
                 const dataUsuario = (row.getAttribute('data-usuario') || '').toLowerCase();
                 const dataTipo = (row.getAttribute('data-tipo') || '').toLowerCase();
+                const dataUbicacion = (row.getAttribute('data-ubicacion') || '').toLowerCase();
 
                 let visible = true;
 
@@ -393,6 +417,16 @@
                 if (cliente && !dataCliente.includes(cliente)) visible = false;
                 if (usuario && !dataUsuario.includes(usuario)) visible = false;
                 if (tipo && !dataTipo.includes(tipo)) visible = false;
+                if (ubicacion) {
+                    // Permitir filtrar por abreviaciones M/N o nombres completos
+                    const ubicacionLower = ubicacion.toLowerCase();
+                    const esMerida = ubicacionLower === 'm' || ubicacionLower === 'mérida' || ubicacionLower === 'merida';
+                    const esNavalmoral = ubicacionLower === 'n' || ubicacionLower === 'navalmoral';
+                    
+                    if (esMerida && dataUbicacion !== 'mérida') visible = false;
+                    if (esNavalmoral && dataUbicacion !== 'navalmoral') visible = false;
+                    if (!esMerida && !esNavalmoral && !dataUbicacion.includes(ubicacionLower)) visible = false;
+                }
 
                 // Por defecto solo mostrar no comunicadas (ocultar comunicadas)
                 if (!mostrarComunicadas && row.classList.contains('row-comunicada')) visible = false;
@@ -558,7 +592,7 @@
                         
                         // Actualizar UI
                         row.classList.add('row-comunicada');
-                        const comunicadaCell = row.querySelector('td:nth-child(8)');
+                        const comunicadaCell = row.querySelector('td:nth-child(9)');
                         if (comunicadaCell) {
                             comunicadaCell.textContent = 'Sí';
                         }

@@ -42,6 +42,7 @@ try:
     from db import ensure_column_exists
     ensure_column_exists('incidencia_aldipod', 'tipo_documento', 'VARCHAR(100)', 'INCIDENCIA')
     ensure_column_exists('incidencia_aldipod', 'comunicada', 'BOOLEAN', 0)
+    ensure_column_exists('incidencia_aldipod', 'ubicacion', 'VARCHAR(50)', 'Mérida')
 except Exception:
     pass
 
@@ -129,6 +130,8 @@ def home():
         if rol in ['rep', 'almacen']:
             return redirect(url_for('scanner_clientes'))
         if rol == 'oficina':
+            return redirect(url_for('scanner_clientes'))
+        if rol == 'incidencias':
             return redirect(url_for('registro_incidencias_aldipod'))
     except Exception:
         pass

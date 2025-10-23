@@ -3,7 +3,11 @@
     "admin": "oficina",
     "oficina": "oficina",
     "rep": "rep",
-    "almacen": "almacen"
+    "repnav": "rep",
+    "almacen": "almacen",
+    "fbonilla": "incidencias",
+    "jmgarcia": "incidencias",
+    "yramos": "incidencias"
   }
 }
 

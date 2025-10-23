@@ -346,6 +346,20 @@ def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo):
         '8': 'BDtrans'
     }
     
+    # Mapeo de usuarios a ubicaciones
+    usuarios_merida = ['jmurillo', 'rocio', 'rep', 'oficina', 'almacen', 'fbonilla', 'jmgarcia']
+    usuarios_navalmoral = ['repnav', 'yramos']
+    
+    # Determinar ubicación basada en el usuario
+    if usuario in usuarios_navalmoral:
+        ubicacion = 'Navalmoral'
+    elif usuario in usuarios_merida:
+        ubicacion = 'Mérida'
+    else:
+        ubicacion = 'Mérida'  # Por defecto
+    
+    print(f"DEBUG: Usuario: {usuario}, Ubicación asignada: {ubicacion}")
+    
     nombre_cliente = clientes_map.get(cliente_id, f'Cliente {cliente_id}')
     
     # Construir enlace al servidor SFTP de backup (más confiable para descargas)
@@ -366,7 +380,8 @@ def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo):
             cliente=nombre_cliente,
             referencia=referencia,
             enlace_imagen=enlace,
-            tipo_documento=tipo_documento
+            tipo_documento=tipo_documento,
+            ubicacion=ubicacion
         )
         db.session.add(incidencia)
         db.session.commit()

@@ -31,8 +31,44 @@ def register_scanner_ftp_routes(app):
         import db
         from models import IncidenciaAldipod
         
-        # Obtener todas las incidencias ordenadas por fecha descendente
-        incidencias = db.session.query(IncidenciaAldipod).order_by(IncidenciaAldipod.fecha.desc()).all()
+        # Obtener el usuario actual
+        usuario_actual = current_user.username if current_user.is_authenticated else ""
+        
+        # Actualizar incidencias existentes que no tengan ubicación
+        incidencias_sin_ubicacion = db.session.query(IncidenciaAldipod).filter(
+            (IncidenciaAldipod.ubicacion == None) | (IncidenciaAldipod.ubicacion == '')
+        ).all()
+        
+        for incidencia in incidencias_sin_ubicacion:
+            # Mapeo de usuarios a ubicaciones (mismo que en funciones_scanner.py)
+            usuarios_merida = ['jmurillo', 'rocio', 'rep', 'oficina', 'almacen', 'fbonilla', 'jmgarcia']
+            usuarios_navalmoral = ['repnav', 'yramos']
+            
+            if incidencia.usuario in usuarios_navalmoral:
+                incidencia.ubicacion = 'Navalmoral'
+            elif incidencia.usuario in usuarios_merida:
+                incidencia.ubicacion = 'Mérida'
+            else:
+                incidencia.ubicacion = 'Mérida'  # Por defecto
+        
+        if incidencias_sin_ubicacion:
+            db.session.commit()
+            print(f"DEBUG: Actualizadas {len(incidencias_sin_ubicacion)} incidencias sin ubicación")
+        
+        # Filtrar incidencias según el usuario
+        if usuario_actual in ['fbonilla', 'jmgarcia']:
+            # Solo mostrar incidencias de Mérida
+            incidencias = db.session.query(IncidenciaAldipod).filter(
+                IncidenciaAldipod.ubicacion == 'Mérida'
+            ).order_by(IncidenciaAldipod.fecha.desc()).all()
+        elif usuario_actual == 'yramos':
+            # Solo mostrar incidencias de Navalmoral
+            incidencias = db.session.query(IncidenciaAldipod).filter(
+                IncidenciaAldipod.ubicacion == 'Navalmoral'
+            ).order_by(IncidenciaAldipod.fecha.desc()).all()
+        else:
+            # Para otros usuarios, mostrar todas las incidencias
+            incidencias = db.session.query(IncidenciaAldipod).order_by(IncidenciaAldipod.fecha.desc()).all()
         
         return render_template('registro_incidencias_aldipod.html', incidencias=incidencias)
     

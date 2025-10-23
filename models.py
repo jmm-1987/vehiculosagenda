@@ -292,8 +292,9 @@ class IncidenciaAldipod(db.Base):
     enlace_imagen = Column(String(500), nullable=False)
     tipo_documento = Column(String(100), nullable=False, default="INCIDENCIA")
     comunicada = Column(Boolean, default=False)
+    ubicacion = Column(String(50), nullable=False, default="Mérida")
     
-    def __init__(self, fecha, usuario, cliente, referencia, enlace_imagen, tipo_documento="INCIDENCIA", comunicada=False):
+    def __init__(self, fecha, usuario, cliente, referencia, enlace_imagen, tipo_documento="INCIDENCIA", comunicada=False, ubicacion="Mérida"):
         self.fecha = fecha
         self.usuario = usuario
         self.cliente = cliente
@@ -301,3 +302,4 @@ class IncidenciaAldipod(db.Base):
         self.enlace_imagen = enlace_imagen
         self.tipo_documento = tipo_documento
         self.comunicada = comunicada
+        self.ubicacion = ubicacion
