@@ -11,7 +11,7 @@
        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
 </div>
     <div class="container">
-    <h1>Consulta visita taller {{visita_ver.alias}}</h1><br>
+    <h1>Consulta visita taller: {{visita_ver.alias}}</h1><br>
         <label> Fecha de entrada <b>{{visita_ver.fecha_visita.strftime('%d-%m-%Y')}}</b></label>
         <br><br>
         <label>Taller: <b>{{visita_ver.taller}}</b></label>

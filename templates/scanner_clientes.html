@@ -869,18 +869,89 @@
             const imagenDataURL = canvas.toDataURL('image/jpeg', 0.9);
             imagenesCapturadas.push(imagenDataURL);
             
-            preview.src = imagenDataURL;
-            preview.classList.remove('hidden');
+            // Siempre mostrar mensaje emergente después de cada foto
+            mostrarMensajeEmergente();
+        }
+
+        function mostrarMensajeEmergente() {
+            // Crear modal emergente
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.7);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+            `;
             
-            // Mantener la cámara activa para capturar más
-            estadoActual = 'taking_photo';
-            document.getElementById('stepIndicator').textContent = `3️⃣ Fotografía (${imagenesCapturadas.length} capturada(s))`;
+            const contenido = document.createElement('div');
+            contenido.style.cssText = `
+                background: white;
+                padding: 30px;
+                border-radius: 10px;
+                text-align: center;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                max-width: 400px;
+                width: 90%;
+            `;
             
-            actualizarBotones([
-                { texto: '📷', clase: 'btn-primary', funcion: 'capturarFoto()' },
-                { texto: '⤴', clase: 'btn-success', funcion: 'enviarFotosAcumuladas()' },
-                { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
-            ]);
+            contenido.innerHTML = `
+                <h3 style="margin-bottom: 20px; color: #333;">📸 Foto capturada</h3>
+                <p style="margin-bottom: 25px; color: #666;">Tienes ${imagenesCapturadas.length} foto(s) capturada(s)</p>
+                <p style="margin-bottom: 25px; color: #666;">¿Qué deseas hacer?</p>
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <button id="btnEnviar" style="
+                        padding: 12px 24px;
+                        background: #28a745;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 16px;
+                        font-weight: bold;
+                    ">⤴ Enviar</button>
+                    <button id="btnAnadir" style="
+                        padding: 12px 24px;
+                        background: #007bff;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 16px;
+                        font-weight: bold;
+                    ">📷 Añadir otra foto</button>
+                </div>
+            `;
+            
+            modal.appendChild(contenido);
+            document.body.appendChild(modal);
+            
+            // Event listeners para los botones
+            document.getElementById('btnEnviar').onclick = function() {
+                document.body.removeChild(modal);
+                enviarFotosAcumuladas();
+            };
+            
+            document.getElementById('btnAnadir').onclick = function() {
+                document.body.removeChild(modal);
+                // Ocultar preview y continuar capturando
+                const preview = document.getElementById('previewImage');
+                preview.classList.add('hidden');
+                
+                estadoActual = 'taking_photo';
+                document.getElementById('stepIndicator').textContent = `3️⃣ Fotografía (${imagenesCapturadas.length} capturada(s))`;
+                
+                actualizarBotones([
+                    { texto: '📷', clase: 'btn-primary', funcion: 'capturarFoto()' },
+                    { texto: '⤴', clase: 'btn-success', funcion: 'enviarFotosAcumuladas()' },
+                    { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
+                ]);
+            };
         }
 
         async function enviarFotosAcumuladas() {
