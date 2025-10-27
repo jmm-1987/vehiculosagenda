@@ -559,6 +559,41 @@
             </div>
         </div>
         
+        <!-- Opciones para usuario oficina -->
+        <div id="opcionesOficina" style="display: none; margin-bottom: 30px;">
+            <h2 style="text-align: center; color: #333; margin-bottom: 20px;">Selecciona el tipo de registro:</h2>
+            <div style="display: flex; justify-content: center; gap: 30px;">
+                <button onclick="seleccionarTipo('INCIDENCIA')" style="
+                    padding: 20px 40px;
+                    background: linear-gradient(135deg, #28a745, #20c997);
+                    color: white;
+                    border: none;
+                    border-radius: 10px;
+                    font-size: 18px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+                    transition: transform 0.2s;
+                " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    📋 INCIDENCIA
+                </button>
+                <button onclick="seleccionarTipo('POD')" style="
+                    padding: 20px 40px;
+                    background: linear-gradient(135deg, #ffc107, #fd7e14);
+                    color: white;
+                    border: none;
+                    border-radius: 10px;
+                    font-size: 18px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+                    transition: transform 0.2s;
+                " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    📦 POD
+                </button>
+            </div>
+        </div>
+        
         <div class="clientes-grid" id="clientesGrid">
             <div class="cliente-card" onclick="abrirScanner(1)">
                 <img src="{{ url_for('static', filename='scanner/logoxpologistics.jpg') }}" alt="XPO Logistics" class="cliente-logo">
@@ -603,6 +638,35 @@
                 <video id="video" autoplay playsinline></video>
                 <canvas id="canvas"></canvas>
                 <img id="previewImage" class="preview-image hidden" />
+                <!-- Marco de captura para POD (21x12) -->
+                <div id="marcoPOD" class="marco-captura hidden" style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 57.14%; /* Proporción 12:21 = 0.5714 */
+                    border: 4px solid #ffc107;
+                    border-bottom: none;
+                    border-radius: 8px 8px 0 0;
+                    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+                    pointer-events: none;
+                    z-index: 10;
+                ">
+                    <div style="
+                        position: absolute;
+                        top: 10px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        color: #ffc107;
+                        font-weight: bold;
+                        font-size: 18px;
+                        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+                        background: rgba(0,0,0,0.7);
+                        padding: 5px 15px;
+                        border-radius: 20px;
+                        border: 2px solid #ffc107;
+                    ">📦 POD: 21cm x 12cm</div>
+                </div>
             </div>
             
             <div id="inputManualContainer" class="hidden" style="margin: 20px 0;">
@@ -654,9 +718,21 @@
                 ubicacionPrincipal.textContent = `📸 ${ubicacion}`;
             }
             
-            // Si el usuario es almacen, mostrar opciones
+            // Si el usuario es almacen, mostrar opciones de almacen
             if (usuarioActual === 'almacen') {
                 const opcionesElement = document.getElementById('opcionesAlmacen');
+                const clientesElement = document.getElementById('clientesGrid');
+                
+                if (opcionesElement) {
+                    opcionesElement.style.display = 'block';
+                }
+                if (clientesElement) {
+                    clientesElement.style.display = 'none';
+                }
+            }
+            // Si el usuario es oficina, mostrar opciones de oficina
+            else if (usuarioActual === 'oficina') {
+                const opcionesElement = document.getElementById('opcionesOficina');
                 const clientesElement = document.getElementById('clientesGrid');
                 
                 if (opcionesElement) {
@@ -671,12 +747,18 @@
         // Función para seleccionar tipo de registro
         function seleccionarTipo(tipo) {
             tipoRegistro = tipo;
+            
+            // Ocultar todas las opciones
             document.getElementById('opcionesAlmacen').style.display = 'none';
+            document.getElementById('opcionesOficina').style.display = 'none';
             document.getElementById('clientesGrid').style.display = 'grid';
             
             // Actualizar título según el tipo
+            const ubicacion = document.getElementById('ubicacion-principal').textContent.split(' ')[1];
             if (tipo === 'MEDIDAS') {
-                document.getElementById('ubicacion-principal').textContent = `📏 ${document.getElementById('ubicacion-principal').textContent.split(' ')[1]} - MEDIDAS`;
+                document.getElementById('ubicacion-principal').textContent = `📏 ${ubicacion} - MEDIDAS`;
+            } else if (tipo === 'POD') {
+                document.getElementById('ubicacion-principal').textContent = `📦 ${ubicacion} - POD`;
             }
         }
         
@@ -893,6 +975,14 @@
                 document.getElementById('video').style.display = 'block';
                 document.getElementById('previewImage').classList.add('hidden');
                 
+                // Mostrar marco de POD si es tipo POD
+                const marcoPOD = document.getElementById('marcoPOD');
+                if (tipoRegistro === 'POD') {
+                    marcoPOD.classList.remove('hidden');
+                } else {
+                    marcoPOD.classList.add('hidden');
+                }
+                
                 stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: 'environment' } 
                 });
@@ -944,10 +1034,94 @@
             // Si es tipo MEDIDAS, pedir medidas para esta foto específica
             if (tipoRegistro === 'MEDIDAS') {
                 mostrarFormularioMedidasPorFoto(imagenesCapturadas.length - 1); // índice de la foto actual
+            } else if (tipoRegistro === 'POD') {
+                // Para POD, usar medidas fijas 21x12
+                mostrarMensajeEmergentePOD();
             } else {
                 // Para INCIDENCIA, usar el flujo original
                 mostrarMensajeEmergente();
             }
+        }
+
+        function mostrarMensajeEmergentePOD() {
+            // Crear modal emergente para POD
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.7);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+            `;
+            
+            const contenido = document.createElement('div');
+            contenido.style.cssText = `
+                background: white;
+                padding: 30px;
+                border-radius: 10px;
+                text-align: center;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                max-width: 400px;
+                width: 90%;
+            `;
+            
+            contenido.innerHTML = `
+                <h3 style="margin-bottom: 20px; color: #333;">📦 POD capturado</h3>
+                <p style="margin-bottom: 15px; color: #666;">Tienes ${imagenesCapturadas.length} foto(s) capturada(s)</p>
+                <p style="margin-bottom: 25px; color: #666;">¿Qué deseas hacer?</p>
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <button id="btnEnviarPOD" style="
+                        padding: 12px 24px;
+                        background: #ffc107;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 16px;
+                        font-weight: bold;
+                    ">⤴ Enviar</button>
+                    <button id="btnAnadirPOD" style="
+                        padding: 12px 24px;
+                        background: #fd7e14;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 16px;
+                        font-weight: bold;
+                    ">📷 Añadir otra foto</button>
+                </div>
+            `;
+            
+            modal.appendChild(contenido);
+            document.body.appendChild(modal);
+            
+            // Event listeners
+            document.getElementById('btnEnviarPOD').onclick = function() {
+                document.body.removeChild(modal);
+                enviarFotosPOD();
+            };
+            
+            document.getElementById('btnAnadirPOD').onclick = function() {
+                document.body.removeChild(modal);
+                // Ocultar preview y continuar capturando
+                const preview = document.getElementById('previewImage');
+                preview.classList.add('hidden');
+                
+                estadoActual = 'taking_photo';
+                document.getElementById('stepIndicator').textContent = `3️⃣ Fotografía (${imagenesCapturadas.length} capturada(s))`;
+                
+                actualizarBotones([
+                    { texto: '📷', clase: 'btn-primary', funcion: 'capturarFoto()' },
+                    { texto: '⤴', clase: 'btn-success', funcion: 'enviarFotosPOD()' },
+                    { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
+                ]);
+            };
         }
 
         function mostrarMensajeEmergente() {
@@ -1339,6 +1513,48 @@
             document.getElementById('btnCancelarMedidas').onclick = function() {
                 document.body.removeChild(modal);
             };
+        }
+
+        async function enviarFotosPOD() {
+            mostrarLoading();
+            
+            try {
+                // Para POD no se envían medidas al PDF, solo el tipo
+                const body = {
+                    imagenes: imagenesCapturadas,
+                    codigo: codigoBarrasActual,
+                    cliente_id: clienteActual,
+                    tipo_registro: tipoRegistro
+                };
+                
+                console.log('Enviando fotos POD:', body);
+
+                const response = await fetch('/subir_imagen_scanner', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    mostrarMensaje(data.mensaje, 'exito');
+                    actualizarBotones([
+                        { texto: '✓', clase: 'btn-success', funcion: 'cerrarModal()' }
+                    ]);
+                } else {
+                    mostrarMensaje(data.mensaje, 'error');
+                    actualizarBotones([
+                        { texto: '🔄', clase: 'btn-danger', funcion: 'enviarFotosPOD()' },
+                        { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
+                    ]);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                mostrarMensaje('Error al enviar la(s) imagen(es)', 'error');
+            }
         }
 
         async function enviarFotosConMedidas() {

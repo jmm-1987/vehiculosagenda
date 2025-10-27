@@ -27,10 +27,19 @@
             box-sizing: border-box;
         }
 
+        .top-bar a {
+            cursor: pointer;
+        }
+
         .top-bar img {
             width: 200px;
             height: 45px;
             object-fit: contain;
+            transition: opacity 0.3s;
+        }
+
+        .top-bar a:hover img {
+            opacity: 0.8;
         }
 
         .top-user {
@@ -264,7 +273,7 @@
 </head>
 <body>
     <div class="top-bar">
-       <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa">
+       <a href="/portada"><img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa"></a>
         <span class="top-user">{{ current_user.username }}</span>
         <a href="/logout" class="top-button">Cerrar sesión</a>
     </div>

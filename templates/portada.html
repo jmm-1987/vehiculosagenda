@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Herramientas Alditraex</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2px 30px;
+            background: linear-gradient(to right, #ffffff, #343a40);
+            color: white;
+            height: 50px;
+            box-sizing: border-box;
+        }
+
+        .top-bar a {
+            cursor: pointer;
+        }
+
+        .top-bar img {
+            width: 200px;
+            height: 45px;
+            object-fit: contain;
+            transition: opacity 0.3s;
+        }
+
+        .top-bar a:hover img {
+            opacity: 0.8;
+        }
+
+        .top-user {
+            font-weight: bold;
+            font-size: 14px;
+            margin-left: auto;
+            margin-right: 20px;
+        }
+
+        .top-button {
+            padding: 2px 8px;
+            background-color: #c51500;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .portada-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            min-height: calc(100vh - 50px);
+        }
+
+        .portada-title {
+            color: #2c3e50;
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .portada-subtitle {
+            color: #7f8c8d;
+            font-size: 18px;
+            margin-bottom: 50px;
+            text-align: center;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 20px;
+            max-width: 1400px;
+            width: 100%;
+            padding: 0 20px;
+        }
+
+        .portada-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 180px;
+            justify-content: center;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .portada-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.2), 0 8px 16px rgba(0,0,0,0.15);
+            border-color: rgba(0,0,0,0.1);
+        }
+
+        .portada-card i {
+            font-size: 40px;
+            margin-bottom: 12px;
+            color: #495057;
+        }
+
+        .portada-card h2 {
+            font-size: 18px;
+            margin: 0 0 8px 0;
+            color: #333;
+        }
+
+        .portada-card p {
+            font-size: 12px;
+            color: #666;
+            margin: 0;
+        }
+
+        /* Colores específicos por card */
+        .card-vehiculos {
+            border-top: 5px solid #6c757d;
+        }
+
+        .card-vehiculos:hover {
+            border-top-color: #5a6268;
+        }
+
+        .card-registros {
+            border-top: 5px solid #28a745;
+        }
+
+        .card-registros:hover {
+            border-top-color: #1e7e34;
+        }
+
+        .card-aldipod {
+            border-top: 5px solid #dc3545;
+        }
+
+        .card-aldipod:hover {
+            border-top-color: #c82333;
+        }
+
+        .card-ftp {
+            border-top: 5px solid #ffc107;
+        }
+
+        .card-ftp:hover {
+            border-top-color: #e0a800;
+        }
+
+        .card-ficheros {
+            border-top: 5px solid #17a2b8;
+        }
+
+        .card-ficheros:hover {
+            border-top-color: #138496;
+        }
+
+        .card-email {
+            border-top: 5px solid #9c27b0;
+        }
+
+        .card-email:hover {
+            border-top-color: #7b1fa2;
+        }
+
+        @media screen and (max-width: 1200px) {
+            .cards-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 15px;
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .portada-title {
+                font-size: 28px;
+            }
+
+            .portada-subtitle {
+                font-size: 16px;
+            }
+
+            .cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+
+            .portada-card {
+                min-height: 150px;
+            }
+
+            .portada-card i {
+                font-size: 32px;
+            }
+
+            .portada-card h2 {
+                font-size: 16px;
+            }
+
+            .portada-card p {
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="/portada"><img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa"></a>
+        <span class="top-user">{{ current_user.username }}</span>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+    </div>
+
+    <div class="portada-container">
+        <h1 class="portada-title">Herramientas Alditraex</h1>
+        <p class="portada-subtitle">Selecciona una opción para comenzar</p>
+        
+        <div class="cards-grid">
+            <a href="/index" class="portada-card card-vehiculos">
+                <i class="fas fa-dashboard"></i>
+                <h2>Dashboard Vehículos</h2>
+                <p>Panel completo con información de vehículos</p>
+            </a>
+
+            <a href="/registro_incidencias_aldipod" class="portada-card card-aldipod">
+                <i class="fas fa-file-alt"></i>
+                <h2>Registros Aldipod</h2>
+                <p>Ver y gestionar incidencias</p>
+            </a>
+
+            <a href="/email_destinatarios" class="portada-card card-email">
+                <i class="fas fa-envelope"></i>
+                <h2>Email Destinatarios</h2>
+                <p>Generar emails de seguimiento</p>
+            </a>
+
+            <a href="/ftp_transfer" class="portada-card card-ftp">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h2>FTP Transfer</h2>
+                <p>Transferencia de archivos FTP</p>
+            </a>
+
+            <a href="/ficheros" class="portada-card card-ficheros">
+                <i class="fas fa-folder-open"></i>
+                <h2>Ficheros</h2>
+                <p>Gestión de ficheros del sistema</p>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
+

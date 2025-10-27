@@ -29,7 +29,7 @@ def cargar_configuracion_ftp():
         print(f"Error al cargar configuración FTP: {e}")
         return None
 
-def subir_archivo_ftp(archivo_local, nombre_remoto, cliente_id=None):
+def subir_archivo_ftp(archivo_local, nombre_remoto, cliente_id=None, tipo_documento="INCIDENCIA"):
     """
     Sube un archivo al servidor FTP
     
@@ -37,6 +37,7 @@ def subir_archivo_ftp(archivo_local, nombre_remoto, cliente_id=None):
         archivo_local: ruta local del archivo
         nombre_remoto: nombre que tendrá el archivo en el servidor
         cliente_id: identificador del cliente (1-8)
+        tipo_documento: tipo de documento (INCIDENCIA, MEDIDAS, POD)
     
     Returns:
         tuple: (success: bool, message: str)
@@ -91,7 +92,12 @@ def subir_archivo_ftp(archivo_local, nombre_remoto, cliente_id=None):
             sftp_user = 'u83991941-tsb'
             sftp_pass = 'tsb010Tx.MX'
             sftp_port = 22
-            sftp_dir = 'ALDIPOD_BACKUP'
+            
+            # Directorio según el tipo de documento
+            if tipo_documento == 'POD':
+                sftp_dir = 'POD'
+            else:
+                sftp_dir = 'ALDIPOD_BACKUP'
             
             print(f"DEBUG SFTP: Intentando conectar a {sftp_host}:{sftp_port} con usuario {sftp_user}")
             
@@ -308,7 +314,15 @@ def crear_pdf_temporal(imagenes_base64: List[str], nombre_pdf: str, medidas_por_
                 if medidas_para_esta_foto:
                     medidas = medidas_para_esta_foto
                     print(f"DEBUG: Añadiendo medidas para foto {idx + 1}: {medidas}")
-                    medidas_texto = f"Medidas: {medidas['ancho']}cm x {medidas['largo']}cm x {medidas['alto']}cm"
+                    
+                    # Formatear texto según el tipo de medidas
+                    if medidas.get('alto') == '0' or medidas.get('alto') == 0:
+                        # Para POD (solo ancho y largo)
+                        medidas_texto = f"Medidas: {medidas['ancho']}cm x {medidas['largo']}cm"
+                    else:
+                        # Para MEDIDAS (ancho, largo y alto)
+                        medidas_texto = f"Medidas: {medidas['ancho']}cm x {medidas['largo']}cm x {medidas['alto']}cm"
+                    
                     print(f"DEBUG: Texto de medidas: {medidas_texto}")
                     
                     # Insertar texto con medidas usando método más robusto
@@ -435,7 +449,13 @@ def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo, tipo_d
     # Construir enlace al servidor SFTP de backup (más confiable para descargas)
     sftp_host = 'home613353667.1and1-data.host'
     sftp_user = 'u83991941-tsb'
-    sftp_dir = 'ALDIPOD_BACKUP'
+    
+    # Directorio según el tipo de documento
+    if tipo_documento == 'POD':
+        sftp_dir = 'POD'
+    else:
+        sftp_dir = 'ALDIPOD_BACKUP'
+    
     enlace = f"sftp://{sftp_user}@{sftp_host}/{sftp_dir}/{nombre_archivo}"
     
     # Si es tipo MEDIDAS y hay medidas, añadirlas al nombre del archivo para identificación
@@ -445,7 +465,14 @@ def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo, tipo_d
             # Es un array de medidas por foto, usar la primera foto como referencia
             primera_medida = medidas[0]
             if primera_medida:
-                medidas_str = f"_{primera_medida['ancho']}x{primera_medida['largo']}x{primera_medida['alto']}cm"
+                # Formatear medidas según el tipo
+                if primera_medida.get('alto') == '0' or primera_medida.get('alto') == 0:
+                    # Para POD (solo ancho y largo)
+                    medidas_str = f"_{primera_medida['ancho']}x{primera_medida['largo']}cm"
+                else:
+                    # Para MEDIDAS (ancho, largo y alto)
+                    medidas_str = f"_{primera_medida['ancho']}x{primera_medida['largo']}x{primera_medida['alto']}cm"
+                
                 nombre_archivo_con_medidas = nombre_archivo.replace('.pdf', f'{medidas_str}.pdf')
                 enlace = f"sftp://{sftp_user}@{sftp_host}/{sftp_dir}/{nombre_archivo_con_medidas}"
         elif isinstance(medidas, dict):

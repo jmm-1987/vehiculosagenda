@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Destinatarios</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2px 30px;
+            background: linear-gradient(to right, #ffffff, #343a40);
+            color: white;
+            height: 50px;
+            box-sizing: border-box;
+        }
+
+        .top-bar a {
+            cursor: pointer;
+        }
+
+        .top-bar img {
+            width: 200px;
+            height: 45px;
+            object-fit: contain;
+            transition: opacity 0.3s;
+        }
+
+        .top-bar a:hover img {
+            opacity: 0.8;
+        }
+
+        .top-user {
+            font-weight: bold;
+            font-size: 14px;
+            margin-left: auto;
+            margin-right: 20px;
+        }
+
+        .top-button {
+            padding: 2px 8px;
+            background-color: #c51500;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #9c27b0;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .btn {
+            background-color: #9c27b0;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background-color: #7b1fa2;
+        }
+
+        .result-box {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #9c27b0;
+        }
+
+        .email-preview {
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .copy-btn {
+            background-color: #28a745;
+            margin-top: 15px;
+        }
+
+        .copy-btn:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="/portada"><img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa"></a>
+        <span class="top-user">{{ current_user.username }}</span>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+    </div>
+
+    <div class="container">
+        <h1><i class="fas fa-envelope"></i> Email Destinatarios</h1>
+        
+        <form method="POST" id="emailForm">
+            <div class="form-group">
+                <label for="agencia">Agencia de Transporte *</label>
+                <select name="agencia" id="agencia" required>
+                    <option value="">Seleccione una agencia</option>
+                    <option value="tsb">TSB</option>
+                    <option value="pallex">PALLEX</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="tsb-tracking-group" style="display: none;">
+                <label for="tsb_tracking">Número de Tracking *</label>
+                <input type="text" name="tsb_tracking" id="tsb_tracking" placeholder="999917736347U59T">
+            </div>
+
+            <div class="form-group" id="pallex-tracking-group" style="display: none;">
+                <label for="pallex_tracking">Número de Tracking *</label>
+                <input type="text" name="pallex_tracking" id="pallex_tracking" placeholder="Introduzca el número de tracking">
+            </div>
+
+            <div class="form-group" id="pallex-postal-group" style="display: none;">
+                <label for="pallex_postal">Código Postal Destino *</label>
+                <input type="text" name="pallex_postal" id="pallex_postal" placeholder="Ej: 08001">
+            </div>
+
+            <div class="form-group">
+                <label for="proveedor">Nombre del Proveedor *</label>
+                <input type="text" name="proveedor" required placeholder="Nombre del proveedor">
+            </div>
+
+            <div class="form-group">
+                <label for="email_destinatario">Email del Destinatario *</label>
+                <input type="email" name="email_destinatario" required placeholder="ejemplo@dominio.com">
+            </div>
+
+            <button type="submit" class="btn">Generar Email</button>
+        </form>
+
+        {% if mailto_link %}
+        <div class="result-box">
+            <h3>Email Generado:</h3>
+            <div class="email-preview" id="emailText">{% for line in email_text.split('\n') %}
+{{ line }}{% endfor %}</div>
+            <br>
+            <button onclick="copiarEmail()" class="btn copy-btn">Copiar Email</button>
+            <br>
+            <a href="{{ mailto_link }}" class="btn" style="text-decoration: none; margin-top: 10px; display: inline-block;">
+                <i class="fas fa-paper-plane"></i> Abrir en Cliente de Correo
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        document.getElementById('agencia').addEventListener('change', function() {
+            var agencia = this.value;
+            var tsbGroup = document.getElementById('tsb-tracking-group');
+            var pallexTrackingGroup = document.getElementById('pallex-tracking-group');
+            var pallexPostalGroup = document.getElementById('pallex-postal-group');
+            
+            if (agencia === 'tsb') {
+                tsbGroup.style.display = 'block';
+                pallexTrackingGroup.style.display = 'none';
+                pallexPostalGroup.style.display = 'none';
+                document.getElementById('tsb_tracking').required = true;
+                document.getElementById('pallex_tracking').required = false;
+                document.getElementById('pallex_postal').required = false;
+            } else if (agencia === 'pallex') {
+                tsbGroup.style.display = 'none';
+                pallexTrackingGroup.style.display = 'block';
+                pallexPostalGroup.style.display = 'block';
+                document.getElementById('tsb_tracking').required = false;
+                document.getElementById('pallex_tracking').required = true;
+                document.getElementById('pallex_postal').required = true;
+            } else {
+                tsbGroup.style.display = 'none';
+                pallexTrackingGroup.style.display = 'none';
+                pallexPostalGroup.style.display = 'none';
+                document.getElementById('tsb_tracking').required = false;
+                document.getElementById('pallex_tracking').required = false;
+                document.getElementById('pallex_postal').required = false;
+            }
+        });
+
+        function copiarEmail() {
+            var emailText = document.getElementById('emailText').innerText;
+            navigator.clipboard.writeText(emailText).then(function() {
+                alert('Email copiado al portapapeles');
+            });
+        }
+    </script>
+</body>
+</html>
+

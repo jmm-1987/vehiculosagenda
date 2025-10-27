@@ -371,7 +371,7 @@ def register_scanner_ftp_routes(app):
                 return jsonify({'success': False, 'mensaje': f'Error creando PDF: {err}'})
 
             # Subir PDF
-            success, mensaje = subir_archivo_ftp(ruta_pdf, nombre_pdf, cliente_id)
+            success, mensaje = subir_archivo_ftp(ruta_pdf, nombre_pdf, cliente_id, tipo_registro)
             if success:
                 registrar_incidencia(usuario, cliente_id, codigo_barras, nombre_pdf, tipo_registro, medidas_a_usar)
             try:

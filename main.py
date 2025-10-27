@@ -107,7 +107,7 @@ def login():
         usuario = db.session.query(Usuario).filter_by(username=username).first()
         if usuario and usuario.password == password:
             login_user(usuario)
-            return redirect(url_for('home'))
+            return redirect(url_for('portada'))
         else:
             return render_template('login.html', mensaje="Usuario o contraseña incorrectos")
     return render_template('login.html')
@@ -117,6 +117,31 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
+@app.route('/portada')
+@login_required
+def portada():
+    """Muestra la pantalla de portada con opciones principales"""
+    # Redirección por usuario
+    username = session.get('_user_id') and db.session.query(Usuario).filter_by(id=session.get('_user_id')).first()
+    if username and username.username == 'email':
+        return redirect(url_for('email_destinatarios'))
+    
+    # Redirección por rol
+    try:
+        with open('static/roles_config.json', 'r') as f:
+            roles = json.load(f)
+        username_str = username.username if username else None
+        rol = roles.get('roles', {}).get(username_str)
+        if rol in ['rep', 'almacen']:
+            return redirect(url_for('scanner_clientes'))
+        if rol == 'oficina':
+            return redirect(url_for('scanner_clientes'))
+        if rol == 'incidencias':
+            return redirect(url_for('registro_incidencias_aldipod'))
+    except Exception:
+        pass
+    return render_template('portada.html')
 
 @app.route('/index')
 @login_required
@@ -264,6 +289,39 @@ def home():
     avisos = sorted(avisos, key=lambda x: x[0])
 
     return render_template('index.html', avisos=avisos, vehiculos_seguros=vehiculos_seguros, vehiculos_flota=vehiculos_flota, hoy=ahora.strftime('%Y-%m-%d'), seguros_vencimientos=seguros_vencimientos, seguros_colores=seguros_colores, flota_vencimientos=flota_vencimientos, talleres_count_ultimo_ano=talleres_count_ultimo_ano, talleres_importe_ultimo_ano=talleres_importe_ultimo_ano, vehiculos_ordenados_taller=vehiculos_ordenados_taller)
+
+@app.route('/email_destinatarios', methods=['GET', 'POST'])
+@login_required
+def email_destinatarios():
+    from urllib.parse import quote
+    from urllib.parse import urlencode
+    
+    if request.method == 'POST':
+        agencia = request.form.get('agencia')
+        proveedor = request.form.get('proveedor')
+        email_destinatario = request.form.get('email_destinatario')
+        
+        if agencia == 'tsb':
+            tracking = request.form.get('tsb_tracking')
+            if tracking:
+                url_tracking = f"https://www.tsbconnect.net/tracking/search?number={tracking}"
+                email_text = f"Hola,\n\nEn los próximos días recibirá un pedido de su proveedor {proveedor} a través de la agencia TSB.\n\nPuede hacer seguimiento aquí: {url_tracking}"
+                subject = "Seguimiento de Pedido TSB"
+                body = quote(email_text)
+                mailto_link = f"mailto:{email_destinatario}?subject={quote(subject)}&body={body}"
+                return render_template('email_destinatarios.html', email_text=email_text, mailto_link=mailto_link, url_tracking=url_tracking)
+        elif agencia == 'pallex':
+            tracking = request.form.get('pallex_tracking')
+            postal = request.form.get('pallex_postal')
+            if tracking and postal:
+                url_tracking = f"https://mynexus.pallex.com/tracking"
+                email_text = f"Hola,\n\nEn los próximos días recibirá un pedido de su proveedor {proveedor} a través de la agencia PALLEX.\n\nPuede hacer seguimiento aquí: {url_tracking}\nNúmero tracking: {tracking}\nCódigo postal destino: {postal}"
+                subject = "Seguimiento de Pedido PALLEX"
+                body = quote(email_text)
+                mailto_link = f"mailto:{email_destinatario}?subject={quote(subject)}&body={body}"
+                return render_template('email_destinatarios.html', email_text=email_text, mailto_link=mailto_link, url_tracking=url_tracking)
+    
+    return render_template('email_destinatarios.html')
 
 @app.route('/descargar_db')
 @login_required
