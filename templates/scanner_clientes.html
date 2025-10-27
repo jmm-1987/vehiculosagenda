@@ -562,7 +562,7 @@
         <!-- Opciones para usuario oficina -->
         <div id="opcionesOficina" style="display: none; margin-bottom: 30px;">
             <h2 style="text-align: center; color: #333; margin-bottom: 20px;">Selecciona el tipo de registro:</h2>
-            <div style="display: flex; justify-content: center; gap: 30px;">
+            <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px;">
                 <button onclick="seleccionarTipo('INCIDENCIA')" style="
                     padding: 20px 40px;
                     background: linear-gradient(135deg, #28a745, #20c997);
@@ -576,6 +576,20 @@
                     transition: transform 0.2s;
                 " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                     📋 INCIDENCIA
+                </button>
+                <button onclick="seleccionarTipo('MEDIDAS')" style="
+                    padding: 20px 40px;
+                    background: linear-gradient(135deg, #007bff, #6610f2);
+                    color: white;
+                    border: none;
+                    border-radius: 10px;
+                    font-size: 18px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+                    transition: transform 0.2s;
+                " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    📏 MEDIDAS
                 </button>
                 <button onclick="seleccionarTipo('POD')" style="
                     padding: 20px 40px;
@@ -775,6 +789,7 @@
         let imagenesCapturadas = []; // base64 strings acumuladas
         let medidasPorFoto = []; // array de medidas correspondientes a cada foto
         let tipoRegistro = 'INCIDENCIA'; // INCIDENCIA o MEDIDAS
+        let procesoCompletado = false; // indica si el proceso se completó exitosamente
 
         // Mapeo de nombres de clientes
         const nombresClientes = {
@@ -799,12 +814,15 @@
         }
 
         function cerrarModal() {
+            // Detener stream y limpiar
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
             }
             if (codeReader) {
                 codeReader.reset();
             }
+            
+            // Limpiar modal
             document.getElementById('scannerModal').style.display = 'none';
             document.getElementById('previewImage').classList.add('hidden');
             imagenesCapturadas = [];
@@ -813,6 +831,12 @@
             document.getElementById('codigoManual').value = '';
             estadoActual = 'init';
             codigoBarrasActual = null;
+            
+            // Si el proceso se completó exitosamente, recargar la página
+            if (procesoCompletado) {
+                procesoCompletado = false;
+                window.location.reload();
+            }
         }
 
         async function iniciarEscanerCodigoBarras() {
@@ -979,6 +1003,17 @@
                 const marcoPOD = document.getElementById('marcoPOD');
                 if (tipoRegistro === 'POD') {
                     marcoPOD.classList.remove('hidden');
+                    
+                    // Ajustar altura del marco según el cliente
+                    // NTL: 21x15cm = 71.43% (15/21)
+                    // Otros: 21x12cm = 57.14% (12/21)
+                    if (clienteActual === 5) { // NTL
+                        marcoPOD.style.height = '71.43%'; // 15/21
+                        marcoPOD.innerHTML = '<div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); color: #ffc107; font-weight: bold; font-size: 18px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 20px; border: 2px solid #ffc107;">📦 POD: 21cm x 15cm</div>';
+                    } else {
+                        marcoPOD.style.height = '57.14%'; // 12/21
+                        marcoPOD.innerHTML = '<div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); color: #ffc107; font-weight: bold; font-size: 18px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 20px; border: 2px solid #ffc107;">📦 POD: 21cm x 12cm</div>';
+                    }
                 } else {
                     marcoPOD.classList.add('hidden');
                 }
@@ -1022,13 +1057,43 @@
             const canvas = document.getElementById('canvas');
             const preview = document.getElementById('previewImage');
             
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            let imagenDataURL;
             
-            const context = canvas.getContext('2d');
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            if (tipoRegistro === 'POD') {
+                // Para POD, solo capturar el área del marco
+                // Cliente NTL: 21x15cm = 71.43% (15/21)
+                // Otros clientes: 21x12cm = 57.14% (12/21)
+                let porcentajeMarco;
+                if (clienteActual === 5) { // NTL
+                    porcentajeMarco = 0.7143; // 71.43% = proporción 15:21
+                } else {
+                    porcentajeMarco = 0.5714; // 57.14% = proporción 12:21
+                }
+                const alturaMarco = video.videoHeight * porcentajeMarco;
+                
+                canvas.width = video.videoWidth;
+                canvas.height = alturaMarco;
+                
+                const context = canvas.getContext('2d');
+                // Recortar del video solo la parte del marco (desde y=0 hasta y=alturaMarco)
+                context.drawImage(
+                    video,
+                    0, 0, video.videoWidth, alturaMarco,  // origen (sx, sy, sWidth, sHeight)
+                    0, 0, video.videoWidth, alturaMarco   // destino (dx, dy, dWidth, dHeight)
+                );
+                
+                imagenDataURL = canvas.toDataURL('image/jpeg', 0.9);
+            } else {
+                // Para INCIDENCIA y MEDIDAS, capturar imagen completa
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                
+                const context = canvas.getContext('2d');
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                imagenDataURL = canvas.toDataURL('image/jpeg', 0.9);
+            }
             
-            const imagenDataURL = canvas.toDataURL('image/jpeg', 0.9);
             imagenesCapturadas.push(imagenDataURL);
             
             // Si es tipo MEDIDAS, pedir medidas para esta foto específica
@@ -1540,6 +1605,7 @@
                 const data = await response.json();
                 
                 if (data.success) {
+                    procesoCompletado = true; // Marcar proceso como completado
                     mostrarMensaje(data.mensaje, 'exito');
                     actualizarBotones([
                         { texto: '✓', clase: 'btn-success', funcion: 'cerrarModal()' }
@@ -1585,6 +1651,7 @@
                 const data = await response.json();
                 
                 if (data.success) {
+                    procesoCompletado = true; // Marcar proceso como completado
                     mostrarMensaje(data.mensaje, 'exito');
                     actualizarBotones([
                         { texto: '✓', clase: 'btn-success', funcion: 'cerrarModal()' }
@@ -1632,6 +1699,7 @@
                 const data = await response.json();
                 
                 if (data.success) {
+                    procesoCompletado = true; // Marcar proceso como completado
                     mostrarMensaje(data.mensaje, 'exito');
                     actualizarBotones([
                         { texto: '✓', clase: 'btn-success', funcion: 'cerrarModal()' }

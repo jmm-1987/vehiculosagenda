@@ -53,31 +53,72 @@ def subir_archivo_ftp(archivo_local, nombre_remoto, cliente_id=None, tipo_docume
         ftp.connect(config.get('host', 'localhost'), config.get('port', 21))
         ftp.login(config.get('user', ''), config.get('password', ''))
         
-        # Cambiar a directorio específico si existe en la config
-        destino_principal = None
-        if 'directory' in config and config['directory']:
-            destino_principal = config['directory']
+        # Si es tipo POD, subir al directorio ALDIPOD/POD
+        if tipo_documento == 'POD':
             try:
-                ftp.cwd(destino_principal)
-            except:
-                # Si no existe el directorio, intentar crearlo (y sus padres si hace falta)
-                partes = destino_principal.split('/')
+                # Cambiar al directorio ALDIPOD/POD
+                try:
+                    ftp.cwd('ALDIPOD')
+                except:
+                    ftp.mkd('ALDIPOD')
+                    ftp.cwd('ALDIPOD')
+                
+                try:
+                    ftp.cwd('POD')
+                except:
+                    ftp.mkd('POD')
+                    ftp.cwd('POD')
+                    
+                print(f"DEBUG FTP: Directorio ALDIPOD/POD verificado/creado")
+            except Exception as e:
+                print(f"DEBUG FTP: Error al cambiar/crear directorio ALDIPOD/POD: {e}")
+                # Intentar crear el directorio completo
+                partes = ['ALDIPOD', 'POD']
                 ruta_acumulada = ''
                 for p in partes:
                     if not p:
                         continue
                     ruta_acumulada = f"{ruta_acumulada}/{p}" if ruta_acumulada else p
                     try:
+                        # Intentar navegar
                         ftp.cwd(ruta_acumulada)
                     except:
-                        ftp.mkd(ruta_acumulada)
-                        ftp.cwd(ruta_acumulada)
+                        # Si falla, intentar crear
+                        try:
+                            ftp.mkd(ruta_acumulada)
+                            ftp.cwd(ruta_acumulada)
+                        except:
+                            pass
+            
+            # Subir al directorio ALDIPOD/POD
+            with open(archivo_local, 'rb') as file:
+                ftp.storbinary(f'STOR {nombre_remoto}', file)
+            print(f"DEBUG FTP: Archivo subido al directorio ALDIPOD/POD")
         
-        # Todos los clientes guardan en el mismo directorio, sin subcarpetas
-        
-        # Subir el archivo al destino principal
-        with open(archivo_local, 'rb') as file:
-            ftp.storbinary(f'STOR {nombre_remoto}', file)
+        else:
+            # Si NO es POD, subir al directorio de configuración (para incidencias y MEDIDAS)
+            destino_principal = None
+            if 'directory' in config and config['directory']:
+                destino_principal = config['directory']
+                try:
+                    ftp.cwd(destino_principal)
+                except:
+                    # Si no existe el directorio, intentar crearlo (y sus padres si hace falta)
+                    partes = destino_principal.split('/')
+                    ruta_acumulada = ''
+                    for p in partes:
+                        if not p:
+                            continue
+                        ruta_acumulada = f"{ruta_acumulada}/{p}" if ruta_acumulada else p
+                        try:
+                            ftp.cwd(ruta_acumulada)
+                        except:
+                            ftp.mkd(ruta_acumulada)
+                            ftp.cwd(ruta_acumulada)
+            
+            # Subir al destino principal
+            with open(archivo_local, 'rb') as file:
+                ftp.storbinary(f'STOR {nombre_remoto}', file)
         
         # Cerrar conexión FTP principal
         ftp.quit()
@@ -95,7 +136,7 @@ def subir_archivo_ftp(archivo_local, nombre_remoto, cliente_id=None, tipo_docume
             
             # Directorio según el tipo de documento
             if tipo_documento == 'POD':
-                sftp_dir = 'POD'
+                sftp_dir = 'ALDIPOD_BACKUP/POD'
             else:
                 sftp_dir = 'ALDIPOD_BACKUP'
             
@@ -110,19 +151,25 @@ def subir_archivo_ftp(archivo_local, nombre_remoto, cliente_id=None, tipo_docume
             sftp = ssh.open_sftp()
             print("DEBUG SFTP: Conexión SFTP exitosa")
             
-            # Crear directorio si no existe
-            try:
-                sftp.mkdir(sftp_dir)
-                print(f"DEBUG SFTP: Directorio {sftp_dir} creado")
-            except FileExistsError:
-                print(f"DEBUG SFTP: Directorio {sftp_dir} ya existe")
-            except OSError as mkdir_err:
-                if "File exists" in str(mkdir_err) or "Failure" in str(mkdir_err):
-                    print(f"DEBUG SFTP: Directorio {sftp_dir} ya existe (OSError)")
+            # Crear directorio si no existe (manejar rutas con /)
+            partes_dir = sftp_dir.split('/')
+            ruta_acumulada = ''
+            for parte in partes_dir:
+                if ruta_acumulada:
+                    ruta_acumulada = f"{ruta_acumulada}/{parte}"
                 else:
-                    print(f"DEBUG SFTP: Error al crear directorio: {mkdir_err}")
-            except Exception as mkdir_err:
-                print(f"DEBUG SFTP: Error al crear directorio: {mkdir_err}")
+                    ruta_acumulada = parte
+                
+                try:
+                    sftp.mkdir(ruta_acumulada)
+                    print(f"DEBUG SFTP: Directorio {ruta_acumulada} creado")
+                except FileExistsError:
+                    print(f"DEBUG SFTP: Directorio {ruta_acumulada} ya existe")
+                except OSError as mkdir_err:
+                    if "File exists" in str(mkdir_err) or "Failure" in str(mkdir_err):
+                        print(f"DEBUG SFTP: Directorio {ruta_acumulada} ya existe (OSError)")
+                except Exception as mkdir_err:
+                    print(f"DEBUG SFTP: Error al crear directorio {ruta_acumulada}: {mkdir_err}")
             
             # Subir archivo
             remote_path = f"{sftp_dir}/{nombre_remoto}"
@@ -450,36 +497,17 @@ def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo, tipo_d
     sftp_host = 'home613353667.1and1-data.host'
     sftp_user = 'u83991941-tsb'
     
-    # Directorio según el tipo de documento
+    # Directorio según el tipo de documento en el SFTP
     if tipo_documento == 'POD':
-        sftp_dir = 'POD'
+        sftp_dir = 'ALDIPOD_BACKUP/POD'
     else:
         sftp_dir = 'ALDIPOD_BACKUP'
     
+    # El enlace SIEMPRE debe apuntar al archivo original sin modificar
     enlace = f"sftp://{sftp_user}@{sftp_host}/{sftp_dir}/{nombre_archivo}"
     
-    # Si es tipo MEDIDAS y hay medidas, añadirlas al nombre del archivo para identificación
-    if tipo_documento == 'MEDIDAS' and medidas:
-        # Manejar tanto medidas simples como medidas por foto
-        if isinstance(medidas, list) and len(medidas) > 0:
-            # Es un array de medidas por foto, usar la primera foto como referencia
-            primera_medida = medidas[0]
-            if primera_medida:
-                # Formatear medidas según el tipo
-                if primera_medida.get('alto') == '0' or primera_medida.get('alto') == 0:
-                    # Para POD (solo ancho y largo)
-                    medidas_str = f"_{primera_medida['ancho']}x{primera_medida['largo']}cm"
-                else:
-                    # Para MEDIDAS (ancho, largo y alto)
-                    medidas_str = f"_{primera_medida['ancho']}x{primera_medida['largo']}x{primera_medida['alto']}cm"
-                
-                nombre_archivo_con_medidas = nombre_archivo.replace('.pdf', f'{medidas_str}.pdf')
-                enlace = f"sftp://{sftp_user}@{sftp_host}/{sftp_dir}/{nombre_archivo_con_medidas}"
-        elif isinstance(medidas, dict):
-            # Es un diccionario simple de medidas
-            medidas_str = f"_{medidas['ancho']}x{medidas['largo']}x{medidas['alto']}cm"
-            nombre_archivo_con_medidas = nombre_archivo.replace('.pdf', f'{medidas_str}.pdf')
-            enlace = f"sftp://{sftp_user}@{sftp_host}/{sftp_dir}/{nombre_archivo_con_medidas}"
+    # NOTA: Las medidas NO deben modificar el nombre del archivo en el enlace
+    # El archivo físico se guarda con su nombre original basado en la referencia
     
     try:
         # Crear fecha con zona horaria de España (UTC+2)
