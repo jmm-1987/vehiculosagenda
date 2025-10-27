@@ -605,6 +605,20 @@
                 " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                     📦 POD
                 </button>
+                <button onclick="seleccionarTipo('alb_clientes')" style="
+                    padding: 20px 40px;
+                    background: linear-gradient(135deg, #6c757d, #495057);
+                    color: white;
+                    border: none;
+                    border-radius: 10px;
+                    font-size: 18px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+                    transition: transform 0.2s;
+                " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    📚 ALB_CLIENTES
+                </button>
             </div>
         </div>
         
@@ -658,7 +672,7 @@
                     top: 0;
                     left: 0;
                     width: 100%;
-                    height: 57.14%; /* Proporción 12:21 = 0.5714 */
+                    height: 100%; /* Se ajustará dinámicamente */
                     border: 4px solid #ffc107;
                     border-bottom: none;
                     border-radius: 8px 8px 0 0;
@@ -680,6 +694,36 @@
                         border-radius: 20px;
                         border: 2px solid #ffc107;
                     ">📦 POD: 21cm x 12cm</div>
+                </div>
+                
+                <!-- Marco de captura para ALB_CLIENTES (21x20) -->
+                <div id="marcoALB" class="marco-captura hidden" style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%; /* Se ajustará dinámicamente para proporción 21x20 */
+                    border: 4px solid #6c757d;
+                    border-bottom: none;
+                    border-radius: 8px 8px 0 0;
+                    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+                    pointer-events: none;
+                    z-index: 10;
+                ">
+                    <div style="
+                        position: absolute;
+                        top: 10px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        color: #6c757d;
+                        font-weight: bold;
+                        font-size: 18px;
+                        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+                        background: rgba(0,0,0,0.7);
+                        padding: 5px 15px;
+                        border-radius: 20px;
+                        border: 2px solid #6c757d;
+                    ">📚 ALB_CLIENTES: 21cm x 30cm</div>
                 </div>
             </div>
             
@@ -773,6 +817,8 @@
                 document.getElementById('ubicacion-principal').textContent = `📏 ${ubicacion} - MEDIDAS`;
             } else if (tipo === 'POD') {
                 document.getElementById('ubicacion-principal').textContent = `📦 ${ubicacion} - POD`;
+            } else if (tipo === 'alb_clientes') {
+                document.getElementById('ubicacion-principal').textContent = `📚 ${ubicacion} - ALB_CLIENTES`;
             }
         }
         
@@ -999,23 +1045,67 @@
                 document.getElementById('video').style.display = 'block';
                 document.getElementById('previewImage').classList.add('hidden');
                 
-                // Mostrar marco de POD si es tipo POD
+                // Mostrar marco según el tipo
                 const marcoPOD = document.getElementById('marcoPOD');
+                const marcoALB = document.getElementById('marcoALB');
+                
                 if (tipoRegistro === 'POD') {
                     marcoPOD.classList.remove('hidden');
+                    marcoALB.classList.add('hidden');
                     
-                    // Ajustar altura del marco según el cliente
-                    // NTL: 21x15cm = 71.43% (15/21)
-                    // Otros: 21x12cm = 57.14% (12/21)
-                    if (clienteActual === 5) { // NTL
-                        marcoPOD.style.height = '71.43%'; // 15/21
-                        marcoPOD.innerHTML = '<div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); color: #ffc107; font-weight: bold; font-size: 18px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 20px; border: 2px solid #ffc107;">📦 POD: 21cm x 15cm</div>';
-                    } else {
-                        marcoPOD.style.height = '57.14%'; // 12/21
-                        marcoPOD.innerHTML = '<div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); color: #ffc107; font-weight: bold; font-size: 18px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 20px; border: 2px solid #ffc107;">📦 POD: 21cm x 12cm</div>';
-                    }
+                    // Ajustar altura del marco según el cliente dinámicamente
+                    const ajustarMarcoPOD = () => {
+                        const video = document.getElementById('video');
+                        if (video.videoWidth > 0 && video.videoHeight > 0) {
+                            let alturaCalculada;
+                            let texto;
+                            if (clienteActual === 5) { // NTL
+                                // 21x15cm: altura = ancho * (15/21)
+                                alturaCalculada = (video.videoWidth * (15/21)) / video.videoHeight * 100;
+                                texto = '📦 POD: 21cm x 15cm';
+                            } else {
+                                // 21x12cm: altura = ancho * (12/21)
+                                alturaCalculada = (video.videoWidth * (12/21)) / video.videoHeight * 100;
+                                texto = '📦 POD: 21cm x 12cm';
+                            }
+                            marcoPOD.style.height = `${alturaCalculada}%`;
+                            marcoPOD.innerHTML = `<div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); color: #ffc107; font-weight: bold; font-size: 18px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 20px; border: 2px solid #ffc107;">${texto}</div>`;
+                            console.log(`Marco POD ajustado: video ${video.videoWidth}x${video.videoHeight}, marco altura: ${alturaCalculada}%`);
+                        }
+                    };
+                    
+                    // Intentar ajustar inmediatamente
+                    ajustarMarcoPOD();
+                    
+                    // Reajustar cuando el video esté listo
+                    const video = document.getElementById('video');
+                    video.addEventListener('loadedmetadata', ajustarMarcoPOD);
+                    video.addEventListener('resize', ajustarMarcoPOD);
+                } else if (tipoRegistro === 'alb_clientes') {
+                    marcoPOD.classList.add('hidden');
+                    marcoALB.classList.remove('hidden');
+                    
+                    // Ajustar dinámicamente la altura para mantener proporción 21x30
+                    const ajustarMarcoALB = () => {
+                        const video = document.getElementById('video');
+                        if (video.videoWidth > 0 && video.videoHeight > 0) {
+                            // Proporción 21x30: altura = ancho * (30/21)
+                            const alturaCalculada = (video.videoWidth * (30/21)) / video.videoHeight * 100;
+                            marcoALB.style.height = `${alturaCalculada}%`;
+                            console.log(`Marco ALB ajustado: video ${video.videoWidth}x${video.videoHeight}, marco altura: ${alturaCalculada}%`);
+                        }
+                    };
+                    
+                    // Intentar ajustar inmediatamente
+                    ajustarMarcoALB();
+                    
+                    // Reajustar cuando el video esté listo
+                    const video = document.getElementById('video');
+                    video.addEventListener('loadedmetadata', ajustarMarcoALB);
+                    video.addEventListener('resize', ajustarMarcoALB);
                 } else {
                     marcoPOD.classList.add('hidden');
+                    marcoALB.classList.add('hidden');
                 }
                 
                 stream = await navigator.mediaDevices.getUserMedia({ 
@@ -1083,6 +1173,23 @@
                 );
                 
                 imagenDataURL = canvas.toDataURL('image/jpeg', 0.9);
+            } else if (tipoRegistro === 'alb_clientes') {
+                // Para ALB_CLIENTES, capturar el área del marco (21x30, proporción 30:21)
+                // La altura debe ser el ancho * (30/21)
+                const alturaMarco = video.videoWidth * (30/21); // Proporción 30:21
+                
+                canvas.width = video.videoWidth;
+                canvas.height = alturaMarco;
+                
+                const context = canvas.getContext('2d');
+                // Recortar del video solo la parte del marco (desde y=0 hasta y=alturaMarco)
+                context.drawImage(
+                    video,
+                    0, 0, video.videoWidth, alturaMarco,  // origen (sx, sy, sWidth, sHeight)
+                    0, 0, video.videoWidth, alturaMarco   // destino (dx, dy, dWidth, dHeight)
+                );
+                
+                imagenDataURL = canvas.toDataURL('image/jpeg', 0.9);
             } else {
                 // Para INCIDENCIA y MEDIDAS, capturar imagen completa
                 canvas.width = video.videoWidth;
@@ -1102,6 +1209,9 @@
             } else if (tipoRegistro === 'POD') {
                 // Para POD, usar medidas fijas 21x12
                 mostrarMensajeEmergentePOD();
+            } else if (tipoRegistro === 'alb_clientes') {
+                // Para alb_clientes, captura completa A4
+                mostrarMensajeEmergenteALBClientes();
             } else {
                 // Para INCIDENCIA, usar el flujo original
                 mostrarMensajeEmergente();
@@ -1184,6 +1294,87 @@
                 actualizarBotones([
                     { texto: '📷', clase: 'btn-primary', funcion: 'capturarFoto()' },
                     { texto: '⤴', clase: 'btn-success', funcion: 'enviarFotosPOD()' },
+                    { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
+                ]);
+            };
+        }
+
+        function mostrarMensajeEmergenteALBClientes() {
+            // Crear modal emergente para ALB_CLIENTES
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.7);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+            `;
+            
+            const contenido = document.createElement('div');
+            contenido.style.cssText = `
+                background: white;
+                padding: 30px;
+                border-radius: 10px;
+                text-align: center;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                max-width: 400px;
+                width: 90%;
+            `;
+            
+            contenido.innerHTML = `
+                <h3 style="margin-bottom: 20px; color: #333;">📚 ALB_CLIENTES capturado</h3>
+                <p style="margin-bottom: 15px; color: #666;">Tienes ${imagenesCapturadas.length} foto(s) capturada(s)</p>
+                <p style="margin-bottom: 25px; color: #666;">¿Qué deseas hacer?</p>
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <button id="btnEnviarALB" style="
+                        padding: 12px 24px;
+                        background: #6c757d;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 16px;
+                        font-weight: bold;
+                    ">⤴ Enviar</button>
+                    <button id="btnAnadirALB" style="
+                        padding: 12px 24px;
+                        background: #495057;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 16px;
+                        font-weight: bold;
+                    ">📷 Añadir otra foto</button>
+                </div>
+            `;
+            
+            modal.appendChild(contenido);
+            document.body.appendChild(modal);
+            
+            // Event listeners
+            document.getElementById('btnEnviarALB').onclick = function() {
+                document.body.removeChild(modal);
+                enviarFotosALBClientes();
+            };
+            
+            document.getElementById('btnAnadirALB').onclick = function() {
+                document.body.removeChild(modal);
+                // Ocultar preview y continuar capturando
+                const preview = document.getElementById('previewImage');
+                preview.classList.add('hidden');
+                
+                estadoActual = 'taking_photo';
+                document.getElementById('stepIndicator').textContent = `3️⃣ Fotografía (${imagenesCapturadas.length} capturada(s))`;
+                
+                actualizarBotones([
+                    { texto: '📷', clase: 'btn-primary', funcion: 'capturarFoto()' },
+                    { texto: '⤴', clase: 'btn-success', funcion: 'enviarFotosALBClientes()' },
                     { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
                 ]);
             };
@@ -1614,6 +1805,49 @@
                     mostrarMensaje(data.mensaje, 'error');
                     actualizarBotones([
                         { texto: '🔄', clase: 'btn-danger', funcion: 'enviarFotosPOD()' },
+                        { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
+                    ]);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                mostrarMensaje('Error al enviar la(s) imagen(es)', 'error');
+            }
+        }
+
+        async function enviarFotosALBClientes() {
+            mostrarLoading();
+            
+            try {
+                // Para alb_clientes no se envían medidas al PDF, solo el tipo
+                const body = {
+                    imagenes: imagenesCapturadas,
+                    codigo: codigoBarrasActual,
+                    cliente_id: clienteActual,
+                    tipo_registro: tipoRegistro
+                };
+                
+                console.log('Enviando fotos ALB_CLIENTES:', body);
+
+                const response = await fetch('/subir_imagen_scanner', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    procesoCompletado = true; // Marcar proceso como completado
+                    mostrarMensaje(data.mensaje, 'exito');
+                    actualizarBotones([
+                        { texto: '✓', clase: 'btn-success', funcion: 'cerrarModal()' }
+                    ]);
+                } else {
+                    mostrarMensaje(data.mensaje, 'error');
+                    actualizarBotones([
+                        { texto: '🔄', clase: 'btn-danger', funcion: 'enviarFotosALBClientes()' },
                         { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
                     ]);
                 }

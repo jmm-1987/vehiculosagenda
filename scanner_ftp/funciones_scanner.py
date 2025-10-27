@@ -54,6 +54,7 @@ def subir_archivo_ftp(archivo_local, nombre_remoto, cliente_id=None, tipo_docume
         ftp.login(config.get('user', ''), config.get('password', ''))
         
         # Si es tipo POD, subir al directorio ALDIPOD/POD
+        # Si es tipo alb_clientes, subir al directorio ALDIPOD/CLIENTES
         if tipo_documento == 'POD':
             try:
                 # Cambiar al directorio ALDIPOD/POD
@@ -94,6 +95,47 @@ def subir_archivo_ftp(archivo_local, nombre_remoto, cliente_id=None, tipo_docume
             with open(archivo_local, 'rb') as file:
                 ftp.storbinary(f'STOR {nombre_remoto}', file)
             print(f"DEBUG FTP: Archivo subido al directorio ALDIPOD/POD")
+        
+        elif tipo_documento == 'alb_clientes':
+            try:
+                # Cambiar al directorio ALDIPOD/CLIENTES
+                try:
+                    ftp.cwd('ALDIPOD')
+                except:
+                    ftp.mkd('ALDIPOD')
+                    ftp.cwd('ALDIPOD')
+                
+                try:
+                    ftp.cwd('CLIENTES')
+                except:
+                    ftp.mkd('CLIENTES')
+                    ftp.cwd('CLIENTES')
+                    
+                print(f"DEBUG FTP: Directorio ALDIPOD/CLIENTES verificado/creado")
+            except Exception as e:
+                print(f"DEBUG FTP: Error al cambiar/crear directorio ALDIPOD/CLIENTES: {e}")
+                # Intentar crear el directorio completo
+                partes = ['ALDIPOD', 'CLIENTES']
+                ruta_acumulada = ''
+                for p in partes:
+                    if not p:
+                        continue
+                    ruta_acumulada = f"{ruta_acumulada}/{p}" if ruta_acumulada else p
+                    try:
+                        # Intentar navegar
+                        ftp.cwd(ruta_acumulada)
+                    except:
+                        # Si falla, intentar crear
+                        try:
+                            ftp.mkd(ruta_acumulada)
+                            ftp.cwd(ruta_acumulada)
+                        except:
+                            pass
+            
+            # Subir al directorio ALDIPOD/CLIENTES
+            with open(archivo_local, 'rb') as file:
+                ftp.storbinary(f'STOR {nombre_remoto}', file)
+            print(f"DEBUG FTP: Archivo subido al directorio ALDIPOD/CLIENTES")
         
         else:
             # Si NO es POD, subir al directorio de configuración (para incidencias y MEDIDAS)
@@ -137,6 +179,8 @@ def subir_archivo_ftp(archivo_local, nombre_remoto, cliente_id=None, tipo_docume
             # Directorio según el tipo de documento
             if tipo_documento == 'POD':
                 sftp_dir = 'ALDIPOD_BACKUP/POD'
+            elif tipo_documento == 'alb_clientes':
+                sftp_dir = 'ALDIPOD_BACKUP/CLIENTES'
             else:
                 sftp_dir = 'ALDIPOD_BACKUP'
             
@@ -274,10 +318,11 @@ def guardar_imagen_temporal(imagen_data, nombre_archivo):
     
     return ruta_completa
 
-def crear_pdf_temporal(imagenes_base64: List[str], nombre_pdf: str, medidas_por_foto=None) -> Tuple[bool, str, str]:
+def crear_pdf_temporal(imagenes_base64: List[str], nombre_pdf: str, medidas_por_foto=None, tipo_documento='INCIDENCIA') -> Tuple[bool, str, str]:
     """
     Crea un PDF temporal a partir de una lista de imágenes en base64.
     Cada imagen ocupa la mitad superior de una página A4, centrada, manteniendo proporción.
+    Si es tipo 'alb_clientes', la imagen ocupa toda la página A4.
     Si se proporcionan medidas por foto, se añaden debajo de cada imagen correspondiente.
     Devuelve (success, ruta_pdf, error_message)
     """
@@ -298,7 +343,14 @@ def crear_pdf_temporal(imagenes_base64: List[str], nombre_pdf: str, medidas_por_
             a4_width, a4_height = a4_rect.width, a4_rect.height
         except Exception:
             a4_width, a4_height = 595.2756, 841.8898  # fallback
-        top_half_rect = fitz.Rect(0, 0, a4_width, a4_height / 2)
+        
+        # Determinar área de imagen según el tipo
+        if tipo_documento == 'alb_clientes':
+            # Para alb_clientes, usar toda la página
+            target_area = fitz.Rect(0, 0, a4_width, a4_height)
+        else:
+            # Para otros tipos, usar solo mitad superior
+            target_area = fitz.Rect(0, 0, a4_width, a4_height / 2)
 
         # Crear documento PDF
         pdf_doc = fitz.open()
@@ -325,8 +377,8 @@ def crear_pdf_temporal(imagenes_base64: List[str], nombre_pdf: str, medidas_por_
                 img_w, img_h = img_rect.width, img_rect.height
                 img_doc.close()
 
-                # Calcular escala para encajar en mitad superior
-                max_w, max_h = top_half_rect.width, top_half_rect.height
+                # Calcular escala para encajar en el área definida
+                max_w, max_h = target_area.width, target_area.height
                 scale = min(max_w / img_w, max_h / img_h)
                 draw_w = img_w * scale
                 draw_h = img_h * scale
@@ -500,6 +552,8 @@ def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo, tipo_d
     # Directorio según el tipo de documento en el SFTP
     if tipo_documento == 'POD':
         sftp_dir = 'ALDIPOD_BACKUP/POD'
+    elif tipo_documento == 'alb_clientes':
+        sftp_dir = 'ALDIPOD_BACKUP/CLIENTES'
     else:
         sftp_dir = 'ALDIPOD_BACKUP'
     

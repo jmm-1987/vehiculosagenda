@@ -366,7 +366,7 @@ def register_scanner_ftp_routes(app):
             
             # Usar medidas_por_foto si está disponible, sino usar medidas (compatibilidad)
             medidas_a_usar = medidas_por_foto if medidas_por_foto else medidas
-            ok, ruta_pdf, err = crear_pdf_temporal(imagenes_norm, nombre_pdf, medidas_a_usar)
+            ok, ruta_pdf, err = crear_pdf_temporal(imagenes_norm, nombre_pdf, medidas_a_usar, tipo_registro)
             if not ok:
                 return jsonify({'success': False, 'mensaje': f'Error creando PDF: {err}'})
 
