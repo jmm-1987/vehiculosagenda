@@ -131,26 +131,129 @@ def register_scanner_ftp_routes(app):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            ssh.connect(sftp_host, port=sftp_port, username=sftp_user, password=sftp_pass, timeout=30)
+            ssh.connect(sftp_host, port=sftp_port, username=sftp_user, password=sftp_pass, timeout=20)
+            # Mantener viva la conexión y limitar bloqueos
+            try:
+                transport = ssh.get_transport()
+                if transport:
+                    transport.set_keepalive(10)
+                    if hasattr(transport, 'sock') and transport.sock:
+                        transport.sock.settimeout(15)
+            except Exception:
+                pass
             sftp = ssh.open_sftp()
         except Exception as e:
             return f"Error conectando a SFTP: {e}", 500
 
         merged_pdf = fitz.open()
         descargados = 0
+        max_archivos = 200  # salvaguarda número de ficheros
+        max_total_mb = 200   # límite de datos descargados
+        total_descargado = 0
+        import time
+        inicio = time.time()
+        presupuesto_seg = 45  # cortar antes del timeout del worker
         try:
-            for inc in incidencias:
+            for idx, inc in enumerate(incidencias):
+                if idx >= max_archivos:
+                    break
+                # Presupuesto de tiempo
+                if time.time() - inicio > presupuesto_seg:
+                    break
                 enlace = inc.enlace_imagen or ''
                 try:
-                    m = re.match(r'sftp://[^/]+/(.+)$', enlace)
+                    m = re.match(r'sftp://[^/]+/(.+)$', enlace or '')
                     if not m:
+                        # intentar construir ruta a partir de nombre archivo si viene sin enlace
+                        # rutas candidatas por convención
+                        posibles = []
+                    else:
+                        ruta_relativa = m.group(1)
+                        posibles = [
+                            ruta_relativa,
+                            f"/{ruta_relativa}",
+                        ]
+                        # Si apunta a BACKUP, probar también directorio operativo
+                        if ruta_relativa.startswith('ALDIPOD_BACKUP/'):
+                            sin_backup = ruta_relativa.replace('ALDIPOD_BACKUP/', 'ALDIPOD/', 1)
+                            posibles.append(sin_backup)
+                            posibles.append(f"/{sin_backup}")
+
+                    file_bytes = None
+                    last_err = None
+                    for ruta in posibles:
+                        try:
+                            # comprobación rápida
+                            try:
+                                sftp.stat(ruta)
+                            except Exception:
+                                pass
+                            with sftp.open(ruta, 'rb') as f:
+                                # Leer en chunks con límites para evitar bloqueos/OOM
+                                try:
+                                    if hasattr(f, 'prefetch'):
+                                        f.prefetch()
+                                except Exception:
+                                    pass
+                                chunk = f.read(64 * 1024)
+                                buf = io.BytesIO()
+                                file_size_limit = 25 * 1024 * 1024  # 25MB por archivo
+                                leidos = 0
+                                while chunk:
+                                    buf.write(chunk)
+                                    leidos += len(chunk)
+                                    total_descargado += len(chunk)
+                                    if leidos > file_size_limit:
+                                        buf = None
+                                        break
+                                    if (total_descargado / (1024*1024)) > max_total_mb:
+                                        break
+                                    if time.time() - inicio > presupuesto_seg:
+                                        break
+                                    chunk = f.read(256 * 1024)
+                                if buf is None:
+                                    raise RuntimeError('archivo_supera_limite')
+                                file_bytes = buf.getvalue()
+                                break
+                        except Exception as e_ruta:
+                            last_err = e_ruta
+                            continue
+                    if file_bytes is None:
                         continue
-                    ruta_relativa = m.group(1)
-                    with sftp.open(ruta_relativa, 'rb') as f:
-                        file_bytes = f.read()
+                        # Leer en chunks con límites para evitar bloqueos/OOM
+                        # Algunos servidores mejoran con prefetch
+                        try:
+                            if hasattr(f, 'prefetch'):
+                                f.prefetch()
+                        except Exception:
+                            pass
+                        chunk = f.read(64 * 1024)
+                        buf = io.BytesIO()
+                        file_size_limit = 25 * 1024 * 1024  # 25MB por archivo
+                        leidos = 0
+                        while chunk:
+                            buf.write(chunk)
+                            leidos += len(chunk)
+                            total_descargado += len(chunk)
+                            if leidos > file_size_limit:
+                                # archivo demasiado grande, saltar
+                                buf = None
+                                break
+                            if (total_descargado / (1024*1024)) > max_total_mb:
+                                break
+                            # Chequeo de tiempo por vuelta
+                            if time.time() - inicio > presupuesto_seg:
+                                break
+                            chunk = f.read(256 * 1024)
+                        if buf is None:
+                            continue
+                        if (total_descargado / (1024*1024)) > max_total_mb:
+                            break
+                        file_bytes = buf.getvalue()
                     try:
                         src = fitz.open(stream=file_bytes, filetype='pdf')
                     except Exception:
+                        # Si no es PDF, abrir como imagen en un PDF temporal
                         src = fitz.open(stream=file_bytes, filetype='jpeg')
                         img_rect = src[0].rect
                         tmp_doc = fitz.open()
@@ -158,8 +261,27 @@ def register_scanner_ftp_routes(app):
                         page.insert_image(img_rect, stream=file_bytes)
                         src.close()
                         src = tmp_doc
-                    merged_pdf.insert_pdf(src)
-                    src.close()
+
+                    # Convertir a escala de grises y comprimir por página para reducir tamaño.
+                    # Si falla por cualquier motivo, insertar el PDF original como fallback.
+                    converted = False
+                    try:
+                        Matrix = fitz.Matrix
+                        scale = 1.5  # ~108 dpi -> 72*1.5 = 108 dpi
+                        for p in src:
+                            pix = p.get_pixmap(matrix=Matrix(scale, scale), colorspace=fitz.csGRAY, alpha=False)
+                            img_bytes = pix.tobytes("jpeg", quality=70)
+                            rect = fitz.Rect(0, 0, pix.width, pix.height)
+                            out_page = merged_pdf.new_page(width=rect.width, height=rect.height)
+                            out_page.insert_image(rect, stream=img_bytes)
+                        converted = True
+                    except Exception:
+                        try:
+                            merged_pdf.insert_pdf(src)
+                        except Exception:
+                            pass
+                    finally:
+                        src.close()
                     descargados += 1
                 except Exception:
                     continue
