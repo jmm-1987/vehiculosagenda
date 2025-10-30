@@ -1045,6 +1045,21 @@
                 const marcoALB = document.getElementById('marcoALB');
                 
                 if (tipoRegistro === 'POD') {
+                    // Botones fuera del vídeo (posición por defecto)
+                    const botones = document.getElementById('botonesAccion');
+                    const cam = document.querySelector('.camera-container');
+                    if (botones && cam && cam.parentElement !== null) {
+                        cam.parentElement.appendChild(botones);
+                        botones.style.position = '';
+                        botones.style.left = '';
+                        botones.style.right = '';
+                        botones.style.bottom = '';
+                        botones.style.width = '';
+                        botones.style.zIndex = '';
+                        botones.style.background = '';
+                        botones.style.padding = '';
+                        botones.style.borderRadius = '';
+                    }
                     // Tamaño estándar para POD
                     if (cameraContainer) cameraContainer.style.maxWidth = '500px';
                     if (videoEl) videoEl.style.maxHeight = '400px';
@@ -1086,6 +1101,21 @@
                     video.addEventListener('loadedmetadata', ajustarMarcoPOD);
                     video.addEventListener('resize', ajustarMarcoPOD);
                 } else if (tipoRegistro === 'alb_clientes') {
+                    // Mover botones a la parte baja del vídeo
+                    const botones = document.getElementById('botonesAccion');
+                    const cam = document.querySelector('.camera-container');
+                    if (botones && cam) {
+                        cam.appendChild(botones);
+                        botones.style.position = 'absolute';
+                        botones.style.left = '0';
+                        botones.style.right = '0';
+                        botones.style.bottom = '10px';
+                        botones.style.width = '100%';
+                        botones.style.zIndex = '20';
+                        botones.style.background = 'rgba(0,0,0,0.25)';
+                        botones.style.padding = '6px 0';
+                        botones.style.borderRadius = '0 0 10px 10px';
+                    }
                     // Hacer el contenedor de vídeo más grande para ALB_CLIENTES
                     if (cameraContainer) cameraContainer.style.maxWidth = '900px';
                     if (videoEl) videoEl.style.maxHeight = '600px';

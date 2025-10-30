@@ -125,12 +125,13 @@ def register_scanner_ftp_routes(app):
 
         sftp_host = 'home613353667.1and1-data.host'
         sftp_user = 'u83991941-tsb'
+        sftp_pass = 'tsb010Tx.MX'
         sftp_port = 22
 
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            ssh.connect(sftp_host, port=sftp_port, username=sftp_user)
+            ssh.connect(sftp_host, port=sftp_port, username=sftp_user, password=sftp_pass, timeout=30)
             sftp = ssh.open_sftp()
         except Exception as e:
             return f"Error conectando a SFTP: {e}", 500
