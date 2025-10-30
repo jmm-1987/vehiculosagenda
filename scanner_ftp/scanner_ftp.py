@@ -1,7 +1,7 @@
 """
 Rutas para el scanner de códigos de barras y subida de imágenes a FTP
 """
-from flask import render_template, request, jsonify
+from flask import render_template, request, jsonify, send_file
 from flask_login import login_required, current_user
 from .funciones_scanner import (
     subir_archivo_ftp, 
@@ -12,6 +12,9 @@ from .funciones_scanner import (
     registrar_incidencia
 )
 import os
+import io
+import re
+from datetime import datetime
 
 def register_scanner_ftp_routes(app):
     """Registra las rutas del scanner FTP"""
@@ -89,6 +92,124 @@ def register_scanner_ftp_routes(app):
         incidencia.comunicada = bool(estado)
         db.session.commit()
         return jsonify({"ok": True})
+
+    @app.route('/aldipod/descargar_albaranes_simoes')
+    @login_required
+    def descargar_albaranes_simoes():
+        """Genera y descarga un PDF único con todos los alb_clientes del cliente Simoes para la fecha indicada (YYYY-MM-DD)."""
+        import db
+        from models import IncidenciaAldipod
+        import fitz
+        import paramiko
+
+        fecha_str = request.args.get('fecha')
+        if not fecha_str:
+            return "Falta parámetro fecha", 400
+        try:
+            fecha = datetime.strptime(fecha_str, '%Y-%m-%d')
+        except ValueError:
+            return "Formato de fecha inválido. Use YYYY-MM-DD", 400
+
+        desde = datetime(fecha.year, fecha.month, fecha.day, 0, 0, 0)
+        hasta = datetime(fecha.year, fecha.month, fecha.day, 23, 59, 59)
+
+        incidencias = db.session.query(IncidenciaAldipod).filter(
+            IncidenciaAldipod.fecha >= desde,
+            IncidenciaAldipod.fecha <= hasta,
+            IncidenciaAldipod.tipo_documento == 'alb_clientes',
+            IncidenciaAldipod.cliente.ilike('%simoes%')
+        ).order_by(IncidenciaAldipod.fecha.asc()).all()
+
+        if not incidencias:
+            return "No hay albaranes para esa fecha.", 404
+
+        sftp_host = 'home613353667.1and1-data.host'
+        sftp_user = 'u83991941-tsb'
+        sftp_port = 22
+
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        try:
+            ssh.connect(sftp_host, port=sftp_port, username=sftp_user)
+            sftp = ssh.open_sftp()
+        except Exception as e:
+            return f"Error conectando a SFTP: {e}", 500
+
+        merged_pdf = fitz.open()
+        descargados = 0
+        try:
+            for inc in incidencias:
+                enlace = inc.enlace_imagen or ''
+                try:
+                    m = re.match(r'sftp://[^/]+/(.+)$', enlace)
+                    if not m:
+                        continue
+                    ruta_relativa = m.group(1)
+                    with sftp.open(ruta_relativa, 'rb') as f:
+                        file_bytes = f.read()
+                    try:
+                        src = fitz.open(stream=file_bytes, filetype='pdf')
+                    except Exception:
+                        src = fitz.open(stream=file_bytes, filetype='jpeg')
+                        img_rect = src[0].rect
+                        tmp_doc = fitz.open()
+                        page = tmp_doc.new_page(width=img_rect.width, height=img_rect.height)
+                        page.insert_image(img_rect, stream=file_bytes)
+                        src.close()
+                        src = tmp_doc
+                    merged_pdf.insert_pdf(src)
+                    src.close()
+                    descargados += 1
+                except Exception:
+                    continue
+        finally:
+            try:
+                sftp.close()
+            except Exception:
+                pass
+            try:
+                ssh.close()
+            except Exception:
+                pass
+
+        if descargados == 0:
+            merged_pdf.close()
+            return "No se pudieron descargar/abrir los archivos.", 404
+
+        out_bytes = io.BytesIO()
+        merged_pdf.save(out_bytes)
+        merged_pdf.close()
+        out_bytes.seek(0)
+        filename = f"albaranes_simoes_{fecha_str}.pdf"
+        return send_file(out_bytes, as_attachment=True, download_name=filename, mimetype='application/pdf')
+
+    @app.route('/aldipod/marcar_albaranes_simoes_comunicados', methods=['POST'])
+    @login_required
+    def marcar_albaranes_simoes_comunicados():
+        import db
+        from models import IncidenciaAldipod
+        data = request.get_json(silent=True) or {}
+        fecha_str = data.get('fecha')
+        if not fecha_str:
+            return jsonify(ok=False, error='Falta fecha'), 400
+        try:
+            fecha = datetime.strptime(fecha_str, '%Y-%m-%d')
+        except ValueError:
+            return jsonify(ok=False, error='Formato de fecha inválido'), 400
+
+        desde = datetime(fecha.year, fecha.month, fecha.day, 0, 0, 0)
+        hasta = datetime(fecha.year, fecha.month, fecha.day, 23, 59, 59)
+
+        incidencias = db.session.query(IncidenciaAldipod).filter(
+            IncidenciaAldipod.fecha >= desde,
+            IncidenciaAldipod.fecha <= hasta,
+            IncidenciaAldipod.tipo_documento == 'alb_clientes',
+            IncidenciaAldipod.cliente.ilike('%simoes%')
+        ).all()
+        for inc in incidencias:
+            inc.comunicada = True
+        db.session.commit()
+        return jsonify(ok=True, actualizados=len(incidencias))
     
     @app.route('/descargar_imagen/<referencia>')
     @login_required

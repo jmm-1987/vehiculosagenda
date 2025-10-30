@@ -194,12 +194,24 @@
         }
 
         .badge-pallex {
-            background-color: #0066cc;
+            background-color: black;
             color: white;
         }
 
         .badge-tsb {
-            background-color: #28a745;
+            background-color: #0066cc;
+            color: white;
+        }
+        .badge-simoes {
+            background-color: green;
+            color: white;
+        }
+        .badge-ntl {
+            background-color: rgba(250, 250, 92, 0.87);
+            color: black;
+        }
+        .badge-surpaq {
+            background-color: orange;
             color: white;
         }
 
@@ -301,7 +313,10 @@
                     <span>Mostrar comunicadas</span>
                 </label>
                 <button type="button" onclick="marcarSeleccionadasComoComunicadas()" id="btnMarcarComunicadas" style="padding:8px 12px; background:#28a745; color:white; border:none; border-radius:6px; cursor:pointer; margin-left:10px;" disabled>Marcar seleccionadas como comunicadas (<span id="contadorSeleccionadas">0</span>)</button>
-                <div style="margin-left:auto; display:flex; gap:10px;">
+                <div style="margin-left:auto; display:flex; gap:10px; align-items:center;">
+                    <button type="button" id="btnDescargarSimoes" onclick="descargarAlbaranesSimoes()" style="padding:8px 12px; background:#343a40; color:white; border:none; border-radius:6px; cursor:pointer;">
+                        <i class="fas fa-file-download"></i> Descargar albaranes Simoes
+                    </button>
                     <div style="padding:8px 12px; background:#007bff; color:white; border-radius:6px; text-align:center; min-width:120px;">
                         <div style="font-size:12px; opacity:0.9;">Total Incidencias</div>
                         <div style="font-size:16px; font-weight:bold;" id="totalIncidencias">0</div>
@@ -339,12 +354,20 @@
                         <td>{{ incidencia.fecha.strftime('%H:%M:%S') }}</td>
                         <td>{{ incidencia.usuario }}</td>
                         <td>
-                            {% if 'XPO' in incidencia.cliente %}
+                            {% if 'Simoes' in incidencia.cliente %}
+                                <span class="badge badge-simoes">{{ incidencia.cliente }}</span>
+                            {% elif 'Surpaq' in incidencia.cliente %}
+                                <span class="badge badge-surpaq">{{ incidencia.cliente }}</span>
+                            {% elif 'NTL' in incidencia.cliente %}
+                                <span class="badge badge-ntl">{{ incidencia.cliente }}</span>
+                            {% elif 'XPO' in incidencia.cliente %}
                                 <span class="badge badge-xpo">{{ incidencia.cliente }}</span>
                             {% elif 'Pallex' in incidencia.cliente %}
                                 <span class="badge badge-pallex">{{ incidencia.cliente }}</span>
                             {% elif 'TSB' in incidencia.cliente %}
                                 <span class="badge badge-tsb">{{ incidencia.cliente }}</span>
+                            {% elif 'Surpaq' in incidencia.cliente %}
+                                <span class="badge badge-surpaq">{{ incidencia.cliente }}</span>
                             {% else %}
                                 <span class="badge badge-default">{{ incidencia.cliente }}</span>
                             {% endif %}
@@ -644,6 +667,46 @@
             filtrarTablaAvanzado();
         });
 
+        async function descargarAlbaranesSimoes() {
+            try {
+                const fecha = prompt('¿Qué fecha deseas descargar? (YYYY-MM-DD)');
+                if (!fecha) return;
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) { alert('Formato de fecha inválido. Usa YYYY-MM-DD.'); return; }
+
+                const btn = document.getElementById('btnDescargarSimoes');
+                if (btn) { btn.disabled = true; btn.textContent = 'Preparando descarga...'; }
+
+                const res = await fetch(`/aldipod/descargar_albaranes_simoes?fecha=${encodeURIComponent(fecha)}`, { method: 'GET' });
+                if (!res.ok) { const t = await res.text(); throw new Error(t || 'Error al generar el PDF'); }
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `albaranes_simoes_${fecha}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                const confirmar = confirm('¿Quieres marcar todos los alb_clientes de Simoes de esa fecha como comunicados?');
+                if (confirmar) {
+                    const res2 = await fetch('/aldipod/marcar_albaranes_simoes_comunicados', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ fecha })
+                    });
+                    const data2 = await res2.json();
+                    if (!res2.ok || !data2.ok) throw new Error(data2.error || 'Error al marcar como comunicados');
+                    alert(`Marcados como comunicados: ${data2.actualizados || 0}`);
+                    location.reload();
+                }
+            } catch (e) {
+                alert(`Error: ${e.message}`);
+            } finally {
+                const btn = document.getElementById('btnDescargarSimoes');
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-file-download"></i> Descargar albaranes Simoes'; }
+            }
+        }
     </script>
 </body>
 </html>
