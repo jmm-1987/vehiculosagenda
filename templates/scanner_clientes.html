@@ -1035,12 +1035,20 @@
                 document.getElementById('stepIndicator').textContent = '3️⃣ Fotografía';
                 document.getElementById('video').style.display = 'block';
                 document.getElementById('previewImage').classList.add('hidden');
+                // Ajuste de tamaño del contenedor de cámara según el tipo
+                const cameraContainer = document.querySelector('.camera-container');
+                const videoEl = document.getElementById('video');
+                const canvasEl = document.getElementById('canvas');
                 
                 // Mostrar marco según el tipo
                 const marcoPOD = document.getElementById('marcoPOD');
                 const marcoALB = document.getElementById('marcoALB');
                 
                 if (tipoRegistro === 'POD') {
+                    // Tamaño estándar para POD
+                    if (cameraContainer) cameraContainer.style.maxWidth = '500px';
+                    if (videoEl) videoEl.style.maxHeight = '400px';
+                    if (canvasEl) canvasEl.style.maxHeight = '400px';
                     marcoPOD.classList.remove('hidden');
                     marcoALB.classList.add('hidden');
 
@@ -1078,28 +1086,52 @@
                     video.addEventListener('loadedmetadata', ajustarMarcoPOD);
                     video.addEventListener('resize', ajustarMarcoPOD);
                 } else if (tipoRegistro === 'alb_clientes') {
+                    // Hacer el contenedor de vídeo más grande para ALB_CLIENTES
+                    if (cameraContainer) cameraContainer.style.maxWidth = '900px';
+                    if (videoEl) videoEl.style.maxHeight = '600px';
+                    if (canvasEl) canvasEl.style.maxHeight = '600px';
+                    // Mostrar marco ALB y ocultar POD
                     marcoPOD.classList.add('hidden');
-                    marcoALB.classList.add('hidden');
-                    
-                    // Ajustar dinámicamente la altura para mantener proporción 21x30
+                    marcoALB.classList.remove('hidden');
+
+                    // Ajustar MARCO visual de 21:30 centrado sobre el vídeo (mismo comportamiento que POD)
                     const ajustarMarcoALB = () => {
                         const video = document.getElementById('video');
-                        if (video.videoWidth > 0 && video.videoHeight > 0) {
-                            // Proporción 21x30: altura = ancho * (30/21)
-                            const alturaCalculada = (video.videoWidth * (30/21)) / video.videoHeight * 100;
-                            marcoALB.style.height = `${alturaCalculada}%`;
-                            console.log(`Marco ALB ajustado: video ${video.videoWidth}x${video.videoHeight}, marco altura: ${alturaCalculada}%`);
+                        const marco = document.getElementById('marcoALB');
+                        if (!video || !marco) return;
+                        const displayW = video.clientWidth;
+                        const displayH = video.clientHeight;
+                        const marcoRatio = 21 / 30; // ancho:alto
+                        let marcoW = displayW;
+                        let marcoH = displayW / marcoRatio;
+                        if (marcoH > displayH) {
+                            marcoH = displayH;
+                            marcoW = displayH * marcoRatio;
                         }
+                        const marcoLeft = (displayW - marcoW) / 2;
+                        const marcoTop = (displayH - marcoH) / 2;
+                        marco.style.display = 'block';
+                        marco.style.position = 'absolute';
+                        marco.style.pointerEvents = 'none';
+                        marco.style.zIndex = 10;
+                        marco.style.width = `${marcoW}px`;
+                        marco.style.height = `${marcoH}px`;
+                        marco.style.left = `${marcoLeft}px`;
+                        marco.style.top = `${marcoTop}px`;
+                        marco.style.border = '4px solid #6c757d';
+                        marco.style.borderRadius = '8px';
+                        marco.style.boxShadow = '';
+                        marco.innerHTML = '<div style="position:absolute; top:10px; left:50%; transform:translateX(-50%); color:#ffc107; font-weight:bold; font-size:18px; text-shadow:2px 2px 4px rgba(0,0,0,0.8); background:rgba(0,0,0,0.7); padding:5px 15px; border-radius:20px; border:2px solid #ffc107;">📄 ALB_CLIENTES: 21cm x 30cm</div>';
                     };
-                    
-                    // Intentar ajustar inmediatamente
                     ajustarMarcoALB();
-                    
-                    // Reajustar cuando el video esté listo
                     const video = document.getElementById('video');
                     video.addEventListener('loadedmetadata', ajustarMarcoALB);
                     video.addEventListener('resize', ajustarMarcoALB);
                 } else {
+                    // Restablecer tamaños por defecto
+                    if (cameraContainer) cameraContainer.style.maxWidth = '500px';
+                    if (videoEl) videoEl.style.maxHeight = '400px';
+                    if (canvasEl) canvasEl.style.maxHeight = '400px';
                     marcoPOD.classList.add('hidden');
                     marcoALB.classList.add('hidden');
                 }
@@ -1208,22 +1240,28 @@
                 );
                 imagenDataURL = canvas.toDataURL('image/jpeg', 0.98);
             } else if (tipoRegistro === 'alb_clientes') {
-                // Para ALB_CLIENTES, capturar el área del marco (21x30, proporción 30:21)
-                // La altura debe ser el ancho * (30/21)
-                const alturaMarco = video.videoWidth * (30/21); // Proporción 30:21
-                
-                canvas.width = video.videoWidth;
-                canvas.height = alturaMarco;
-                
+                // Recorte exactamente proporción 21:30 centrada (igual que POD, distinta proporción)
+                const RATIO = 21/30; // ancho:alto
+                const videoW = video.videoWidth;
+                const videoH = video.videoHeight;
+                let cropW = videoW;
+                let cropH = videoW / RATIO;
+                if (cropH > videoH) {
+                    cropH = videoH;
+                    cropW = videoH * RATIO;
+                }
+                // Coordenadas de recorte centradas
+                const cropX = (videoW - cropW) / 2;
+                const cropY = (videoH - cropH) / 2;
+                canvas.width = cropW;
+                canvas.height = cropH;
                 const context = canvas.getContext('2d');
-                // Recortar del video solo la parte del marco (desde y=0 hasta y=alturaMarco)
                 context.drawImage(
                     video,
-                    0, 0, video.videoWidth, alturaMarco,  // origen (sx, sy, sWidth, sHeight)
-                    0, 0, video.videoWidth, alturaMarco   // destino (dx, dy, dWidth, dHeight)
+                    cropX, cropY, cropW, cropH,
+                    0, 0, cropW, cropH
                 );
-                
-                imagenDataURL = canvas.toDataURL('image/jpeg', 0.9);
+                imagenDataURL = canvas.toDataURL('image/jpeg', 0.98);
             } else {
                 // Para INCIDENCIA y MEDIDAS, capturar imagen completa
                 canvas.width = video.videoWidth;
@@ -1244,7 +1282,7 @@
                 // Para POD, usar recorte fijo 21x11
                 mostrarMensajeEmergentePOD();
             } else if (tipoRegistro === 'alb_clientes') {
-                // Para alb_clientes, captura completa A4
+                // Para alb_clientes, usar recorte fijo 21x30
                 mostrarMensajeEmergenteALBClientes();
             } else {
                 // Para INCIDENCIA, usar el flujo original
