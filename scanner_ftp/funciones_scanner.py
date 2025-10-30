@@ -348,6 +348,11 @@ def crear_pdf_temporal(imagenes_base64: List[str], nombre_pdf: str, medidas_por_
         if tipo_documento == 'alb_clientes':
             # Para alb_clientes, usar toda la página
             target_area = fitz.Rect(0, 0, a4_width, a4_height)
+        elif tipo_documento == 'POD':
+            # Para POD, área fija 21 x 11 cm en la parte superior (ancho completo A4, alto 11cm)
+            # A4 de ancho equivale a 21cm; 11cm en puntos:
+            alto_11cm_pt = (11 / 2.54) * 72  # 11 cm -> pulgadas -> puntos
+            target_area = fitz.Rect(0, 0, a4_width, alto_11cm_pt)
         else:
             # Para otros tipos, usar solo mitad superior
             target_area = fitz.Rect(0, 0, a4_width, a4_height / 2)
@@ -377,13 +382,13 @@ def crear_pdf_temporal(imagenes_base64: List[str], nombre_pdf: str, medidas_por_
                 img_w, img_h = img_rect.width, img_rect.height
                 img_doc.close()
 
-                # Calcular escala para encajar en el área definida
+                # Calcular escala para encajar en el área definida manteniendo proporción
                 max_w, max_h = target_area.width, target_area.height
                 scale = min(max_w / img_w, max_h / img_h)
                 draw_w = img_w * scale
                 draw_h = img_h * scale
-                # Centrar horizontalmente y alinear arriba (y=0)
-                x0 = (max_w - draw_w) / 2
+                # Centrar horizontalmente y alinear arriba (y=0) dentro del área
+                x0 = (a4_width - draw_w) / 2
                 y0 = 0
                 target_rect = fitz.Rect(x0, y0, x0 + draw_w, y0 + draw_h)
 
