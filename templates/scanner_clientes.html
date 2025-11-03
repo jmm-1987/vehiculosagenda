@@ -887,10 +887,16 @@
                 codeReader = new ZXing.BrowserMultiFormatReader();
                 
                 // Configurar botones
-                actualizarBotones([
-                    { texto: '⌨️', clase: 'btn-primary', funcion: 'mostrarInputManual()' },
-                    { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
-                ]);
+                (function configurarBotonesEscaneo() {
+                    const botones = [
+                        { texto: '⌨️', clase: 'btn-primary', funcion: 'mostrarInputManual()' },
+                        { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
+                    ];
+                    if (torchDisponible) {
+                        botones.unshift({ texto: torchEncendido ? '💡' : '🔦', clase: 'btn-secondary', funcion: 'toggleTorch()' });
+                    }
+                    actualizarBotones(botones);
+                })();
 
                 const videoElement = document.getElementById('video');
                 
@@ -906,6 +912,35 @@
                         mostrarMensaje('⚠️ Permisos de cámara denegados. Puedes introducir el código manualmente.', 'error');
                     }
                 });
+
+                // Intentar preparar control de linterna cuando haya stream de ZXing
+                const prepararTorchDesdeVideo = () => {
+                    try {
+                        const src = videoElement.srcObject;
+                        if (!src) return;
+                        const track = src.getVideoTracks && src.getVideoTracks()[0] ? src.getVideoTracks()[0] : null;
+                        if (!track) return;
+                        videoTrack = track;
+                        torchDisponible = false;
+                        torchEncendido = false;
+                        if (typeof videoTrack.getCapabilities === 'function') {
+                            const caps = videoTrack.getCapabilities();
+                            if (caps && 'torch' in caps) {
+                                torchDisponible = true;
+                                // refrescar botones con linterna visible
+                                const botones = [
+                                    { texto: '⌨️', clase: 'btn-primary', funcion: 'mostrarInputManual()' },
+                                    { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
+                                ];
+                                botones.unshift({ texto: '🔦', clase: 'btn-secondary', funcion: 'toggleTorch()' });
+                                actualizarBotones(botones);
+                            }
+                        }
+                    } catch (e) {
+                        // ignorar
+                    }
+                };
+                videoElement.addEventListener('playing', prepararTorchDesdeVideo, { once: true });
 
             } catch (error) {
                 console.error('Error al iniciar escáner:', error);
@@ -991,10 +1026,14 @@
             document.getElementById('inputManualContainer').classList.add('hidden');
             document.getElementById('stepIndicator').textContent = '2️⃣ Confirmar';
             
-            actualizarBotones([
+            const botones = [
                 { texto: '✓', clase: 'btn-success', funcion: 'confirmarCodigo()' },
                 { texto: '✗', clase: 'btn-danger', funcion: 'reintentarCodigoBarras()' }
-            ]);
+            ];
+            if (torchDisponible) {
+                botones.unshift({ texto: torchEncendido ? '💡' : '🔦', clase: 'btn-secondary', funcion: 'toggleTorch()' });
+            }
+            actualizarBotones(botones);
         }
 
         function reintentarCodigoBarras() {
@@ -1198,7 +1237,7 @@
                 { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
             ];
             if (torchDisponible) {
-                botonesFoto.unshift({ texto: '🔦', clase: 'btn-secondary', funcion: 'toggleTorch()' });
+                botonesFoto.unshift({ texto: torchEncendido ? '💡' : '🔦', clase: 'btn-secondary', funcion: 'toggleTorch()' });
             }
             actualizarBotones(botonesFoto);
                 
@@ -1393,11 +1432,15 @@
                 estadoActual = 'taking_photo';
                 document.getElementById('stepIndicator').textContent = `3️⃣ Fotografía (${imagenesCapturadas.length} capturada(s))`;
                 
-                actualizarBotones([
+                const botones = [
                     { texto: '📷', clase: 'btn-primary', funcion: 'capturarFoto()' },
                     { texto: '⤴', clase: 'btn-success', funcion: 'enviarFotosPOD()' },
                     { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
-                ]);
+                ];
+                if (torchDisponible) {
+                    botones.unshift({ texto: torchEncendido ? '💡' : '🔦', clase: 'btn-secondary', funcion: 'toggleTorch()' });
+                }
+                actualizarBotones(botones);
             };
         }
 
@@ -1474,11 +1517,15 @@
                 estadoActual = 'taking_photo';
                 document.getElementById('stepIndicator').textContent = `3️⃣ Fotografía (${imagenesCapturadas.length} capturada(s))`;
                 
-                actualizarBotones([
+                const botones = [
                     { texto: '📷', clase: 'btn-primary', funcion: 'capturarFoto()' },
                     { texto: '⤴', clase: 'btn-success', funcion: 'enviarFotosALBClientes()' },
                     { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
-                ]);
+                ];
+                if (torchDisponible) {
+                    botones.unshift({ texto: torchEncendido ? '💡' : '🔦', clase: 'btn-secondary', funcion: 'toggleTorch()' });
+                }
+                actualizarBotones(botones);
             };
         }
 
@@ -1555,11 +1602,15 @@
                 estadoActual = 'taking_photo';
                 document.getElementById('stepIndicator').textContent = `3️⃣ Fotografía (${imagenesCapturadas.length} capturada(s))`;
                 
-                actualizarBotones([
+                const botones = [
                     { texto: '📷', clase: 'btn-primary', funcion: 'capturarFoto()' },
                     { texto: '⤴', clase: 'btn-success', funcion: 'enviarFotosAcumuladas()' },
                     { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
-                ]);
+                ];
+                if (torchDisponible) {
+                    botones.unshift({ texto: torchEncendido ? '💡' : '🔦', clase: 'btn-secondary', funcion: 'toggleTorch()' });
+                }
+                actualizarBotones(botones);
             };
         }
 
@@ -1756,11 +1807,15 @@
                 estadoActual = 'taking_photo';
                 document.getElementById('stepIndicator').textContent = `3️⃣ Fotografía (${imagenesCapturadas.length} capturada(s))`;
                 
-                actualizarBotones([
+                const botones = [
                     { texto: '📷', clase: 'btn-primary', funcion: 'capturarFoto()' },
                     { texto: '⤴', clase: 'btn-success', funcion: 'enviarFotosConMedidas()' },
                     { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
-                ]);
+                ];
+                if (torchDisponible) {
+                    botones.unshift({ texto: torchEncendido ? '💡' : '🔦', clase: 'btn-secondary', funcion: 'toggleTorch()' });
+                }
+                actualizarBotones(botones);
             };
         }
 

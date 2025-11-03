@@ -669,31 +669,38 @@
 
         async function descargarAlbaranesSimoes() {
             try {
-                const fecha = prompt('¿Qué fecha deseas descargar? (YYYY-MM-DD)');
-                if (!fecha) return;
-                if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) { alert('Formato de fecha inválido. Usa YYYY-MM-DD.'); return; }
+                const desdeStr = prompt('Desde (dd-mm-aaaa)');
+                if (!desdeStr) return;
+                const hastaStr = prompt('Hasta (dd-mm-aaaa)');
+                if (!hastaStr) return;
+                const re = /^\d{2}-\d{2}-\d{4}$/;
+                if (!re.test(desdeStr) || !re.test(hastaStr)) { alert('Formato inválido. Usa dd-mm-aaaa.'); return; }
+                const toIso = (dmy) => { const [dd, mm, yyyy] = dmy.split('-'); return `${yyyy}-${mm}-${dd}`; };
+                const desde = toIso(desdeStr);
+                const hasta = toIso(hastaStr);
 
                 const btn = document.getElementById('btnDescargarSimoes');
                 if (btn) { btn.disabled = true; btn.textContent = 'Preparando descarga...'; }
 
-                const res = await fetch(`/aldipod/descargar_albaranes_simoes?fecha=${encodeURIComponent(fecha)}`, { method: 'GET' });
+                const qs = new URLSearchParams({ desde, hasta }).toString();
+                const res = await fetch(`/aldipod/descargar_albaranes_simoes?${qs}`, { method: 'GET' });
                 if (!res.ok) { const t = await res.text(); throw new Error(t || 'Error al generar el PDF'); }
                 const blob = await res.blob();
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `albaranes_simoes_${fecha}.pdf`;
+                a.download = `albaranes_simoes_${desdeStr}_a_${hastaStr}.pdf`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
 
-                const confirmar = confirm('¿Quieres marcar todos los alb_clientes de Simoes de esa fecha como comunicados?');
+                const confirmar = confirm(`¿Marcar como comunicados todos los alb_clientes de Simoes del ${desdeStr} al ${hastaStr}?`);
                 if (confirmar) {
                     const res2 = await fetch('/aldipod/marcar_albaranes_simoes_comunicados', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ fecha })
+                        body: JSON.stringify({ desde, hasta })
                     });
                     const data2 = await res2.json();
                     if (!res2.ok || !data2.ok) throw new Error(data2.error || 'Error al marcar como comunicados');

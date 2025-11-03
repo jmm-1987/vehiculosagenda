@@ -96,32 +96,50 @@ def register_scanner_ftp_routes(app):
     @app.route('/aldipod/descargar_albaranes_simoes')
     @login_required
     def descargar_albaranes_simoes():
-        """Genera y descarga un PDF único con todos los alb_clientes del cliente Simoes para la fecha indicada (YYYY-MM-DD)."""
+        """Genera y descarga un PDF único con todos los alb_clientes del cliente Simoes.
+        Acepta:
+        - fecha=YYYY-MM-DD (compatibilidad)
+        - o rango: desde=YYYY-MM-DD&hasta=YYYY-MM-DD
+        """
         import db
         from models import IncidenciaAldipod
         import fitz
         import paramiko
 
         fecha_str = request.args.get('fecha')
-        if not fecha_str:
-            return "Falta parámetro fecha", 400
-        try:
-            fecha = datetime.strptime(fecha_str, '%Y-%m-%d')
-        except ValueError:
-            return "Formato de fecha inválido. Use YYYY-MM-DD", 400
+        desde_str = request.args.get('desde')
+        hasta_str = request.args.get('hasta')
 
-        desde = datetime(fecha.year, fecha.month, fecha.day, 0, 0, 0)
-        hasta = datetime(fecha.year, fecha.month, fecha.day, 23, 59, 59)
+        if fecha_str:
+            try:
+                fecha = datetime.strptime(fecha_str, '%Y-%m-%d')
+            except ValueError:
+                return "Formato de fecha inválido. Use YYYY-MM-DD", 400
+            desde = datetime(fecha.year, fecha.month, fecha.day, 0, 0, 0)
+            hasta = datetime(fecha.year, fecha.month, fecha.day, 23, 59, 59)
+        elif desde_str and hasta_str:
+            try:
+                desde = datetime.strptime(desde_str, '%Y-%m-%d')
+                hasta = datetime.strptime(hasta_str, '%Y-%m-%d')
+            except ValueError:
+                return "Formato de rango inválido. Use YYYY-MM-DD", 400
+            # Normalizar extremos del día
+            desde = datetime(desde.year, desde.month, desde.day, 0, 0, 0)
+            hasta = datetime(hasta.year, hasta.month, hasta.day, 23, 59, 59)
+            fecha_str = f"{desde_str}_a_{hasta_str}"
+        else:
+            return "Falta parámetro fecha o rango desde/hasta", 400
 
         incidencias = db.session.query(IncidenciaAldipod).filter(
             IncidenciaAldipod.fecha >= desde,
             IncidenciaAldipod.fecha <= hasta,
             IncidenciaAldipod.tipo_documento == 'alb_clientes',
+            IncidenciaAldipod.comunicada == False,
             IncidenciaAldipod.cliente.ilike('%simoes%')
         ).order_by(IncidenciaAldipod.fecha.asc()).all()
 
         if not incidencias:
-            return "No hay albaranes para esa fecha.", 404
+            return "No hay albaranes para ese rango.", 404
 
         sftp_host = 'home613353667.1and1-data.host'
         sftp_user = 'u83991941-tsb'
@@ -313,15 +331,26 @@ def register_scanner_ftp_routes(app):
         from models import IncidenciaAldipod
         data = request.get_json(silent=True) or {}
         fecha_str = data.get('fecha')
-        if not fecha_str:
-            return jsonify(ok=False, error='Falta fecha'), 400
-        try:
-            fecha = datetime.strptime(fecha_str, '%Y-%m-%d')
-        except ValueError:
-            return jsonify(ok=False, error='Formato de fecha inválido'), 400
+        desde_str = data.get('desde')
+        hasta_str = data.get('hasta')
 
-        desde = datetime(fecha.year, fecha.month, fecha.day, 0, 0, 0)
-        hasta = datetime(fecha.year, fecha.month, fecha.day, 23, 59, 59)
+        if fecha_str:
+            try:
+                fecha = datetime.strptime(fecha_str, '%Y-%m-%d')
+            except ValueError:
+                return jsonify(ok=False, error='Formato de fecha inválido'), 400
+            desde = datetime(fecha.year, fecha.month, fecha.day, 0, 0, 0)
+            hasta = datetime(fecha.year, fecha.month, fecha.day, 23, 59, 59)
+        elif desde_str and hasta_str:
+            try:
+                desde = datetime.strptime(desde_str, '%Y-%m-%d')
+                hasta = datetime.strptime(hasta_str, '%Y-%m-%d')
+            except ValueError:
+                return jsonify(ok=False, error='Formato de rango inválido'), 400
+            desde = datetime(desde.year, desde.month, desde.day, 0, 0, 0)
+            hasta = datetime(hasta.year, hasta.month, hasta.day, 23, 59, 59)
+        else:
+            return jsonify(ok=False, error='Falta fecha o rango'), 400
 
         incidencias = db.session.query(IncidenciaAldipod).filter(
             IncidenciaAldipod.fecha >= desde,
