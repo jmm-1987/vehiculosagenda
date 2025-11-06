@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash, jsonify
 import ftplib
 from io import BytesIO
 import json
@@ -10,6 +10,55 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(BASE_DIR, '..', 'static', 'ftp_config.json')
 
 def register_ftp_transfer_routes(app):
+    @app.route('/ftp_transfer/estado_scheduler')
+    def estado_scheduler():
+        """Endpoint para verificar el estado del scheduler"""
+        global _scheduler
+        try:
+            if _scheduler is None:
+                return jsonify({
+                    'scheduler_iniciado': False,
+                    'mensaje': 'Scheduler no ha sido iniciado'
+                })
+            
+            jobs = _scheduler.get_jobs()
+            job_info = []
+            for job in jobs:
+                job_info.append({
+                    'id': job.id,
+                    'next_run_time': str(job.next_run_time) if job.next_run_time else None,
+                    'func': job.func.__name__ if hasattr(job.func, '__name__') else str(job.func)
+                })
+            
+            return jsonify({
+                'scheduler_iniciado': True,
+                'scheduler_running': _scheduler.running if _scheduler else False,
+                'jobs': job_info,
+                'total_jobs': len(jobs)
+            })
+        except Exception as e:
+            return jsonify({
+                'error': str(e),
+                'scheduler_iniciado': False
+            })
+    
+    @app.route('/ftp_transfer/ejecutar_ahora')
+    def ejecutar_tarea_ahora():
+        """Endpoint para ejecutar la tarea manualmente (para pruebas)"""
+        try:
+            tarea_programada()
+            return jsonify({
+                'success': True,
+                'mensaje': 'Tarea ejecutada manualmente'
+            })
+        except Exception as e:
+            import traceback
+            return jsonify({
+                'success': False,
+                'error': str(e),
+                'traceback': traceback.format_exc()
+            })
+    
     @app.route('/ftp_transfer')
     def ftp_transfer():
         origen = ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "XPOsalidas"]
@@ -181,29 +230,66 @@ def cargar_config_ftp():
 
 
 def tarea_programada():
-    print("============== INICIO DE TAREA PROGRAMADA ==============")
-    print(f"Hora de inicio: {datetime.datetime.now()}")
-    datos = cargar_config_ftp()
-    if datos:
-        print("Ejecutando tarea programada...")
-        logs = iniciar_transferencia(datos)
-        for log in logs:
-            print(log)
-    else:
-        print("No hay configuración disponible para ejecutar la tarea.")
+    try:
+        import sys
+        print("=" * 50, file=sys.stderr)
+        print("============== INICIO DE TAREA PROGRAMADA ==============", file=sys.stderr)
+        print(f"Hora de inicio: {datetime.datetime.now()}", file=sys.stderr)
+        print(f"PID del proceso: {os.getpid()}", file=sys.stderr)
+        
+        datos = cargar_config_ftp()
+        if datos:
+            print("Ejecutando tarea programada...", file=sys.stderr)
+            print(f"Configuración cargada: origen={datos.get('origen', {}).get('ftp', 'N/A')}, destinos={len(datos.get('destinos', []))}", file=sys.stderr)
+            logs = iniciar_transferencia(datos)
+            for log in logs:
+                print(log, file=sys.stderr)
+        else:
+            print("No hay configuración disponible para ejecutar la tarea.", file=sys.stderr)
+            print(f"Intentando cargar desde: {CONFIG_PATH}", file=sys.stderr)
+            print(f"Archivo existe: {os.path.exists(CONFIG_PATH)}", file=sys.stderr)
 
-    print(f"Hora de finalización: {datetime.datetime.now()}")
-    print("=============== FIN DE TAREA PROGRAMADA ================\n")
+        print(f"Hora de finalización: {datetime.datetime.now()}", file=sys.stderr)
+        print("=============== FIN DE TAREA PROGRAMADA ================", file=sys.stderr)
+        print("=" * 50, file=sys.stderr)
+    except Exception as e:
+        import traceback
+        print(f"ERROR CRÍTICO en tarea_programada: {str(e)}", file=sys.stderr)
+        print(traceback.format_exc(), file=sys.stderr)
+
+# Variable global para almacenar el scheduler
+_scheduler = None
 
 def iniciar_scheduler():
+    global _scheduler
     try:
-        scheduler = BackgroundScheduler()
-        scheduler.add_job(tarea_programada, 'interval', minutes=5)
-        scheduler.start()
-        print("Scheduler iniciado correctamente. Tarea programada cada 30 minutos.")
+        if _scheduler is not None and _scheduler.running:
+            print("Scheduler ya está corriendo. No se reinicia.")
+            return
+        
+        import sys
+        print(f"Iniciando scheduler... PID: {os.getpid()}", file=sys.stderr)
+        _scheduler = BackgroundScheduler(daemon=False)
+        _scheduler.add_job(
+            tarea_programada, 
+            'interval', 
+            minutes=5,
+            id='tarea_ftp_transfer',
+            replace_existing=True
+        )
+        _scheduler.start()
+        print(f"Scheduler iniciado correctamente. Tarea programada cada 5 minutos. PID: {os.getpid()}", file=sys.stderr)
+        print(f"Estado del scheduler: running={_scheduler.running}", file=sys.stderr)
+        
+        # Verificar que el job está programado
+        jobs = _scheduler.get_jobs()
+        print(f"Jobs programados: {len(jobs)}", file=sys.stderr)
+        for job in jobs:
+            print(f"  - Job ID: {job.id}, Próxima ejecución: {job.next_run_time}", file=sys.stderr)
+            
     except Exception as e:
-        print(f"Error al iniciar scheduler: {e}")
         import traceback
-        print(traceback.format_exc())
+        print(f"Error al iniciar scheduler: {e}", file=sys.stderr)
+        print(traceback.format_exc(), file=sys.stderr)
 
 
