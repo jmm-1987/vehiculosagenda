@@ -1,13 +1,9 @@
 from flask import render_template, request, redirect, url_for, flash, jsonify
 import ftplib
 from io import BytesIO
-import json
 import os
 from apscheduler.schedulers.background import BackgroundScheduler
 import datetime
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_PATH = os.path.join(BASE_DIR, '..', 'static', 'ftp_config.json')
 
 def register_ftp_transfer_routes(app):
     @app.route('/ftp_transfer/estado_scheduler')
@@ -307,12 +303,120 @@ def iniciar_transferencia(datos):
 
 
 def cargar_config_ftp():
-    try:
-        with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"Error cargando config: {e}")
-        return None
+    """
+    Devuelve siempre la configuración por defecto (la misma que se usa en la ejecución manual).
+    No lee el archivo JSON.
+    """
+    # Configuración por defecto (la misma que se usa en ejecución manual)
+    config_default = {
+        "origen": {
+            "ftp": "ftpclientes.nereid.es",
+            "username": "ne4ld1tr43xSurp4q",
+            "password": "J8QP123(A2e",
+            "directory": "XPOsalidas"
+        },
+        "destinos": [
+            {
+                "ftp": "ftpclientes.nereid.es",
+                "username": "ne4ld1tr43xSurp4q",
+                "password": "J8QP123(A2e",
+                "prefix": "DSEL",
+                "directory": "PODSalidasXPO/POD"
+            },
+            {
+                "ftp": "ftpclientes.nereid.es",
+                "username": "ne4ld1tr43xSurp4q",
+                "password": "J8QP123(A2e",
+                "prefix": "GGSS",
+                "directory": "PODSalidasXPO/PRIVADO"
+            },
+            {
+                "ftp": "ftpclientes.nereid.es",
+                "username": "ne4ld1tr43xSurp4q",
+                "password": "J8QP123(A2e",
+                "prefix": "VARI",
+                "directory": "PODSalidasXPO/PRIVADO"
+            },
+            {
+                "ftp": "ftpclientes.nereid.es",
+                "username": "ne4ld1tr43xSurp4q",
+                "password": "J8QP123(A2e",
+                "prefix": "DADR",
+                "directory": "PODSalidasXPO/PRIVADO"
+            },
+            {
+                "ftp": "ftpclientes.nereid.es",
+                "username": "ne4ld1tr43xSurp4q",
+                "password": "J8QP123(A2e",
+                "prefix": "ATRA",
+                "directory": "PODSalidasXPO/POD"
+            },
+            {
+                "ftp": "ftpclientes.nereid.es",
+                "username": "ne4ld1tr43xSurp4q",
+                "password": "J8QP123(A2e",
+                "prefix": "DFIR",
+                "directory": "PODSalidasXPO/POD"
+            },
+            {
+                "ftp": "ftpclientes.nereid.es",
+                "username": "ne4ld1tr43xSurp4q",
+                "password": "J8QP123(A2e",
+                "prefix": "DALB",
+                "directory": "PODSalidasXPO/POD"
+            },
+            {
+                "ftp": "ftpclientes.nereid.es",
+                "username": "ne4ld1tr43xSurp4q",
+                "password": "J8QP123(A2e",
+                "prefix": "POD",
+                "directory": "PODSalidasXPO/POD"
+            },
+            {
+                "ftp": "ftpclientes.nereid.es",
+                "username": "ne4ld1tr43xSurp4q",
+                "password": "J8QP123(A2e",
+                "prefix": "CONS",
+                "directory": "PODSalidasXPO/POD"
+            },
+            {
+                "ftp": "ftpclientes.nereid.es",
+                "username": "ne4ld1tr43xSurp4q",
+                "password": "J8QP123(A2e",
+                "prefix": "EREP",
+                "directory": "PODSalidasXPO/POD"
+            },
+            {
+                "ftp": "ftpclientes.nereid.es",
+                "username": "ne4ld1tr43xSurp4q",
+                "password": "J8QP123(A2e",
+                "prefix": "MANI",
+                "directory": "PODSalidasXPO/POD"
+            },
+            {
+                "ftp": "ftpclientes.nereid.es",
+                "username": "ne4ld1tr43xSurp4q",
+                "password": "J8QP123(A2e",
+                "prefix": "INCC",
+                "directory": "PODSalidasXPO/INC"
+            },
+            {
+                "ftp": "ftpclientes.nereid.es",
+                "username": "ne4ld1tr43xSurp4q",
+                "password": "J8QP123(A2e",
+                "prefix": "INCB",
+                "directory": "PODSalidasXPO/INC"
+            },
+            {
+                "ftp": "ftpclientes.nereid.es",
+                "username": "ne4ld1tr43xSurp4q",
+                "password": "J8QP123(A2e",
+                "prefix": "DIMG",
+                "directory": "PODSalidasXPO/INC"
+            }
+        ]
+    }
+    return config_default
 
 
 def tarea_programada():
@@ -324,16 +428,11 @@ def tarea_programada():
         print(f"PID del proceso: {os.getpid()}", file=sys.stderr)
         
         datos = cargar_config_ftp()
-        if datos:
-            print("Ejecutando tarea programada...", file=sys.stderr)
-            print(f"Configuración cargada: origen={datos.get('origen', {}).get('ftp', 'N/A')}, destinos={len(datos.get('destinos', []))}", file=sys.stderr)
-            logs = iniciar_transferencia(datos)
-            for log in logs:
-                print(log, file=sys.stderr)
-        else:
-            print("No hay configuración disponible para ejecutar la tarea.", file=sys.stderr)
-            print(f"Intentando cargar desde: {CONFIG_PATH}", file=sys.stderr)
-            print(f"Archivo existe: {os.path.exists(CONFIG_PATH)}", file=sys.stderr)
+        print("Ejecutando tarea programada...", file=sys.stderr)
+        print(f"Configuración cargada: origen={datos.get('origen', {}).get('ftp', 'N/A')}, directorio={datos.get('origen', {}).get('directory', 'N/A')}, destinos={len(datos.get('destinos', []))}", file=sys.stderr)
+        logs = iniciar_transferencia(datos)
+        for log in logs:
+            print(log, file=sys.stderr)
 
         print(f"Hora de finalización: {datetime.datetime.now()}", file=sys.stderr)
         print("=============== FIN DE TAREA PROGRAMADA ================", file=sys.stderr)
