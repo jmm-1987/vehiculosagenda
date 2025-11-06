@@ -38,40 +38,67 @@ def register_ftp_transfer_routes(app):
 
     @app.route('/iniciar_transferencia', methods=['POST'])
     def iniciar_transferencia_route():
-        ftp_origen = request.form.get('ftp_origen')
-        username_origen = request.form.get('username_origen')
-        password_origen = request.form.get('password_origen')
-        directory_origen = request.form.get('directory_origen')
+        try:
+            ftp_origen = request.form.get('ftp_origen')
+            username_origen = request.form.get('username_origen')
+            password_origen = request.form.get('password_origen')
+            directory_origen = request.form.get('directory_origen')
 
-        lista_conexiones = []
-        numero_conexiones = len(request.form) // 5
+            lista_conexiones = []
+            numero_conexiones = len(request.form) // 5
 
-        for i in range(1, numero_conexiones + 1):
-            ftp_dest = request.form.get(f'ftp_dest_{i}')
-            username_dest = request.form.get(f'username_dest_{i}')
-            password_dest = request.form.get(f'password_dest_{i}')
-            prefix_dest = request.form.get(f'prefix_dest_{i}')
-            directory_dest = request.form.get(f'directory_dest_{i}')
+            for i in range(1, numero_conexiones + 1):
+                ftp_dest = request.form.get(f'ftp_dest_{i}')
+                username_dest = request.form.get(f'username_dest_{i}')
+                password_dest = request.form.get(f'password_dest_{i}')
+                prefix_dest = request.form.get(f'prefix_dest_{i}')
+                directory_dest = request.form.get(f'directory_dest_{i}')
 
-            lista_conexiones.append({
-                'ftp': ftp_dest,
-                'username': username_dest,
-                'password': password_dest,
-                'prefix': prefix_dest,
-                'directory': directory_dest
+                # Solo agregar si tiene datos válidos
+                if ftp_dest and username_dest and password_dest and prefix_dest and directory_dest:
+                    lista_conexiones.append({
+                        'ftp': ftp_dest,
+                        'username': username_dest,
+                        'password': password_dest,
+                        'prefix': prefix_dest,
+                        'directory': directory_dest
+                    })
+
+            logs = iniciar_transferencia({
+                'origen': {
+                    'ftp': ftp_origen,
+                    'username': username_origen,
+                    'password': password_origen,
+                    'directory': directory_origen
+                },
+                'destinos': lista_conexiones
             })
 
-        logs = iniciar_transferencia({
-            'origen': {
-                'ftp': ftp_origen,
-                'username': username_origen,
-                'password': password_origen,
-                'directory': directory_origen
-            },
-            'destinos': lista_conexiones
-        })
-
-        return render_template('ftp_transfer.html', origen=[ftp_origen, username_origen, password_origen, directory_origen], conexiones=lista_conexiones, logs=logs)
+            return render_template('ftp_transfer.html', origen=[ftp_origen, username_origen, password_origen, directory_origen], conexiones=lista_conexiones, logs=logs)
+        except Exception as e:
+            import traceback
+            error_msg = f"Error en iniciar_transferencia_route: {str(e)}"
+            print(error_msg)
+            print(traceback.format_exc())
+            logs = [f"Error: {error_msg}"]
+            origen = ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "XPOsalidas"]
+            lista_conexiones = [
+                ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "DSEL", "PODSalidasXPO/POD"],
+                ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "GGSS", "PODSalidasXPO/PRIVADO"],
+                ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "VARI", "PODSalidasXPO/PRIVADO"],
+                ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "DADR", "PODSalidasXPO/PRIVADO"],
+                ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "ATRA", "PODSalidasXPO/POD"],
+                ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "DFIR", "PODSalidasXPO/POD"],
+                ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "DALB", "PODSalidasXPO/POD"],
+                ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "POD", "PODSalidasXPO/POD"],
+                ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "CONS", "PODSalidasXPO/POD"],
+                ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "EREP", "PODSalidasXPO/POD"],
+                ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "MANI", "PODSalidasXPO/POD"],
+                ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "INCC", "PODSalidasXPO/INC"],
+                ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "INCB", "PODSalidasXPO/INC"],
+                ["ftpclientes.nereid.es", "ne4ld1tr43xSurp4q", "J8QP123(A2e", "DIMG", "PODSalidasXPO/INC"]
+            ]
+            return render_template('ftp_transfer.html', origen=origen, conexiones=lista_conexiones, logs=logs)
 
 def iniciar_transferencia(datos):
     origen = datos['origen']
@@ -80,23 +107,40 @@ def iniciar_transferencia(datos):
     MAX_ARCHIVOS = 20
     archivos_transferidos = 0
 
+    # Validar datos de origen
+    if not origen or not origen.get('ftp') or not origen.get('username') or not origen.get('password') or not origen.get('directory'):
+        logs.append("Error: Faltan datos del servidor de origen")
+        return logs
+
     try:
-        with ftplib.FTP(origen['ftp']) as ftp_origen:
-            ftp_origen.login(origen['username'], origen['password'])
-            ftp_origen.cwd(origen['directory'])
-            archivos_origen = ftp_origen.nlst()
+        logs.append(f"Conectando al servidor origen: {origen['ftp']}")
+        ftp_origen = ftplib.FTP(origen['ftp'])
+        ftp_origen.login(origen['username'], origen['password'])
+        ftp_origen.cwd(origen['directory'])
+        archivos_origen = ftp_origen.nlst()
+        logs.append(f"Archivos encontrados en origen: {len(archivos_origen)}")
 
-            for destino in destinos:
-                with ftplib.FTP(destino['ftp']) as ftp_dest:
-                    ftp_dest.login(destino['username'], destino['password'])
-                    ftp_dest.cwd(destino['directory'])
+        for destino in destinos:
+            # Validar datos de destino
+            if not destino or not destino.get('ftp') or not destino.get('username') or not destino.get('password') or not destino.get('directory') or not destino.get('prefix'):
+                logs.append(f"Error: Faltan datos del destino. Saltando...")
+                continue
 
-                    for archivo in archivos_origen:
-                        if archivo.startswith(destino['prefix']):
-                            if archivos_transferidos >= MAX_ARCHIVOS:
-                                logs.append("Límite de 20 archivos alcanzado. Proceso detenido.")
-                                return logs
+            try:
+                logs.append(f"Conectando al destino: {destino['ftp']} - {destino['directory']}")
+                ftp_dest = ftplib.FTP(destino['ftp'])
+                ftp_dest.login(destino['username'], destino['password'])
+                ftp_dest.cwd(destino['directory'])
 
+                for archivo in archivos_origen:
+                    if archivo.startswith(destino['prefix']):
+                        if archivos_transferidos >= MAX_ARCHIVOS:
+                            logs.append("Límite de 20 archivos alcanzado. Proceso detenido.")
+                            ftp_dest.quit()
+                            ftp_origen.quit()
+                            return logs
+
+                        try:
                             logs.append(f"Transfiriendo {archivo} a {destino['directory']} en {destino['ftp']}")
                             file_buffer = BytesIO()
                             ftp_origen.retrbinary(f'RETR {archivo}', file_buffer.write)
@@ -105,11 +149,24 @@ def iniciar_transferencia(datos):
                             logs.append(f"{archivo} transferido con éxito a {destino['directory']} en {destino['ftp']}")
                             ftp_origen.delete(archivo)
                             logs.append(f"{archivo} eliminado del servidor de origen.")
-
                             archivos_transferidos += 1
+                        except Exception as e_archivo:
+                            logs.append(f"Error al transferir {archivo}: {str(e_archivo)}")
+                            continue
+
+                ftp_dest.quit()
+            except Exception as e_destino:
+                logs.append(f"Error conectando al destino {destino.get('ftp', 'desconocido')}: {str(e_destino)}")
+                continue
+
+        ftp_origen.quit()
+        logs.append(f"Transferencia completada. Total de archivos transferidos: {archivos_transferidos}")
 
     except Exception as e:
-        logs.append(f"Error durante la transferencia: {e}")
+        error_msg = f"Error durante la transferencia: {str(e)}"
+        logs.append(error_msg)
+        import traceback
+        logs.append(f"Detalles: {traceback.format_exc()}")
 
     return logs
 
@@ -139,8 +196,14 @@ def tarea_programada():
     print("=============== FIN DE TAREA PROGRAMADA ================\n")
 
 def iniciar_scheduler():
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(tarea_programada, 'interval', minutes=30)
-    scheduler.start()
+    try:
+        scheduler = BackgroundScheduler()
+        scheduler.add_job(tarea_programada, 'interval', minutes=5)
+        scheduler.start()
+        print("Scheduler iniciado correctamente. Tarea programada cada 30 minutos.")
+    except Exception as e:
+        print(f"Error al iniciar scheduler: {e}")
+        import traceback
+        print(traceback.format_exc())
 
 

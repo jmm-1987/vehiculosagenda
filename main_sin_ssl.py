@@ -37,8 +37,6 @@ from ficheros.ficheros_carreras import register_func_subir_fichero_carreras
 from scanner_ftp.scanner_ftp import register_scanner_ftp_routes
 from sqlalchemy import func
 
-iniciar_scheduler()
-
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '78587fgrtyth'
 login_manager = LoginManager(app)
@@ -74,6 +72,9 @@ register_func_subir_fichero_pallex(app)
 register_func_subir_fichero_xpo(app)
 register_func_subir_fichero_carreras(app)
 register_scanner_ftp_routes(app)
+
+# Iniciar scheduler después de registrar todas las rutas
+iniciar_scheduler()
 
 @app.route('/')
 def index():

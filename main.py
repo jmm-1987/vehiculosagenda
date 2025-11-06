@@ -35,8 +35,6 @@ from ficheros.ficheros_carreras import register_func_subir_fichero_carreras
 from scanner_ftp.scanner_ftp import register_scanner_ftp_routes
 from sqlalchemy import func
 
-iniciar_scheduler()
-
 # Asegurar columnas nuevas en SQLite al arranque (sin migraciones)
 try:
     from db import ensure_column_exists
@@ -90,6 +88,8 @@ register_func_subir_fichero_xpo(app)
 register_func_subir_fichero_carreras(app)
 register_scanner_ftp_routes(app)
 
+# Iniciar scheduler después de registrar todas las rutas
+iniciar_scheduler()
 
 @app.route('/')
 def index():
