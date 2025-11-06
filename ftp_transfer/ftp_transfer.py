@@ -160,14 +160,100 @@ def iniciar_transferencia(datos):
     if not origen or not origen.get('ftp') or not origen.get('username') or not origen.get('password') or not origen.get('directory'):
         logs.append("Error: Faltan datos del servidor de origen")
         return logs
+    
+    # Mostrar información de configuración al inicio
+    logs.append("=" * 60)
+    logs.append("CONFIGURACIÓN DE TRANSFERENCIA FTP")
+    logs.append("=" * 60)
 
     try:
+        logs.append(f"=== INFORMACIÓN DE CONEXIÓN ORIGEN ===")
+        logs.append(f"Servidor FTP: {origen['ftp']}")
+        logs.append(f"Usuario: {origen['username']}")
+        logs.append(f"DIRECTORIO DE ORIGEN: {origen['directory']}")
+        logs.append(f"========================================")
+        
         logs.append(f"Conectando al servidor origen: {origen['ftp']}")
         ftp_origen = ftplib.FTP(origen['ftp'])
         ftp_origen.login(origen['username'], origen['password'])
-        ftp_origen.cwd(origen['directory'])
-        archivos_origen = ftp_origen.nlst()
-        logs.append(f"Archivos encontrados en origen: {len(archivos_origen)}")
+        
+        # Verificar directorio actual antes de cambiar
+        pwd_antes = ftp_origen.pwd()
+        logs.append(f"Directorio actual antes de cambiar: {pwd_antes}")
+        
+        # Cambiar al directorio de origen
+        logs.append(f"Cambiando al directorio: {origen['directory']}")
+        try:
+            ftp_origen.cwd(origen['directory'])
+        except Exception as e_cwd:
+            logs.append(f"ERROR al cambiar al directorio {origen['directory']}: {str(e_cwd)}")
+            logs.append("Intentando listar directorios disponibles...")
+            try:
+                directorios = ftp_origen.nlst()
+                logs.append(f"Directorios/carpetas en el directorio actual: {directorios[:10]}")  # Primeros 10
+            except:
+                pass
+            raise e_cwd
+        
+        # Verificar que el cambio fue exitoso
+        pwd_despues = ftp_origen.pwd()
+        logs.append(f"Directorio actual después de cambiar: {pwd_despues}")
+        
+        # Intentar listar archivos con diferentes métodos
+        archivos_origen = []
+        
+        # Método 1: nlst() - puede fallar en algunos servidores
+        try:
+            archivos_nlst = ftp_origen.nlst()
+            logs.append(f"nlst() encontró {len(archivos_nlst)} elementos")
+            # Filtrar solo archivos (excluir directorios que empiezan con punto o son nombres especiales)
+            archivos_nlst = [f for f in archivos_nlst if f and not f.startswith('.') and f not in ['.', '..']]
+            archivos_origen = archivos_nlst
+        except Exception as e_nlst:
+            logs.append(f"Error con nlst(): {str(e_nlst)}")
+        
+        # Si nlst() no funcionó o devolvió pocos archivos, intentar con retrlines
+        if len(archivos_origen) == 0:
+            try:
+                logs.append("Intentando listar con retrlines('NLST')...")
+                archivos_list = []
+                ftp_origen.retrlines('NLST', archivos_list.append)
+                # Filtrar solo archivos válidos
+                archivos_list = [f for f in archivos_list if f and not f.startswith('.') and f not in ['.', '..']]
+                archivos_origen = archivos_list
+                logs.append(f"retrlines('NLST') encontró {len(archivos_origen)} archivos")
+            except Exception as e_retr:
+                logs.append(f"Error con retrlines('NLST'): {str(e_retr)}")
+        
+        # Si aún no hay archivos, intentar con dir() y parsear
+        if len(archivos_origen) == 0:
+            try:
+                logs.append("Intentando listar con dir()...")
+                archivos_dir = []
+                ftp_origen.retrlines('LIST', archivos_dir.append)
+                # Parsear la salida de LIST para extraer nombres de archivos
+                archivos_parseados = []
+                for linea in archivos_dir:
+                    # El formato típico es: -rw-r--r-- 1 user group size date time filename
+                    partes = linea.split()
+                    if len(partes) >= 9:
+                        nombre_archivo = ' '.join(partes[8:])  # El nombre puede tener espacios
+                        if nombre_archivo and not nombre_archivo.startswith('.'):
+                            archivos_parseados.append(nombre_archivo)
+                archivos_origen = archivos_parseados
+                logs.append(f"dir() encontró {len(archivos_origen)} archivos")
+            except Exception as e_dir:
+                logs.append(f"Error con dir(): {str(e_dir)}")
+        
+        # Mostrar algunos ejemplos de archivos encontrados
+        if len(archivos_origen) > 0:
+            logs.append(f"Archivos encontrados en origen: {len(archivos_origen)}")
+            # Mostrar primeros 5 archivos como ejemplo
+            ejemplos = archivos_origen[:5]
+            logs.append(f"Ejemplos de archivos: {', '.join(ejemplos)}")
+        else:
+            logs.append(f"ADVERTENCIA: No se encontraron archivos en {origen['directory']}")
+            logs.append("Verifica que el directorio sea correcto y que tenga archivos")
 
         for destino in destinos:
             # Validar datos de destino
