@@ -458,7 +458,7 @@ def iniciar_scheduler():
         _scheduler.add_job(
             tarea_programada, 
             'interval', 
-            minutes=5,
+            minutes=30,
             id='tarea_ftp_transfer',
             replace_existing=True
         )
