@@ -646,7 +646,24 @@ def register_scanner_ftp_routes(app):
             # Subir PDF
             success, mensaje = subir_archivo_ftp(ruta_pdf, nombre_pdf, cliente_id, tipo_registro)
             if success:
-                registrar_incidencia(usuario, cliente_id, codigo_barras, nombre_pdf, tipo_registro, medidas_a_usar)
+                # Registrar incidencia en la base de datos
+                registro_ok, registro_msg, incidencia_id = registrar_incidencia(
+                    usuario, cliente_id, codigo_barras, nombre_pdf, tipo_registro, medidas_a_usar
+                )
+                if not registro_ok:
+                    # Si falla el registro, reportar el error
+                    print(f"ERROR CRÍTICO: Archivo subido pero registro en BD falló: {registro_msg}")
+                    # Limpiar archivo temporal
+                    try:
+                        os.remove(ruta_pdf)
+                    except:
+                        pass
+                    return jsonify({
+                        'success': False, 
+                        'mensaje': f'Archivo subido pero error al registrar en BD: {registro_msg}'
+                    })
+                else:
+                    print(f"DEBUG: Registro exitoso - {registro_msg}")
             try:
                 os.remove(ruta_pdf)
             except:

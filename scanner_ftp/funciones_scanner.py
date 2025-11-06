@@ -5,6 +5,17 @@ import ftplib
 import json
 import os
 from datetime import datetime, timezone, timedelta
+try:
+    from zoneinfo import ZoneInfo
+    ZONEINFO_AVAILABLE = True
+except ImportError:
+    try:
+        import pytz
+        ZONEINFO_AVAILABLE = False
+        PYTZ_AVAILABLE = True
+    except ImportError:
+        ZONEINFO_AVAILABLE = False
+        PYTZ_AVAILABLE = False
 import db
 from models import IncidenciaAldipod
 from typing import List, Tuple
@@ -511,6 +522,9 @@ def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo, tipo_d
         nombre_archivo: nombre del archivo subido
         tipo_documento: tipo de documento (INCIDENCIA o MEDIDAS)
         medidas: medidas para el documento (puede ser un diccionario simple o array de medidas por foto)
+    
+    Returns:
+        tuple: (success: bool, message: str, incidencia_id: int or None)
     """
     print(f"DEBUG: registrar_incidencia llamado con medidas: {medidas}")
     print(f"DEBUG: tipo de medidas: {type(medidas)}")
@@ -569,12 +583,23 @@ def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo, tipo_d
     # El archivo físico se guarda con su nombre original basado en la referencia
     
     try:
-        # Crear fecha con zona horaria de España (UTC+2)
-        now_utc = datetime.now(timezone.utc)
-        now_spain = now_utc.astimezone(timezone(timedelta(hours=2)))
+        # Obtener fecha/hora actual en zona horaria de España (Europe/Madrid)
+        # Esto maneja automáticamente el horario de verano (CEST/CET)
+        if ZONEINFO_AVAILABLE:
+            # Python 3.9+ con zoneinfo
+            tz_madrid = ZoneInfo("Europe/Madrid")
+            fecha_actual = datetime.now(tz_madrid)
+        elif PYTZ_AVAILABLE:
+            # Python con pytz instalado
+            tz_madrid = pytz.timezone("Europe/Madrid")
+            fecha_actual = datetime.now(tz_madrid)
+        else:
+            # Fallback: usar fecha local del servidor
+            # Asumimos que el servidor está en zona horaria de España
+            fecha_actual = datetime.now()
         
         incidencia = IncidenciaAldipod(
-            fecha=now_spain,
+            fecha=fecha_actual,
             usuario=usuario,
             cliente=nombre_cliente,
             referencia=referencia,
@@ -583,8 +608,32 @@ def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo, tipo_d
             ubicacion=ubicacion
         )
         db.session.add(incidencia)
+        # Flush para asegurar que se asigne el ID antes del commit
+        db.session.flush()
+        
+        # Verificar que se asignó el ID antes del commit
+        incidencia_id = incidencia.id
+        if incidencia_id is None:
+            print(f"ERROR: Incidencia no obtuvo ID después de flush")
+            db.session.rollback()
+            return False, "Error: No se pudo asignar ID a la incidencia", None
+        
+        # Commit explícito
         db.session.commit()
+        
+        # Verificar nuevamente después del commit
+        if incidencia_id is None:
+            print(f"ERROR: Incidencia perdió ID después del commit")
+            return False, "Error: ID perdido después del commit", None
+        
+        print(f"DEBUG: Incidencia registrada exitosamente - ID: {incidencia_id}, fecha: {fecha_actual}")
+        return True, f"Incidencia registrada correctamente (ID: {incidencia_id})", incidencia_id
+        
     except Exception as e:
-        print(f"Error al registrar incidencia: {e}")
+        error_msg = f"Error al registrar incidencia: {str(e)}"
+        print(f"ERROR: {error_msg}")
+        import traceback
+        print(f"ERROR traceback: {traceback.format_exc()}")
         db.session.rollback()
+        return False, error_msg, None
 
