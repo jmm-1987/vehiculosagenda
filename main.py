@@ -33,6 +33,7 @@ from ficheros.ficheros_pallex import register_func_subir_fichero_pallex
 from ficheros.ficheros_xpo import register_func_subir_fichero_xpo
 from ficheros.ficheros_carreras import register_func_subir_fichero_carreras
 from scanner_ftp.scanner_ftp import register_scanner_ftp_routes
+from rrhh.rrhh_routes import register_rrhh_routes
 from sqlalchemy import func
 
 # Asegurar columnas nuevas en SQLite al arranque (sin migraciones)
@@ -87,6 +88,7 @@ register_func_subir_fichero_pallex(app)
 register_func_subir_fichero_xpo(app)
 register_func_subir_fichero_carreras(app)
 register_scanner_ftp_routes(app)
+register_rrhh_routes(app)
 
 # Iniciar scheduler después de registrar todas las rutas
 iniciar_scheduler()

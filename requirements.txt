@@ -4,6 +4,7 @@ DateTime~=5.4
 paramiko
 gunicorn
 flask_login
+flask-cors
 pandas
 openpyxl
 apscheduler
