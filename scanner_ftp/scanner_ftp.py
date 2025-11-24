@@ -92,6 +92,42 @@ def register_scanner_ftp_routes(app):
         incidencia.comunicada = bool(estado)
         db.session.commit()
         return jsonify({"ok": True})
+    
+    @app.route('/incidencia_aldipod/actualizar_observaciones', methods=['POST'])
+    @login_required
+    def actualizar_observaciones_incidencia():
+        """Actualiza las observaciones de una incidencia por referencia"""
+        import db
+        from models import IncidenciaAldipod
+        data = request.get_json(silent=True) or {}
+        referencia = data.get('referencia')
+        observaciones = data.get('observaciones')
+        
+        if referencia is None:
+            return jsonify({"ok": False, "error": "Parámetro 'referencia' requerido"}), 400
+        
+        # Normalizar observaciones: None, '', o 'None' -> None
+        if observaciones is None:
+            obs_final = None
+        elif isinstance(observaciones, str):
+            obs_clean = observaciones.strip()
+            if not obs_clean or obs_clean.lower() == 'none':
+                obs_final = None
+            else:
+                obs_final = obs_clean
+        else:
+            obs_final = None
+        
+        # Buscar la incidencia más reciente con esa referencia
+        incidencia = db.session.query(IncidenciaAldipod).filter_by(referencia=referencia).order_by(IncidenciaAldipod.fecha.desc()).first()
+        
+        if not incidencia:
+            return jsonify({"ok": False, "error": "Incidencia no encontrada"}), 404
+        
+        print(f"DEBUG: Actualizando observaciones para referencia {referencia}: {repr(obs_final)}")
+        incidencia.observaciones = obs_final
+        db.session.commit()
+        return jsonify({"ok": True, "mensaje": "Observaciones actualizadas correctamente"})
 
     @app.route('/aldipod/descargar_albaranes_simoes')
     @login_required
@@ -621,6 +657,17 @@ def register_scanner_ftp_routes(app):
         tipo_registro = data.get('tipo_registro', 'INCIDENCIA')
         medidas = data.get('medidas', None)  # Para compatibilidad con flujo anterior
         medidas_por_foto = data.get('medidas_por_foto', None)  # Nuevo flujo con medidas por foto
+        # Obtener observaciones y normalizar: None, '', o 'None' (string) -> None
+        observaciones_raw = data.get('observaciones')
+        if observaciones_raw is None:
+            observaciones = None
+        elif isinstance(observaciones_raw, str):
+            observaciones = observaciones_raw.strip()
+            # Si es string vacío o la palabra 'None', convertir a None
+            if not observaciones or observaciones.lower() == 'none':
+                observaciones = None
+        else:
+            observaciones = None
 
         if (not imagen_data and not imagenes) or not codigo_barras:
             return jsonify({'success': False,'mensaje': 'Faltan datos: imagen(es) o código de barras'})
@@ -631,6 +678,7 @@ def register_scanner_ftp_routes(app):
             print(f"DEBUG: Tipo registro: {tipo_registro}")
             print(f"DEBUG: Medidas recibidas: {medidas}")
             print(f"DEBUG: Medidas por foto recibidas: {medidas_por_foto}")
+            print(f"DEBUG: Observaciones recibidas: '{observaciones}' (tipo: {type(observaciones)}, longitud: {len(observaciones) if observaciones else 0})")
 
             # Normalizar a lista siempre
             imagenes_norm = imagenes if (imagenes and isinstance(imagenes, list)) else ([imagen_data] if imagen_data else [])
@@ -648,7 +696,7 @@ def register_scanner_ftp_routes(app):
             if success:
                 # Registrar incidencia en la base de datos
                 registro_ok, registro_msg, incidencia_id = registrar_incidencia(
-                    usuario, cliente_id, codigo_barras, nombre_pdf, tipo_registro, medidas_a_usar
+                    usuario, cliente_id, codigo_barras, nombre_pdf, tipo_registro, medidas_a_usar, observaciones
                 )
                 if not registro_ok:
                     # Si falla el registro, reportar el error

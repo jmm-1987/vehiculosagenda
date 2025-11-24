@@ -42,6 +42,7 @@ try:
     ensure_column_exists('incidencia_aldipod', 'tipo_documento', 'VARCHAR(100)', 'INCIDENCIA')
     ensure_column_exists('incidencia_aldipod', 'comunicada', 'BOOLEAN', 0)
     ensure_column_exists('incidencia_aldipod', 'ubicacion', 'VARCHAR(50)', 'Mérida')
+    ensure_column_exists('incidencia_aldipod', 'observaciones', 'VARCHAR(1000)', '')
 except Exception:
     pass
 
@@ -344,7 +345,8 @@ if __name__ == '__main__':
     # app.run(debug=True, host='0.0.0.0', port=5000, ssl_context=('cert.pem', 'key.pem'))
     
     # Opción 2: SSL adhoc (más simple, genera certificados temporales automáticamente)
-    app.run(debug=True, host='0.0.0.0', port=5000, ssl_context='adhoc')
+    # use_reloader=False evita el error de socket en Windows
+    app.run(debug=True, host='0.0.0.0', port=5000, ssl_context='adhoc', use_reloader=False)
 
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

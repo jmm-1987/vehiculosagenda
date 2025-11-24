@@ -511,7 +511,7 @@ def limpiar_archivos_temporales():
                 except:
                     pass
 
-def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo, tipo_documento="INCIDENCIA", medidas=None):
+def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo, tipo_documento="INCIDENCIA", medidas=None, observaciones=None):
     """
     Registra una incidencia en la base de datos
     
@@ -522,6 +522,7 @@ def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo, tipo_d
         nombre_archivo: nombre del archivo subido
         tipo_documento: tipo de documento (INCIDENCIA o MEDIDAS)
         medidas: medidas para el documento (puede ser un diccionario simple o array de medidas por foto)
+        observaciones: texto de observaciones opcional
     
     Returns:
         tuple: (success: bool, message: str, incidencia_id: int or None)
@@ -598,6 +599,21 @@ def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo, tipo_d
             # Asumimos que el servidor está en zona horaria de España
             fecha_actual = datetime.now()
         
+        # Normalizar observaciones: None, string vacío, o 'None' -> None
+        if observaciones is None:
+            obs_final = None
+        elif isinstance(observaciones, str):
+            obs_clean = observaciones.strip()
+            # Si es string vacío o la palabra 'None', convertir a None
+            if not obs_clean or obs_clean.lower() == 'none':
+                obs_final = None
+            else:
+                obs_final = obs_clean
+        else:
+            obs_final = None
+        
+        print(f"DEBUG: Guardando observaciones en BD: {repr(obs_final)} (tipo: {type(obs_final)})")
+        
         incidencia = IncidenciaAldipod(
             fecha=fecha_actual,
             usuario=usuario,
@@ -605,7 +621,8 @@ def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo, tipo_d
             referencia=referencia,
             enlace_imagen=enlace,
             tipo_documento=tipo_documento,
-            ubicacion=ubicacion
+            ubicacion=ubicacion,
+            observaciones=obs_final
         )
         db.session.add(incidencia)
         # Flush para asegurar que se asigne el ID antes del commit

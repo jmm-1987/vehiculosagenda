@@ -342,6 +342,7 @@
                         <th onclick="sortTable(5)">Referencia <i class="fas fa-sort"></i></th>
                         <th onclick="sortTable(6)">Tipo <i class="fas fa-sort"></i></th>
                         <th onclick="sortTable(7)">Ubicación <i class="fas fa-sort"></i></th>
+                        <th>Observaciones</th>
                         <th>Comunicada</th>
                         <th>Imagen</th>
                     </tr>
@@ -381,6 +382,13 @@
                                 <span class="badge badge-ubicacion" style="background-color: #28a745; color: white;">M</span>
                             {% else %}
                                 <span class="badge badge-ubicacion" style="background-color: #6c757d; color: white;">{{ incidencia.ubicacion or 'Sin ubicación' }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="max-width: 200px; word-wrap: break-word; font-size: 0.9em;">
+                            {% if incidencia.observaciones %}
+                                {{ incidencia.observaciones }}
+                            {% else %}
+                                <span style="color: #999;">-</span>
                             {% endif %}
                         </td>
                         <td>{{ 'Sí' if incidencia.comunicada else 'No' }}</td>
