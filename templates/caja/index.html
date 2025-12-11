@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caja - Alditraex</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0;
+        }
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2px 30px;
+            background: linear-gradient(to right, #ffffff, #343a40);
+            color: white;
+            height: 50px;
+            box-sizing: border-box;
+        }
+        .top-bar img {
+            width: 200px;
+            height: 45px;
+            object-fit: contain;
+        }
+        .top-user {
+            font-weight: bold;
+            font-size: 14px;
+            margin-left: auto;
+            margin-right: 20px;
+        }
+        .top-button {
+            padding: 2px 8px;
+            background-color: #c51500;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+        }
+        .tab {
+            padding: 12px 24px;
+            background: #f8f9fa;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            color: #666;
+            transition: all 0.3s;
+        }
+        .tab:hover {
+            background: #e9ecef;
+        }
+        .tab.active {
+            background: white;
+            color: #c51500;
+            border-bottom-color: #c51500;
+        }
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .btn {
+            padding: 8px 16px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #218838;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .btn-primary {
+            background: #007bff;
+        }
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #343a40;
+            color: white;
+            font-weight: bold;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .alert {
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-group textarea {
+            min-height: 80px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .arqueo-summary {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .arqueo-summary h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #c51500;
+            padding-bottom: 10px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 16px;
+        }
+        .summary-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 20px;
+            color: #c51500;
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 2px solid #c51500;
+        }
+        .summary-label {
+            font-weight: bold;
+            color: #666;
+        }
+        .summary-value {
+            font-weight: bold;
+        }
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="/portada"><img src="{{ url_for('static', filename='logo.png') }}" alt="Logo"></a>
+        <span class="top-user">{{ current_user.username }}</span>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+    </div>
+
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1><i class="fas fa-cash-register"></i> {{ titulo_caja|default('Gestión de Caja') }}</h1>
+            <div style="display: flex; gap: 10px;">
+                {% if tipo_caja == 'CAJA' %}
+                    <a href="{{ url_for('caja_cobros') }}" class="btn" style="background: #28a745;">
+                        <i class="fas fa-list"></i> Listado Cobros
+                    </a>
+                    <a href="{{ url_for('caja_pagos') }}" class="btn" style="background: #dc3545;">
+                        <i class="fas fa-list"></i> Listado Pagos
+                    </a>
+                    <a href="{{ url_for('caja_arqueo') }}" class="btn" style="background: #ffc107; color: #000;">
+                        <i class="fas fa-calculator"></i> Arqueo
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('caja_reembolsos_cobros') }}" class="btn" style="background: #28a745;">
+                        <i class="fas fa-list"></i> Listado Cobros
+                    </a>
+                    <a href="{{ url_for('caja_reembolsos_pagos') }}" class="btn" style="background: #dc3545;">
+                        <i class="fas fa-list"></i> Listado Pagos
+                    </a>
+                    <a href="{{ url_for('caja_reembolsos_arqueo') }}" class="btn" style="background: #ffc107; color: #000;">
+                        <i class="fas fa-calculator"></i> Arqueo
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'error' if category == 'error' else 'success' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Resumen de Totales -->
+        <div class="arqueo-summary">
+            <h2>Resumen</h2>
+            <div class="summary-row">
+                <span class="summary-label">Total Cobros:</span>
+                <span class="summary-value" style="color: #28a745;">{{ "%.2f"|format(total_cobros) }}€</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Total Pagos:</span>
+                <span class="summary-value" style="color: #dc3545;">{{ "%.2f"|format(total_pagos) }}€</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Diferencia (Cobros - Pagos):</span>
+                <span class="summary-value" style="color: {% if diferencia >= 0 %}#28a745{% else %}#dc3545{% endif %};">
+                    {{ "%.2f"|format(diferencia) }}€
+                </span>
+            </div>
+        </div>
+
+        <!-- Sección de Cobros -->
+        <div style="background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #28a745;"><i class="fas fa-arrow-down"></i> Cobros</h2>
+                <a href="{{ url_for('crear_cobro') }}" class="btn">
+                    <i class="fas fa-plus"></i> Nuevo Cobro
+                </a>
+            </div>
+
+            {% if cobros %}
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Expedición</th>
+                            <th>Agencia</th>
+                            <th>Remitente</th>
+                            <th>Destinatario</th>
+                            <th class="text-right">Reembolso</th>
+                            <th class="text-right">Comisión</th>
+                            <th class="text-right">Portes Pag.</th>
+                            <th class="text-right">Portes Deb.</th>
+                            <th class="text-right">IVA</th>
+                            {% if tipo_caja == 'CAJA' %}
+                            <th class="text-right">Entrada en Caja</th>
+                            {% endif %}
+                            <th class="text-center">Factura</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cobro in cobros %}
+                        <tr>
+                            <td>{{ cobro.fecha_albaran.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ cobro.expedicion }}</td>
+                            <td>{{ cobro.agencia }}</td>
+                            <td>{{ cobro.remitente }}</td>
+                            <td>{{ cobro.destinatario }}</td>
+                            <td class="text-right">{{ "%.2f"|format(cobro.reembolso) }}€</td>
+                            <td class="text-right">{{ "%.2f"|format(cobro.comision_reembolso) }}€</td>
+                            <td class="text-right">{{ "%.2f"|format(cobro.portes_pagados) }}€</td>
+                            <td class="text-right">{{ "%.2f"|format(cobro.portes_debidos) }}€</td>
+                            <td class="text-right">{{ "%.2f"|format(cobro.iva) }}€</td>
+                            {% if tipo_caja == 'CAJA' %}
+                            <td class="text-right">{{ "%.2f"|format(cobro.entrada_en_caja or 0.0) }}€</td>
+                            {% endif %}
+                            <td class="text-center">
+                                {% if cobro.es_factura %}
+                                    <span class="badge badge-success">Sí</span>
+                                {% else %}
+                                    <span>No</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if cobro.arqueado %}
+                                    <span class="badge badge-success" title="Arqueado el {{ cobro.fecha_arqueo.strftime('%d/%m/%Y %H:%M') if cobro.fecha_arqueo else 'N/A' }}">Arqueado</span>
+                                {% else %}
+                                    <span class="badge" style="background: #6c757d;">Pendiente</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if not cobro.arqueado %}
+                                    {% if tipo_caja == 'CAJA' %}
+                                        <a href="{{ url_for('editar_cobro', id=cobro.id) }}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form method="POST" action="{{ url_for('eliminar_cobro', id=cobro.id) }}" style="display: inline;" 
+                                              onsubmit="return confirm('¿Estás seguro de eliminar este cobro?');">
+                                            <button type="submit" class="btn btn-danger btn-sm">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <a href="{{ url_for('editar_cobro_reembolsos', id=cobro.id) }}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form method="POST" action="{{ url_for('eliminar_cobro_reembolsos', id=cobro.id) }}" style="display: inline;" 
+                                              onsubmit="return confirm('¿Estás seguro de eliminar este cobro?');">
+                                            <button type="submit" class="btn btn-danger btn-sm">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge badge-success" title="Arqueado el {{ cobro.fecha_arqueo.strftime('%d/%m/%Y %H:%M') if cobro.fecha_arqueo else 'N/A' }}">Arqueado</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert">
+                <p>No hay cobros registrados aún.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sección de Pagos -->
+        <div style="background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #dc3545;"><i class="fas fa-arrow-up"></i> Pagos</h2>
+                {% if tipo_caja == 'CAJA' %}
+                    <a href="{{ url_for('crear_pago') }}" class="btn" style="background: #dc3545;">
+                        <i class="fas fa-plus"></i> Nuevo Pago
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('crear_pago_reembolsos') }}" class="btn" style="background: #dc3545;">
+                        <i class="fas fa-plus"></i> Nuevo Pago
+                    </a>
+                {% endif %}
+            </div>
+
+            {% if pagos %}
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Albarán</th>
+                            <th>Observaciones</th>
+                            <th class="text-right">Base</th>
+                            <th class="text-right">IVA</th>
+                            <th class="text-center">Factura</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pago in pagos %}
+                        <tr>
+                            <td>{{ pago.fecha_albaran.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ pago.albaran }}</td>
+                            <td>{{ pago.observaciones }}</td>
+                            <td class="text-right">{{ "%.2f"|format(pago.base) }}€</td>
+                            <td class="text-right">{{ "%.2f"|format(pago.iva) }}€</td>
+                            <td class="text-center">
+                                {% if pago.es_factura %}
+                                    <span class="badge badge-success">Sí</span>
+                                {% else %}
+                                    <span>No</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if pago.arqueado %}
+                                    <span class="badge badge-success" title="Arqueado el {{ pago.fecha_arqueo.strftime('%d/%m/%Y %H:%M') if pago.fecha_arqueo else 'N/A' }}">Arqueado</span>
+                                {% else %}
+                                    <span class="badge" style="background: #6c757d;">Pendiente</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if not pago.arqueado %}
+                                    {% if tipo_caja == 'CAJA' %}
+                                        <a href="{{ url_for('editar_pago', id=pago.id) }}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form method="POST" action="{{ url_for('eliminar_pago', id=pago.id) }}" style="display: inline;" 
+                                              onsubmit="return confirm('¿Estás seguro de eliminar este pago?');">
+                                            <button type="submit" class="btn btn-danger btn-sm">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <a href="{{ url_for('editar_pago_reembolsos', id=pago.id) }}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form method="POST" action="{{ url_for('eliminar_pago_reembolsos', id=pago.id) }}" style="display: inline;" 
+                                              onsubmit="return confirm('¿Estás seguro de eliminar este pago?');">
+                                            <button type="submit" class="btn btn-danger btn-sm">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge badge-success" title="Arqueado el {{ pago.fecha_arqueo.strftime('%d/%m/%Y %H:%M') if pago.fecha_arqueo else 'N/A' }}">Arqueado</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert">
+                <p>No hay pagos registrados aún.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
+

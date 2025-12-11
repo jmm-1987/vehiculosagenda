@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arqueo de Caja</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0;
+        }
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2px 30px;
+            background: linear-gradient(to right, #ffffff, #343a40);
+            color: white;
+            height: 50px;
+            box-sizing: border-box;
+        }
+        .top-bar img {
+            width: 200px;
+            height: 45px;
+            object-fit: contain;
+        }
+        .top-user {
+            font-weight: bold;
+            font-size: 14px;
+            margin-left: auto;
+            margin-right: 20px;
+        }
+        .top-button {
+            padding: 2px 8px;
+            background-color: #c51500;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .arqueo-summary {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .arqueo-summary h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #c51500;
+            padding-bottom: 10px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 16px;
+        }
+        .summary-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 20px;
+            color: #c51500;
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 2px solid #c51500;
+        }
+        .summary-label {
+            font-weight: bold;
+            color: #666;
+        }
+        .summary-value {
+            font-weight: bold;
+        }
+        .form-section {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .btn {
+            padding: 12px 24px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .btn:hover {
+            background: #218838;
+        }
+        .btn-primary {
+            background: #007bff;
+        }
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        .historial-section {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .historial-section h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #c51500;
+            padding-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #343a40;
+            color: white;
+            font-weight: bold;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .alert {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="/portada"><img src="{{ url_for('static', filename='logo.png') }}" alt="Logo"></a>
+        <span class="top-user">{{ current_user.username }}</span>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+    </div>
+
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1><i class="fas fa-calculator"></i> Arqueo de {{ titulo_caja|default('Caja') }}</h1>
+            {% if tipo_caja == 'CAJA' %}
+                <a href="{{ url_for('caja_index') }}" class="btn btn-primary">
+                    <i class="fas fa-arrow-left"></i> Volver a Caja
+                </a>
+            {% else %}
+                <a href="{{ url_for('caja_reembolsos_index') }}" class="btn btn-primary">
+                    <i class="fas fa-arrow-left"></i> Volver a Caja Reembolsos
+                </a>
+            {% endif %}
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'error' if category == 'error' else 'success' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="arqueo-summary">
+            <h2>Resumen de Caja</h2>
+            <div class="summary-row">
+                <span class="summary-label">Total Cobros:</span>
+                <span class="summary-value">{{ "%.2f"|format(total_cobros) }}€</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Total Pagos:</span>
+                <span class="summary-value">{{ "%.2f"|format(total_pagos) }}€</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Diferencia (Cobros - Pagos):</span>
+                <span class="summary-value" style="color: {% if diferencia >= 0 %}#28a745{% else %}#dc3545{% endif %};">
+                    {{ "%.2f"|format(diferencia) }}€
+                </span>
+            </div>
+        </div>
+
+        <div class="alert alert-warning">
+            <strong>⚠️ Atención:</strong> La entrega de efectivo debe ser igual a la diferencia ({{ "%.2f"|format(diferencia) }}€) para poder procesar el arqueo.
+        </div>
+
+        <div class="form-section">
+            <h2>Procesar Arqueo</h2>
+            <form method="POST" action="{% if tipo_caja == 'CAJA' %}{{ url_for('procesar_arqueo') }}{% else %}{{ url_for('procesar_arqueo_reembolsos') }}{% endif %}" onsubmit="return validarArqueo();">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="entrega_efectivo">Entrega de Efectivo a Responsable (€) *</label>
+                        <input type="number" id="entrega_efectivo" name="entrega_efectivo" 
+                               step="0.01" value="{{ "%.2f"|format(diferencia) }}" required>
+                        <small style="color: #666;">Debe ser igual a la diferencia: {{ "%.2f"|format(diferencia) }}€</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="responsable">Responsable *</label>
+                        <input type="text" id="responsable" name="responsable" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="observaciones">Observaciones</label>
+                    <textarea id="observaciones" name="observaciones" placeholder="Observaciones sobre el arqueo..."></textarea>
+                </div>
+                <button type="submit" class="btn">
+                    <i class="fas fa-check"></i> Procesar Arqueo
+                </button>
+            </form>
+        </div>
+
+        {% if historial %}
+        <div class="historial-section">
+            <h2>Historial de Arqueos</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Usuario</th>
+                        <th class="text-right">Total Cobros</th>
+                        <th class="text-right">Total Pagos</th>
+                        <th class="text-right">Diferencia</th>
+                        <th class="text-right">Entrega Efectivo</th>
+                        <th>Responsable</th>
+                        <th>Observaciones</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for arqueo in historial %}
+                    <tr>
+                        <td>{{ arqueo.fecha_arqueo.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>{{ arqueo.usuario }}</td>
+                        <td class="text-right">{{ "%.2f"|format(arqueo.total_cobros) }}€</td>
+                        <td class="text-right">{{ "%.2f"|format(arqueo.total_pagos) }}€</td>
+                        <td class="text-right">{{ "%.2f"|format(arqueo.diferencia) }}€</td>
+                        <td class="text-right">{{ "%.2f"|format(arqueo.entrega_efectivo) }}€</td>
+                        <td>{{ arqueo.responsable }}</td>
+                        <td>{{ arqueo.observaciones }}</td>
+                        <td class="text-center">
+                            {% if tipo_caja == 'CAJA' %}
+                                <a href="{{ url_for('ver_arqueo_detalle', id=arqueo.id) }}" class="btn btn-primary btn-sm" title="Ver detalle">
+                                    <i class="fas fa-eye"></i> Ver Detalle
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('ver_arqueo_detalle_reembolsos', id=arqueo.id) }}" class="btn btn-primary btn-sm" title="Ver detalle">
+                                    <i class="fas fa-eye"></i> Ver Detalle
+                                </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function validarArqueo() {
+            const diferencia = {{ diferencia }};
+            const entregaEfectivo = parseFloat(document.getElementById('entrega_efectivo').value);
+            
+            if (Math.abs(diferencia - entregaEfectivo) > 0.01) {
+                alert('La entrega de efectivo debe ser igual a la diferencia (' + diferencia.toFixed(2) + '€)');
+                return false;
+            }
+            
+            return confirm('¿Estás seguro de procesar el arqueo? Esto marcará todos los cobros y pagos como arqueados.');
+        }
+
+        // Actualizar validación en tiempo real
+        document.getElementById('entrega_efectivo').addEventListener('input', function() {
+            const diferencia = {{ diferencia }};
+            const entregaEfectivo = parseFloat(this.value) || 0;
+            const diferenciaAbs = Math.abs(diferencia - entregaEfectivo);
+            
+            if (diferenciaAbs <= 0.01) {
+                this.style.borderColor = '#28a745';
+                const submitBtn = document.querySelector('button[type="submit"]');
+                if (submitBtn) submitBtn.disabled = false;
+            } else {
+                this.style.borderColor = '#dc3545';
+                const submitBtn = document.querySelector('button[type="submit"]');
+                if (submitBtn) submitBtn.disabled = true;
+            }
+        });
+    </script>
+</body>
+</html>
+

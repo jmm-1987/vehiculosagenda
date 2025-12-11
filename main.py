@@ -2,7 +2,7 @@ from flask import Flask, render_template, session, request, redirect, url_for, s
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 import db
 from ftp_transfer.ftp_transfer import register_ftp_transfer_routes, iniciar_scheduler
-from models import Itv, Seguro, Tacografo, Rodaje, Extintor, Usuario, Vehiculo, Taller, IncidenciaAldipod
+from models import Itv, Seguro, Tacografo, Rodaje, Extintor, Usuario, Vehiculo, Taller, IncidenciaAldipod, CajaCobro, CajaPago, CajaArqueo
 from datetime import datetime, timedelta
 import json
 from vehiculos.vehiculos import register_vehiculos_routes
@@ -34,6 +34,7 @@ from ficheros.ficheros_xpo import register_func_subir_fichero_xpo
 from ficheros.ficheros_carreras import register_func_subir_fichero_carreras
 from scanner_ftp.scanner_ftp import register_scanner_ftp_routes
 from rrhh.rrhh_routes import register_rrhh_routes
+from caja.caja import register_caja_routes
 from sqlalchemy import func
 
 # Asegurar columnas nuevas en SQLite al arranque (sin migraciones)
@@ -43,6 +44,12 @@ try:
     ensure_column_exists('incidencia_aldipod', 'comunicada', 'BOOLEAN', 0)
     ensure_column_exists('incidencia_aldipod', 'ubicacion', 'VARCHAR(50)', 'Mérida')
     ensure_column_exists('incidencia_aldipod', 'observaciones', 'VARCHAR(1000)', '')
+    # Añadir tipo_caja a las tablas de caja
+    ensure_column_exists('caja_cobro', 'tipo_caja', 'VARCHAR(20)', 'CAJA')
+    ensure_column_exists('caja_pago', 'tipo_caja', 'VARCHAR(20)', 'CAJA')
+    ensure_column_exists('caja_arqueo', 'tipo_caja', 'VARCHAR(20)', 'CAJA')
+    # Añadir entrada_en_caja a caja_cobro
+    ensure_column_exists('caja_cobro', 'entrada_en_caja', 'FLOAT', 0.0)
 except Exception:
     pass
 
@@ -90,6 +97,7 @@ register_func_subir_fichero_xpo(app)
 register_func_subir_fichero_carreras(app)
 register_scanner_ftp_routes(app)
 register_rrhh_routes(app)
+register_caja_routes(app)
 
 # Iniciar scheduler después de registrar todas las rutas
 iniciar_scheduler()

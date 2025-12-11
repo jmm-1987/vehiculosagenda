@@ -1,5 +1,5 @@
 import db
-from sqlalchemy import Column, Integer, String, ForeignKey,Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float
 from sqlalchemy import DateTime, Date
 from flask_login import UserMixin
 
@@ -305,3 +305,105 @@ class IncidenciaAldipod(db.Base):
         self.comunicada = comunicada
         self.ubicacion = ubicacion
         self.observaciones = observaciones
+
+
+class CajaCobro(db.Base):
+    __tablename__ = "caja_cobro"
+    id = Column(Integer, primary_key=True)
+    fecha_albaran = Column(Date, nullable=False)
+    expedicion = Column(String(200))
+    agencia = Column(String(200))
+    remitente = Column(String(200))
+    poblacion_origen = Column(String(200))
+    destinatario = Column(String(200))
+    poblacion_destino = Column(String(200))
+    observaciones = Column(String(500))
+    reembolso = Column(Float, default=0.0)
+    comision_reembolso = Column(Float, default=0.0)
+    portes_pagados = Column(Float, default=0.0)
+    portes_debidos = Column(Float, default=0.0)
+    iva = Column(Float, default=0.0)
+    entrada_en_caja = Column(Float, default=0.0)  # Solo para CAJA, no para REEMBOLSOS
+    es_factura = Column(Boolean, default=False)
+    arqueado = Column(Boolean, default=False)
+    fecha_arqueo = Column(DateTime)
+    arqueo_id = Column(Integer, ForeignKey('caja_arqueo.id'))
+    tipo_caja = Column(String(20), default='CAJA', nullable=False)  # 'CAJA' o 'REEMBOLSOS'
+    
+    def __init__(self, fecha_albaran, expedicion="", agencia="", remitente="", poblacion_origen="", 
+                 destinatario="", poblacion_destino="", observaciones="", reembolso=0.0, 
+                 comision_reembolso=0.0, portes_pagados=0.0, portes_debidos=0.0, iva=0.0, 
+                 entrada_en_caja=0.0, es_factura=False, arqueado=False, fecha_arqueo=None, arqueo_id=None, tipo_caja='CAJA'):
+        self.fecha_albaran = fecha_albaran
+        self.expedicion = expedicion
+        self.agencia = agencia
+        self.remitente = remitente
+        self.poblacion_origen = poblacion_origen
+        self.destinatario = destinatario
+        self.poblacion_destino = poblacion_destino
+        self.observaciones = observaciones
+        self.reembolso = reembolso
+        self.comision_reembolso = comision_reembolso
+        self.portes_pagados = portes_pagados
+        self.portes_debidos = portes_debidos
+        self.iva = iva
+        self.entrada_en_caja = entrada_en_caja
+        self.es_factura = es_factura
+        self.arqueado = arqueado
+        self.fecha_arqueo = fecha_arqueo
+        self.arqueo_id = arqueo_id
+        self.tipo_caja = tipo_caja
+
+
+class CajaPago(db.Base):
+    __tablename__ = "caja_pago"
+    id = Column(Integer, primary_key=True)
+    fecha_albaran = Column(Date, nullable=False)
+    albaran = Column(String(200))
+    observaciones = Column(String(500))
+    base = Column(Float, default=0.0)
+    iva = Column(Float, default=0.0)
+    es_factura = Column(Boolean, default=False)
+    arqueado = Column(Boolean, default=False)
+    fecha_arqueo = Column(DateTime)
+    arqueo_id = Column(Integer, ForeignKey('caja_arqueo.id'))
+    tipo_caja = Column(String(20), default='CAJA', nullable=False)  # 'CAJA' o 'REEMBOLSOS'
+    
+    def __init__(self, fecha_albaran, albaran="", observaciones="", base=0.0, iva=0.0, 
+                 es_factura=False, arqueado=False, fecha_arqueo=None, arqueo_id=None, tipo_caja='CAJA'):
+        self.fecha_albaran = fecha_albaran
+        self.albaran = albaran
+        self.observaciones = observaciones
+        self.base = base
+        self.iva = iva
+        self.es_factura = es_factura
+        self.arqueado = arqueado
+        self.fecha_arqueo = fecha_arqueo
+        self.arqueo_id = arqueo_id
+        self.tipo_caja = tipo_caja
+
+
+class CajaArqueo(db.Base):
+    __tablename__ = "caja_arqueo"
+    id = Column(Integer, primary_key=True)
+    fecha_arqueo = Column(DateTime, nullable=False)
+    usuario = Column(String(100), nullable=False)
+    total_cobros = Column(Float, default=0.0)
+    total_pagos = Column(Float, default=0.0)
+    diferencia = Column(Float, default=0.0)
+    entrega_efectivo = Column(Float, default=0.0)
+    responsable = Column(String(200))
+    observaciones = Column(String(500))
+    tipo_caja = Column(String(20), default='CAJA', nullable=False)  # 'CAJA' o 'REEMBOLSOS'
+    
+    def __init__(self, fecha_arqueo, usuario, total_cobros=0.0, total_pagos=0.0, diferencia=0.0, 
+                 entrega_efectivo=0.0, responsable="", observaciones="", tipo_caja='CAJA'):
+        self.fecha_arqueo = fecha_arqueo
+        self.usuario = usuario
+        self.total_cobros = total_cobros
+        self.total_pagos = total_pagos
+        self.diferencia = diferencia
+        self.entrega_efectivo = entrega_efectivo
+        self.responsable = responsable
+        self.observaciones = observaciones
+        self.tipo_caja = tipo_caja
