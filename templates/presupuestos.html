@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Presupuestos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0;
+        }
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2px 30px;
+            background: linear-gradient(to right, #ffffff, #343a40);
+            color: white;
+            height: 50px;
+            box-sizing: border-box;
+        }
+        .top-bar img {
+            width: 200px;
+            height: 45px;
+            object-fit: contain;
+        }
+        .top-user {
+            font-weight: bold;
+            font-size: 14px;
+            margin-left: auto;
+            margin-right: 20px;
+        }
+        .top-button {
+            padding: 2px 8px;
+            background-color: #c51500;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            background: #6f42c1;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 5px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            background: #5a32a3;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .btn-primary {
+            background: #007bff;
+        }
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header-actions h1 {
+            margin: 0;
+            color: #333;
+        }
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #343a40;
+            color: white;
+            font-weight: bold;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .badge {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .badge-warning {
+            background: #ffc107;
+            color: #000;
+        }
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .badge-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .content-card {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .form-inline {
+            display: inline-block;
+        }
+        .form-inline form {
+            display: inline-block;
+        }
+        .no-activo {
+            opacity: 0.6;
+        }
+        .file-upload {
+            display: inline-block;
+        }
+        .file-upload input[type="file"] {
+            font-size: 12px;
+        }
+        .file-upload input[type="submit"] {
+            padding: 4px 8px;
+            background: #17a2b8;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .file-upload input[type="submit"]:hover {
+            background: #138496;
+        }
+        @media screen and (max-width: 768px) {
+            .top-bar {
+                flex-direction: column;
+                align-items: center;
+                height: auto;
+            }
+            .header-actions {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .header-buttons {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+            table {
+                font-size: 12px;
+            }
+            th, td {
+                padding: 8px;
+            }
+        }
+        /* Modal de Presupuesto */
+        .modal-presupuesto {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            overflow: auto;
+        }
+        .modal-presupuesto-content {
+            background-color: #2c3e50;
+            margin: 3% auto;
+            padding: 0;
+            border: none;
+            width: 90%;
+            max-width: 700px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-presupuesto-header {
+            background-color: #34495e;
+            padding: 15px 20px;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .modal-presupuesto-header h2 {
+            margin: 0;
+            color: white;
+            font-size: 18px;
+            text-transform: uppercase;
+        }
+        .modal-presupuesto-close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-presupuesto-close:hover {
+            color: #e74c3c;
+        }
+        .modal-presupuesto-body {
+            padding: 20px;
+            background-color: #2c3e50;
+        }
+        .modal-presupuesto-body .form-group {
+            margin-bottom: 12px;
+        }
+        .modal-presupuesto-body .form-group label {
+            color: white;
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .modal-presupuesto-body .form-group input,
+        .modal-presupuesto-body .form-group select,
+        .modal-presupuesto-body .form-group textarea {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #34495e;
+            border-radius: 4px;
+            background-color: white;
+            color: #333;
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+        .modal-presupuesto-body .form-group textarea {
+            min-height: 60px;
+            resize: vertical;
+        }
+        .modal-presupuesto-body .form-group input:focus,
+        .modal-presupuesto-body .form-group select:focus,
+        .modal-presupuesto-body .form-group textarea:focus {
+            outline: none;
+            border-color: #e74c3c;
+            box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
+        }
+        .modal-presupuesto-body .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 10px;
+        }
+        .modal-presupuesto-body .form-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .modal-presupuesto-body .cliente-select-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        .modal-presupuesto-body .cliente-select-row select {
+            flex: 1;
+        }
+        .modal-presupuesto-body .btn-nuevo-cliente {
+            padding: 6px 12px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        .modal-presupuesto-body .btn-nuevo-cliente:hover {
+            background: #218838;
+        }
+        .modal-presupuesto-footer {
+            padding: 15px 20px;
+            background-color: #34495e;
+            border-radius: 0 0 8px 8px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            position: sticky;
+            bottom: 0;
+        }
+        .btn-modal-presupuesto {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn-modal-presupuesto-guardar {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .btn-modal-presupuesto-guardar:hover {
+            background-color: #c0392b;
+        }
+        .btn-modal-presupuesto-cerrar {
+            background-color: #7f8c8d;
+            color: white;
+        }
+        .btn-modal-presupuesto-cerrar:hover {
+            background-color: #5f6c6d;
+        }
+        .modal-presupuesto-error {
+            color: #e74c3c;
+            background-color: #f8d7da;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border: 1px solid #f5c6cb;
+            font-size: 13px;
+        }
+        @media screen and (max-width: 768px) {
+            .modal-presupuesto-body .form-row,
+            .modal-presupuesto-body .form-row-2 {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            .modal-presupuesto-content {
+                width: 95%;
+                margin: 2% auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="/portada"><img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la empresa"></a>
+        <span class="top-user">{{ current_user.username }}</span>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+    </div>
+
+    <div class="container">
+        <div class="header-actions">
+            <h1><i class="fas fa-file-invoice-dollar"></i> Gestión de Presupuestos</h1>
+            <div class="header-buttons">
+                <a href="/presupuestos_todos" class="btn btn-secondary">
+                    <i class="fas fa-list"></i> Mostrar todos
+                </a>
+                <button type="button" class="btn btn-success" onclick="abrirModalPresupuesto()">
+                    <i class="fas fa-plus"></i> Nuevo Presupuesto
+                </button>
+                <a href="/portada" class="btn btn-danger">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+            </div>
+        </div>
+
+        {% if mensaje %}
+        <div style="background: #d4edda; color: #155724; padding: 12px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #c3e6cb;">
+            {{ mensaje }}
+        </div>
+        {% endif %}
+
+        <div class="content-card">
+            {% if lista_presupuestos %}
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nº</th>
+                            <th>Fecha</th>
+                            <th>Cliente</th>
+                            <th>Concepto</th>
+                            <th class="text-right">Importe</th>
+                            <th class="text-right">IVA</th>
+                            <th class="text-right">Total</th>
+                            <th class="text-center">Estado</th>
+                            <th>Observaciones</th>
+                            <th class="text-center" colspan="2">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for presupuesto, cliente in lista_presupuestos %}
+                        <tr class="{% if not presupuesto.activo %}no-activo{% endif %}">
+                            <td><strong>{{ presupuesto.numero_presupuesto }}</strong></td>
+                            <td>{{ presupuesto.fecha_presupuesto.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ cliente.nombre }}</td>
+                            <td title="{{ presupuesto.concepto|e if presupuesto.concepto else '' }}">
+                                {{ presupuesto.concepto[:40] if presupuesto.concepto else '' }}{% if presupuesto.concepto and presupuesto.concepto|length > 40 %}...{% endif %}
+                            </td>
+                            <td class="text-right">{{ "%.2f"|format(presupuesto.importe) }}€</td>
+                            <td class="text-right">{{ "%.2f"|format(presupuesto.iva) }}€</td>
+                            <td class="text-right"><strong style="color: #6f42c1;">{{ "%.2f"|format(presupuesto.total) }}€</strong></td>
+                            <td class="text-center">
+                                {% if presupuesto.estado == 'PENDIENTE' %}
+                                    <span class="badge badge-warning">{{ presupuesto.estado }}</span>
+                                {% elif presupuesto.estado == 'APROBADO' %}
+                                    <span class="badge badge-success">{{ presupuesto.estado }}</span>
+                                {% elif presupuesto.estado == 'RECHAZADO' %}
+                                    <span class="badge badge-danger">{{ presupuesto.estado }}</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">{{ presupuesto.estado }}</span>
+                                {% endif %}
+                            </td>
+                            <td title="{{ presupuesto.observaciones|e if presupuesto.observaciones else '' }}">
+                                {{ presupuesto.observaciones[:25] if presupuesto.observaciones else '-' }}{% if presupuesto.observaciones and presupuesto.observaciones|length > 25 %}...{% endif %}
+                            </td>
+                            <td class="text-center">
+                                <a href="/exportar_presupuesto_pdf/{{ presupuesto.id }}" class="btn btn-success btn-sm" title="Exportar PDF">
+                                    <i class="fas fa-file-pdf"></i>
+                                </a>
+                                <a href="/form_editar_presupuesto/{{ presupuesto.id }}" class="btn btn-primary btn-sm" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </td>
+                            {% if current_user.username == "jmurillo" or current_user.username == "javimurillo" %}
+                            <td class="text-center">
+                                <form action="/borrar_presupuesto/{{ presupuesto.id }}" method="POST" style="display: inline;" 
+                                      onsubmit="return confirm('¿Estás seguro de eliminar este presupuesto?');">
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                            {% else %}
+                            <td></td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div style="text-align: center; padding: 40px; color: #666;">
+                <i class="fas fa-file-invoice-dollar" style="font-size: 48px; color: #ccc; margin-bottom: 20px;"></i>
+                <p style="font-size: 18px;">No hay presupuestos registrados aún.</p>
+                <button type="button" class="btn btn-success" onclick="abrirModalPresupuesto()" style="margin-top: 20px;">
+                    <i class="fas fa-plus"></i> Crear primer presupuesto
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Modal para nuevo presupuesto -->
+    <div id="modalPresupuesto" class="modal-presupuesto">
+        <div class="modal-presupuesto-content">
+            <div class="modal-presupuesto-header">
+                <h2>NUEVO PRESUPUESTO</h2>
+                <button type="button" class="modal-presupuesto-close" onclick="cerrarModalPresupuesto()">&times;</button>
+            </div>
+            <form id="presupuestoFormModal" action="/crear_presupuesto" method="post">
+                <div class="modal-presupuesto-body">
+                    <div id="presupuestoError" class="modal-presupuesto-error" style="display: none;"></div>
+                    
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="modal_numero_presupuesto">Número de Presupuesto</label>
+                            <input type="text" id="modal_numero_presupuesto" name="numero_presupuesto" readonly style="background-color: #e9ecef; cursor: not-allowed;">
+                        </div>
+                        <div class="form-group">
+                            <label for="modal_fecha_presupuesto">Fecha del Presupuesto (*)</label>
+                            <input type="date" id="modal_fecha_presupuesto" name="fecha_presupuesto" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="modal_cliente_id">Cliente (*)</label>
+                        <div class="cliente-select-row">
+                            <select id="modal_cliente_id" name="cliente_id" required>
+                                <option value="">Seleccione un cliente</option>
+                                {% if lista_clientes %}
+                                    {% for cliente in lista_clientes %}
+                                        <option value="{{ cliente.id }}">{{ cliente.nombre }} - {{ cliente.cif }}</option>
+                                    {% endfor %}
+                                {% endif %}
+                            </select>
+                            <button type="button" class="btn-nuevo-cliente" onclick="abrirModalCliente()">
+                                <i class="fas fa-plus"></i> Nuevo Cliente
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="modal_concepto">Concepto</label>
+                        <textarea id="modal_concepto" name="concepto" rows="2"></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="modal_importe">Importe (€)</label>
+                            <input type="number" id="modal_importe" name="importe" step="0.01" min="0" value="0" onchange="calcularTotalModal()">
+                        </div>
+                        <div class="form-group">
+                            <label for="modal_iva_percent">Tipo de IVA (%)</label>
+                            <input type="number" id="modal_iva_percent" name="iva_percent" step="0.01" min="0" max="100" value="21" onchange="calcularTotalModal()">
+                        </div>
+                        <div class="form-group">
+                            <label for="modal_iva_cantidad">Cantidad IVA (€)</label>
+                            <input type="number" id="modal_iva_cantidad" name="iva" step="0.01" min="0" value="0" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="modal_total">Total (€)</label>
+                            <input type="number" id="modal_total" name="total" step="0.01" min="0" value="0" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="modal_estado">Estado</label>
+                        <select id="modal_estado" name="estado">
+                            <option value="PENDIENTE" selected>Pendiente</option>
+                            <option value="APROBADO">Aprobado</option>
+                            <option value="RECHAZADO">Rechazado</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="modal_observaciones">Observaciones</label>
+                        <textarea id="modal_observaciones" name="observaciones" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-presupuesto-footer">
+                    <button type="button" class="btn-modal-presupuesto btn-modal-presupuesto-cerrar" onclick="cerrarModalPresupuesto()">Cerrar</button>
+                    <button type="submit" class="btn-modal-presupuesto btn-modal-presupuesto-guardar">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para nuevo cliente -->
+    <div id="modalCliente" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>NUEVO CLIENTE</h2>
+                <button type="button" class="modal-close" onclick="cerrarModalCliente()">&times;</button>
+            </div>
+            <form id="clienteForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="modal_nombre">Nombre (*)</label>
+                        <input type="text" id="modal_nombre" name="nombre" required>
+                        <div class="error-message">Este campo es obligatorio</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_cif">CIF (*)</label>
+                        <input type="text" id="modal_cif" name="cif" required>
+                        <div class="error-message">Este campo es obligatorio</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_direccion">Dirección (*)</label>
+                        <input type="text" id="modal_direccion" name="direccion" required>
+                        <div class="error-message">Este campo es obligatorio</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_poblacion">Población</label>
+                        <input type="text" id="modal_poblacion" name="poblacion" placeholder="Población">
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_telefono">Teléfono</label>
+                        <input type="text" id="modal_telefono" name="telefono">
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_email">email</label>
+                        <input type="email" id="modal_email" name="email">
+                        <div class="error-message">Email no válido</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal btn-modal-cerrar" onclick="cerrarModalCliente()">Cerrar</button>
+                    <button type="submit" class="btn-modal btn-modal-guardar">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        /* Estilos del modal de cliente (reutilizados del modal de presupuesto) */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            overflow: auto;
+        }
+        .modal-content {
+            background-color: #2c3e50;
+            margin: 5% auto;
+            padding: 0;
+            border: none;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            background-color: #34495e;
+            padding: 15px 20px;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h2 {
+            margin: 0;
+            color: white;
+            font-size: 18px;
+            text-transform: uppercase;
+        }
+        .modal-close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-close:hover {
+            color: #e74c3c;
+        }
+        .modal-body {
+            padding: 20px;
+            background-color: #2c3e50;
+        }
+        .modal-body .form-group {
+            margin-bottom: 15px;
+        }
+        .modal-body .form-group label {
+            color: white;
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .modal-body .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #34495e;
+            border-radius: 4px;
+            background-color: white;
+            color: #333;
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+        .modal-body .form-group input:focus {
+            outline: none;
+            border-color: #e74c3c;
+            box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
+        }
+        .modal-body .form-group input.error {
+            border-color: #e74c3c;
+        }
+        .modal-footer {
+            padding: 15px 20px;
+            background-color: #34495e;
+            border-radius: 0 0 8px 8px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .btn-modal {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn-modal-guardar {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .btn-modal-guardar:hover {
+            background-color: #c0392b;
+        }
+        .btn-modal-cerrar {
+            background-color: #7f8c8d;
+            color: white;
+        }
+        .btn-modal-cerrar:hover {
+            background-color: #5f6c6d;
+        }
+        .error-message {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+    </style>
+
+    <script>
+        // Funciones del modal de presupuesto
+        function abrirModalPresupuesto() {
+            document.getElementById('modalPresupuesto').style.display = 'block';
+            document.getElementById('presupuestoFormModal').reset();
+            document.getElementById('presupuestoError').style.display = 'none';
+            
+            // Establecer fecha actual
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('modal_fecha_presupuesto').value = today;
+            
+            // Obtener siguiente número de presupuesto
+            fetch('/siguiente_numero_presupuesto')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('modal_numero_presupuesto').value = data.numero;
+                })
+                .catch(error => {
+                    console.error('Error al obtener número de presupuesto:', error);
+                    document.getElementById('modal_numero_presupuesto').value = '1';
+                });
+            
+            // Resetear totales
+            document.getElementById('modal_importe').value = 0;
+            document.getElementById('modal_iva_percent').value = 21;
+            document.getElementById('modal_iva_cantidad').value = 0;
+            document.getElementById('modal_total').value = 0;
+        }
+
+        function cerrarModalPresupuesto() {
+            document.getElementById('modalPresupuesto').style.display = 'none';
+        }
+
+        function calcularTotalModal() {
+            const importe = parseFloat(document.getElementById('modal_importe').value) || 0;
+            const ivaPercent = parseFloat(document.getElementById('modal_iva_percent').value) || 0;
+            const iva = (importe * ivaPercent) / 100;
+            const total = importe + iva;
+            
+            document.getElementById('modal_iva_cantidad').value = iva.toFixed(2);
+            document.getElementById('modal_total').value = total.toFixed(2);
+        }
+
+        // Manejar submit del formulario de presupuesto
+        document.getElementById('presupuestoFormModal').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch('/crear_presupuesto', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    return response.json().then(data => {
+                        if (data.success === false) {
+                            throw new Error(data.error || 'Error al crear el presupuesto');
+                        }
+                        // Si viene JSON y no es error, redirigir
+                        window.location.href = '/presupuestos';
+                    });
+                } else if (response.status === 302 || response.redirected || response.ok) {
+                    // Éxito - redirigir
+                    window.location.href = '/presupuestos';
+                } else {
+                    // Error - intentar leer como texto
+                    return response.text().then(text => {
+                        throw new Error('Error al crear el presupuesto. Verifique los datos.');
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error completo:', error);
+                document.getElementById('presupuestoError').textContent = 'Error: ' + error.message;
+                document.getElementById('presupuestoError').style.display = 'block';
+            });
+        });
+
+        // Funciones del modal de cliente
+        function abrirModalCliente() {
+            document.getElementById('modalCliente').style.display = 'block';
+            document.getElementById('clienteForm').reset();
+            document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.form-group input').forEach(el => el.classList.remove('error'));
+        }
+
+        function cerrarModalCliente() {
+            document.getElementById('modalCliente').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modalPresupuesto = document.getElementById('modalPresupuesto');
+            const modalCliente = document.getElementById('modalCliente');
+            if (event.target == modalPresupuesto) {
+                cerrarModalPresupuesto();
+            }
+            if (event.target == modalCliente) {
+                cerrarModalCliente();
+            }
+        }
+
+        // Manejar el submit del formulario de cliente
+        document.getElementById('clienteForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const errorMessages = document.querySelectorAll('.error-message');
+            errorMessages.forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.form-group input').forEach(el => el.classList.remove('error'));
+
+            fetch('/crear_cliente_presupuesto', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    return response.json();
+                } else {
+                    throw new Error('La respuesta no es JSON. Es posible que haya sido redirigido al login.');
+                }
+            })
+            .then(data => {
+                if (data.success) {
+                    // Añadir el nuevo cliente al select del modal de presupuesto
+                    const select = document.getElementById('modal_cliente_id');
+                    const option = document.createElement('option');
+                    option.value = data.cliente.id;
+                    option.textContent = data.cliente.nombre + ' - ' + data.cliente.cif;
+                    option.selected = true;
+                    select.appendChild(option);
+                    
+                    cerrarModalCliente();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al crear el cliente: ' + error.message + '. Por favor, verifique que esté logueado e intente nuevamente.');
+            });
+        });
+    </script>
+</body>
+</html>

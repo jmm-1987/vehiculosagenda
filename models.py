@@ -1,6 +1,7 @@
 import db
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float
 from sqlalchemy import DateTime, Date
+from sqlalchemy.orm import relationship
 from flask_login import UserMixin
 
 
@@ -407,3 +408,67 @@ class CajaArqueo(db.Base):
         self.responsable = responsable
         self.observaciones = observaciones
         self.tipo_caja = tipo_caja
+
+
+class ClientePresupuesto(db.Base):
+    __tablename__ = "clientes_presupuestos"
+    id = Column(Integer, primary_key=True)
+    nombre = Column(String(200), nullable=False)
+    cif = Column(String(50), nullable=False)
+    direccion = Column(String(300), nullable=False)
+    poblacion = Column(String(200))
+    telefono = Column(String(50))
+    email = Column(String(200))
+    activo = Column(Boolean, default=True)
+    
+    def __init__(self, nombre, cif, direccion, poblacion="", telefono="", email="", activo=True):
+        self.nombre = nombre
+        self.cif = cif
+        self.direccion = direccion
+        self.poblacion = poblacion
+        self.telefono = telefono
+        self.email = email
+        self.activo = activo
+    
+    def __str__(self):
+        return f"{self.nombre} ({self.cif})"
+
+
+class Presupuesto(db.Base):
+    __tablename__ = "presupuesto"
+    id = Column(Integer, primary_key=True)
+    numero_presupuesto = Column(String(100), nullable=False)
+    fecha_presupuesto = Column(DateTime, nullable=False)
+    cliente_id = Column(Integer, ForeignKey('clientes_presupuestos.id'), nullable=False)
+    cliente = Column(String(200), default='')  # Columna legacy para compatibilidad con BD existente, usar cliente_id
+    concepto = Column(String(500))
+    importe = Column(Float, default=0.0)
+    iva = Column(Float, default=0.0)
+    total = Column(Float, default=0.0)
+    estado = Column(String(50), default='PENDIENTE')  # PENDIENTE, APROBADO, RECHAZADO
+    observaciones = Column(String(1000))
+    nombre_doc = Column(String(200))
+    activo = Column(Boolean, default=True)
+    fecha_creacion = Column(DateTime, nullable=False)
+    usuario_creacion = Column(String(100))
+    
+    # Relación con ClientePresupuesto (usar cliente_obj para acceder al objeto relacionado)
+    cliente_obj = relationship("ClientePresupuesto", backref="presupuestos")
+    
+    def __init__(self, numero_presupuesto, fecha_presupuesto, cliente_id, concepto="", 
+                 importe=0.0, iva=0.0, total=0.0, estado='PENDIENTE', observaciones="", 
+                 nombre_doc="", activo=True, fecha_creacion=None, usuario_creacion=""):
+        self.numero_presupuesto = numero_presupuesto
+        self.fecha_presupuesto = fecha_presupuesto
+        self.cliente_id = cliente_id
+        self.cliente = ''  # Valor por defecto para columna legacy (compatibilidad con BD)
+        self.concepto = concepto
+        self.importe = importe
+        self.iva = iva
+        self.total = total
+        self.estado = estado
+        self.observaciones = observaciones
+        self.nombre_doc = nombre_doc
+        self.activo = activo
+        self.fecha_creacion = fecha_creacion
+        self.usuario_creacion = usuario_creacion
