@@ -424,7 +424,9 @@
                             <th>Nº</th>
                             <th>Fecha</th>
                             <th>Cliente</th>
-                            <th>Concepto</th>
+                            <th>Bultos</th>
+                            <th>Kg</th>
+                            <th>Medidas</th>
                             <th class="text-right">Importe</th>
                             <th class="text-right">IVA</th>
                             <th class="text-right">Total</th>
@@ -439,9 +441,9 @@
                             <td><strong>{{ presupuesto.numero_presupuesto }}</strong></td>
                             <td>{{ presupuesto.fecha_presupuesto.strftime('%d/%m/%Y') }}</td>
                             <td>{{ cliente.nombre }}</td>
-                            <td title="{{ presupuesto.concepto|e if presupuesto.concepto else '' }}">
-                                {{ presupuesto.concepto[:40] if presupuesto.concepto else '' }}{% if presupuesto.concepto and presupuesto.concepto|length > 40 %}...{% endif %}
-                            </td>
+                            <td>{{ presupuesto.bultos or '-' }}</td>
+                            <td>{{ presupuesto.kg or '-' }}</td>
+                            <td>{{ presupuesto.medidas or '-' }}</td>
                             <td class="text-right">{{ "%.2f"|format(presupuesto.importe) }}€</td>
                             <td class="text-right">{{ "%.2f"|format(presupuesto.iva) }}€</td>
                             <td class="text-right"><strong style="color: #6f42c1;">{{ "%.2f"|format(presupuesto.total) }}€</strong></td>
@@ -535,9 +537,19 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="modal_concepto">Concepto</label>
-                        <textarea id="modal_concepto" name="concepto" rows="2"></textarea>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="modal_bultos">Bultos (*)</label>
+                            <input type="text" id="modal_bultos" name="bultos" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="modal_kg">Kg (*)</label>
+                            <input type="text" id="modal_kg" name="kg" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="modal_medidas">Medidas (*)</label>
+                            <input type="text" id="modal_medidas" name="medidas" required>
+                        </div>
                     </div>
 
                     <div class="form-row">
@@ -570,7 +582,7 @@
 
                     <div class="form-group">
                         <label for="modal_observaciones">Observaciones</label>
-                        <textarea id="modal_observaciones" name="observaciones" rows="2"></textarea>
+                        <textarea id="modal_observaciones" name="observaciones" rows="2" placeholder="Introduce aquí origen y destino de la mercancía"></textarea>
                     </div>
                 </div>
                 <div class="modal-presupuesto-footer">
@@ -899,6 +911,45 @@
                 alert('Error al crear el cliente: ' + error.message + '. Por favor, verifique que esté logueado e intente nuevamente.');
             });
         });
+
+        // Deshabilitar gesto de swipe hacia la izquierda que vuelve atrás
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        document.addEventListener('touchmove', function(e) {
+            // Prevenir el comportamiento por defecto si el movimiento es hacia la izquierda desde el borde
+            const touch = e.changedTouches[0];
+            const currentX = touch.screenX;
+            
+            // Si el toque comienza cerca del borde izquierdo y se mueve hacia la izquierda
+            if (touchStartX < 20 && currentX < touchStartX) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            const swipeThreshold = 50;
+            const diff = touchStartX - touchEndX;
+            
+            // Si el deslizamiento es hacia la izquierda desde el borde izquierdo
+            if (touchStartX < 20 && diff < -swipeThreshold) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Prevenir el gesto de navegación hacia atrás del navegador
+        window.addEventListener('popstate', function(e) {
+            // Prevenir que se ejecute la navegación hacia atrás
+            history.pushState(null, null, window.location.href);
+        });
+
+        // Agregar un estado al historial para poder prevenir el back
+        history.pushState(null, null, window.location.href);
     </script>
 </body>
 </html>

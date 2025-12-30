@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required
 import db
 from datetime import datetime
@@ -50,7 +50,15 @@ def register_presupuestoedit_routes(app):
         except (ValueError, TypeError):
             pass
         
-        presupuesto_modificar.concepto = request.form.get("concepto", "")
+        presupuesto_modificar.concepto = request.form.get("concepto", "")  # Mantener por compatibilidad
+        presupuesto_modificar.bultos = request.form.get("bultos", "")
+        presupuesto_modificar.kg = request.form.get("kg", "")
+        presupuesto_modificar.medidas = request.form.get("medidas", "")
+        
+        # Validar campos obligatorios
+        if not presupuesto_modificar.bultos or not presupuesto_modificar.kg or not presupuesto_modificar.medidas:
+            flash('Los campos Bultos, Kg y Medidas son obligatorios', 'error')
+            return redirect(url_for('edicion_presupuesto', id=id))
         
         try:
             importe = float(request.form.get("importe", 0) or 0)

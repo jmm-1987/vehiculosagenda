@@ -138,10 +138,68 @@
     </div>
 
     <div class="container">
-        <h1 style="margin: 10px 0; font-size: 24px;"><i class="fas fa-plus-circle"></i> Nuevo Cobro</h1>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1 style="margin: 0; font-size: 24px;"><i class="fas fa-plus-circle"></i> Nuevo Cobro</h1>
+            <div>
+                {% if tipo_caja == 'CAJA' %}
+                    <a href="{{ url_for('caja_index') }}" class="btn" style="background: #6c757d;">
+                        <i class="fas fa-arrow-left"></i> Volver a Caja
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('caja_reembolsos_index') }}" class="btn" style="background: #6c757d;">
+                        <i class="fas fa-arrow-left"></i> Volver a Caja Reembolsos
+                    </a>
+                {% endif %}
+            </div>
+        </div>
         
         <div class="form-container">
             <form method="POST" action="{% if tipo_caja == 'CAJA' %}{{ url_for('crear_cobro') }}{% else %}{{ url_for('crear_cobro_reembolsos') }}{% endif %}">
+                {% if tipo_caja == 'CAJA' %}
+                {# Solo para caja de contados: mostrar solo los campos solicitados #}
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fecha_albaran">Fecha Albarán *</label>
+                        <input type="date" id="fecha_albaran" name="fecha_albaran" required>
+                        <script>
+                            document.getElementById('fecha_albaran').valueAsDate = new Date();
+                        </script>
+                    </div>
+                    <div class="form-group">
+                        <label for="expedicion">Expedición</label>
+                        <input type="text" id="expedicion" name="expedicion">
+                    </div>
+                    <div class="form-group">
+                        <label for="observaciones">Observaciones</label>
+                        <input type="text" id="observaciones" name="observaciones">
+                    </div>
+                    <div class="form-group">
+                        <label for="iva">IVA (€)</label>
+                        <input type="number" id="iva" name="iva" step="0.01" value="0.00" class="input-cantidad">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="entrada_en_caja">Entrada en Caja (€)</label>
+                        <input type="number" id="entrada_en_caja" name="entrada_en_caja" step="0.01" value="0.00" class="input-cantidad" oninput="calcularTotalCobro()">
+                    </div>
+                    <div class="form-group">
+                        <div class="form-checkbox" style="margin-top: 24px;">
+                            <input type="checkbox" id="es_factura" name="es_factura">
+                            <label for="es_factura" style="margin: 0;">Es Factura</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background-color: #e8f5e9; border-radius: 4px; border: 2px solid #28a745;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 18px; font-weight: bold; color: #333;">Total Movimiento:</span>
+                        <span id="total_cobro" style="font-size: 24px; font-weight: bold; color: #28a745;">0.00€</span>
+                    </div>
+                </div>
+                {% else %}
+                {# Para reembolsos: mantener todos los campos #}
                 <div class="form-row">
                     <div class="form-group">
                         <label for="fecha_albaran">Fecha Albarán *</label>
@@ -186,40 +244,48 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="reembolso">Reembolso (€)</label>
-                        <input type="number" id="reembolso" name="reembolso" step="0.01" value="0.00" class="input-cantidad">
+                        <input type="number" id="reembolso" name="reembolso" step="0.01" value="0.00" class="input-cantidad" oninput="calcularTotalCobro()">
                     </div>
                     <div class="form-group">
                         <label for="comision_reembolso">Comisión Reemb. (€)</label>
-                        <input type="number" id="comision_reembolso" name="comision_reembolso" step="0.01" value="0.00" class="input-cantidad">
+                        <input type="number" id="comision_reembolso" name="comision_reembolso" step="0.01" value="0.00" class="input-cantidad" oninput="calcularTotalCobro()">
                     </div>
                     <div class="form-group">
                         <label for="portes_pagados">Portes Pagados (€)</label>
-                        <input type="number" id="portes_pagados" name="portes_pagados" step="0.01" value="0.00" class="input-cantidad">
+                        <input type="number" id="portes_pagados" name="portes_pagados" step="0.01" value="0.00" class="input-cantidad" oninput="calcularTotalCobro()">
                     </div>
                     <div class="form-group">
                         <label for="portes_debidos">Portes Debidos (€)</label>
-                        <input type="number" id="portes_debidos" name="portes_debidos" step="0.01" value="0.00" class="input-cantidad">
+                        <input type="number" id="portes_debidos" name="portes_debidos" step="0.01" value="0.00" class="input-cantidad" oninput="calcularTotalCobro()">
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="iva">IVA (€)</label>
-                        <input type="number" id="iva" name="iva" step="0.01" value="0.00" class="input-cantidad">
+                        <input type="number" id="iva" name="iva" step="0.01" value="0.00" class="input-cantidad" oninput="calcularTotalCobro()">
                     </div>
-                    {% if tipo_caja == 'CAJA' %}
-                    <div class="form-group">
-                        <label for="entrada_en_caja">Entrada en Caja (€)</label>
-                        <input type="number" id="entrada_en_caja" name="entrada_en_caja" step="0.01" value="0.00" class="input-cantidad">
-                    </div>
-                    {% endif %}
                     <div class="form-group">
                         <div class="form-checkbox" style="margin-top: 24px;">
                             <input type="checkbox" id="es_factura" name="es_factura">
                             <label for="es_factura" style="margin: 0;">Es Factura</label>
                         </div>
                     </div>
+                    <div class="form-group">
+                        <!-- Espacio vacío para mantener el layout -->
+                    </div>
+                    <div class="form-group">
+                        <!-- Espacio vacío para mantener el layout -->
+                    </div>
                 </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background-color: #e8f5e9; border-radius: 4px; border: 2px solid #28a745;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 18px; font-weight: bold; color: #333;">Total Movimiento:</span>
+                        <span id="total_cobro" style="font-size: 24px; font-weight: bold; color: #28a745;">0.00€</span>
+                    </div>
+                </div>
+                {% endif %}
 
                 <div style="margin-top: 15px; text-align: right;">
                     <button type="submit" class="btn">
@@ -232,6 +298,31 @@
             </form>
         </div>
     </div>
+
+    <script>
+        function calcularTotalCobro() {
+            {% if tipo_caja == 'CAJA' %}
+            // Para caja de contados: total = entrada_en_caja
+            const entradaEnCaja = parseFloat(document.getElementById('entrada_en_caja').value) || 0;
+            const total = entradaEnCaja;
+            {% else %}
+            // Para reembolsos: total = reembolso + portes_pagados + portes_debidos + iva + comision_reembolso
+            const reembolso = parseFloat(document.getElementById('reembolso').value) || 0;
+            const comisionReembolso = parseFloat(document.getElementById('comision_reembolso').value) || 0;
+            const portesPagados = parseFloat(document.getElementById('portes_pagados').value) || 0;
+            const portesDebidos = parseFloat(document.getElementById('portes_debidos').value) || 0;
+            const iva = parseFloat(document.getElementById('iva').value) || 0;
+            const total = reembolso + portesPagados + portesDebidos + iva + comisionReembolso;
+            {% endif %}
+            
+            document.getElementById('total_cobro').textContent = total.toFixed(2) + '€';
+        }
+        
+        // Calcular total al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            calcularTotalCobro();
+        });
+    </script>
 </body>
 </html>
 

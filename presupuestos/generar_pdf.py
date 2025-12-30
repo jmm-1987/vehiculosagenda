@@ -6,13 +6,11 @@ import fitz  # PyMuPDF
 from datetime import datetime
 
 # Datos de la empresa
-EMPRESA_NOMBRE = "Alditraex, S.L."
-EMPRESA_DIRECCION = "Pol. Ind. Prado C/Valladolid parc. R46 A/b, 06800 Mérida - Badajoz"
+EMPRESA_NOMBRE = "Alditraex SL"
+EMPRESA_DIRECCION = "C/Cadiz, 15 Pol Ind El Prado"
+EMPRESA_DIRECCION_2 = "06800-Mérida (Badajoz)"
 EMPRESA_CIF = "B06422208"
 EMPRESA_CUENTA_BANCARIA = "ES38 0078 0076 4440 0000 3347"
-
-# Política de privacidad (texto completo del PDF)
-TEXTO_PRIVACIDAD = """De conformidad con lo establecido en la normativa vigente en Protección de Datos de Carácter Personal, le informamos que los datos de carácter personal que nos proporcione serán incorporados a un fichero titularidad de ALDITRAEX, S.L. con la finalidad de gestionar la relación comercial, contractual y administrativa, así como para remitirle información comercial sobre nuestros productos y servicios. Los datos no serán cedidos a terceros salvo obligación legal. Puede ejercitar sus derechos de acceso, rectificación, supresión, portabilidad, limitación y oposición dirigiéndose a la dirección postal arriba indicada o al correo electrónico jmurillo@alditraex.es. Asimismo, tiene derecho a presentar una reclamación ante la Agencia Española de Protección de Datos (www.aepd.es) si considera que el tratamiento de sus datos personales vulnera la normativa vigente."""
 
 # Observaciones del presupuesto
 OBSERVACIONES_PRESUPUESTO = """VALIDEZ DEL PRESUPUESTO: 15 DÍAS DESDE SU COMUNICACIÓN:
@@ -24,9 +22,7 @@ La mercancía debe estar perfectamente embalada, paletizada para ser transportad
 
 *No entramos en fincas, nuestras entregas y recogidas son puerta a puerta.-
 
-"Si el bulto una vez recibido en nuestro almacén difiriera de las medidas y pesos que nos han dicho ustedes en la petición del servicio, deben saber que primaran las medidas y pesos tomadas en nuestras instalaciones para el precio del servicio a pagar.
-
-En el caso de estar de acuerdo con la cotización ofrecida, rogamos hagan el ingreso por transferencia al mismo a la cuenta nº ES38 0078 0076 4440 0000 3347 (adjunten copia de la misma a este email) para poder poner en marcha el servicio. Quedamos a la espera de sus indicaciones."""
+"Si el bulto una vez recibido en nuestro almacén difiriera de las medidas y pesos que nos han dicho ustedes en la petición del servicio, deben saber que primaran las medidas y pesos tomadas en nuestras instalaciones para el precio del servicio a pagar."""
 
 
 def generar_pdf_presupuesto(presupuesto, cliente, output_path=None):
@@ -63,16 +59,18 @@ def generar_pdf_presupuesto(presupuesto, cliente, output_path=None):
         except Exception as e:
             print(f"Error al insertar logo: {e}")
     
-    # === INFORMACIÓN DE LA EMPRESA (izquierda) ===
-    y_pos = 150 + (12 * 5)  # Bajar 5 líneas más (120 + 60 = 180)
+    # === INFORMACIÓN DEL CLIENTE (derecha) ===
+    y_pos_cliente = 120  # Bajar más desde 100 a 120
+    
+    # === INFORMACIÓN DE LA EMPRESA (izquierda) - misma altura que CLIENTE ===
+    y_pos = y_pos_cliente  # Misma altura que el bloque CLIENTE
     page.insert_text((50, y_pos), EMPRESA_NOMBRE, fontsize=font_size_header, color=(0, 0, 0))
     y_pos += 15
     page.insert_text((50, y_pos), EMPRESA_DIRECCION, fontsize=font_size_normal, color=(0, 0, 0))
     y_pos += 12
-    page.insert_text((50, y_pos), f"CIF/NIF: {EMPRESA_CIF}", fontsize=font_size_normal, color=(0, 0, 0))
-    
-    # === INFORMACIÓN DEL CLIENTE (derecha) ===
-    y_pos_cliente = 120  # Bajar más desde 100 a 120
+    page.insert_text((50, y_pos), EMPRESA_DIRECCION_2, fontsize=font_size_normal, color=(0, 0, 0))
+    y_pos += 12
+    page.insert_text((50, y_pos), f"CIF: {EMPRESA_CIF}", fontsize=font_size_normal, color=(0, 0, 0))
     page.insert_text((350, y_pos_cliente), "CLIENTE:", fontsize=font_size_normal, color=(0, 0, 0))
     y_pos_cliente += 12
     page.insert_text((350, y_pos_cliente), f"Nombre: {cliente.nombre}", fontsize=font_size_normal, color=(0, 0, 0))
@@ -86,21 +84,28 @@ def generar_pdf_presupuesto(presupuesto, cliente, output_path=None):
     y_pos_cliente += 12
     page.insert_text((350, y_pos_cliente), f"CIF/NIF: {cliente.cif}", fontsize=font_size_normal, color=(0, 0, 0))
     
-    # === INFORMACIÓN DEL PRESUPUESTO (derecha, debajo del cliente) ===
+    # === INFORMACIÓN DEL PRESUPUESTO (centrado, en negrita) ===
     y_pos_presupuesto = y_pos_cliente + 20
     fecha_str = presupuesto.fecha_presupuesto.strftime('%d/%m/%Y') if presupuesto.fecha_presupuesto else ""
-    page.insert_text((350, y_pos_presupuesto), f"FECHA PRESUPUESTO: {fecha_str}", fontsize=font_size_normal, color=(0, 0, 0))
-    y_pos_presupuesto += 12
-    page.insert_text((350, y_pos_presupuesto), f"N°: {presupuesto.numero_presupuesto}", fontsize=font_size_normal, color=(0, 0, 0))
-    y_pos_presupuesto += 12
-    concepto_titulo = presupuesto.concepto[:30] if presupuesto.concepto else "Presupuesto"
-    page.insert_text((350, y_pos_presupuesto), f"PRESUPUESTO {concepto_titulo}", fontsize=font_size_normal, color=(0, 0, 0))
+    # Texto combinado: FECHA: dd/mm/aaaa Nº PRESUPUESTO: x
+    texto_presupuesto = f"FECHA: {fecha_str}    Nº PRESUPUESTO: {presupuesto.numero_presupuesto}"
+    
+    # Calcular posición centrada (ancho del documento A4 = 595.2756 puntos)
+    # Aproximación: fuente 12 tiene aproximadamente 0.6 puntos por carácter
+    # Para fuente header (12), usar factor de 0.6
+    ancho_texto = len(texto_presupuesto) * font_size_header * 0.5
+    x_centrado = (595.2756 - ancho_texto) / 2
+    
+    # Insertar texto en negrita (usando tamaño de fuente mayor para simular negrita)
+    # Usar la misma altura que tenía "PRESUPUESTO" (que estaba 24 puntos más abajo)
+    y_pos_texto = y_pos_presupuesto + 24
+    page.insert_text((x_centrado, y_pos_texto), texto_presupuesto, fontsize=font_size_header, color=(0, 0, 0))
     
     # === TABLA DE CONCEPTOS ===
-    y_tabla = y_pos_presupuesto + 40
+    y_tabla = y_pos_texto + 30  # Espacio después del texto centrado
     
     # Encabezados de la tabla
-    headers = ["N°", "CONCEPTO", "PRECIO", "% IVA", "IVA", "TOTAL"]
+    headers = ["N°", "OBSERVACIONES", "PRECIO", "% IVA", "IVA", "TOTAL"]
     col_widths = [30, 250, 70, 50, 70, 80]
     x_start = 50
     x_positions = [x_start]
@@ -124,12 +129,23 @@ def generar_pdf_presupuesto(presupuesto, cliente, output_path=None):
     y_row = y_header + 20
     page.insert_text((x_positions[0] + 5, y_row), "1", fontsize=font_size_normal, color=(0, 0, 0))
     
-    # Concepto (puede ser largo, ajustar)
-    concepto_texto = presupuesto.concepto if presupuesto.concepto else ""
+    # Observaciones (primera línea)
+    observaciones_texto = presupuesto.observaciones if presupuesto.observaciones else ""
     # Truncar si es muy largo
-    if len(concepto_texto) > 50:
-        concepto_texto = concepto_texto[:47] + "..."
-    page.insert_text((x_positions[1] + 5, y_row), concepto_texto, fontsize=font_size_normal, color=(0, 0, 0))
+    if len(observaciones_texto) > 50:
+        observaciones_texto = observaciones_texto[:47] + "..."
+    page.insert_text((x_positions[1] + 5, y_row), observaciones_texto, fontsize=font_size_normal, color=(0, 0, 0))
+    
+    # Segunda línea: Bultos, Kg y Medidas
+    y_row_2 = y_row + 12
+    bultos = presupuesto.bultos if presupuesto.bultos else "-"
+    kg = presupuesto.kg if presupuesto.kg else "-"
+    medidas = presupuesto.medidas if presupuesto.medidas else "-"
+    detalle_texto = f"Bultos: {bultos}, Kg: {kg}, Medidas: {medidas}"
+    # Truncar si es muy largo
+    if len(detalle_texto) > 50:
+        detalle_texto = detalle_texto[:47] + "..."
+    page.insert_text((x_positions[1] + 5, y_row_2), detalle_texto, fontsize=font_size_small, color=(0, 0, 0))
     
     # Precio
     precio_str = f"{presupuesto.importe:.2f}"
@@ -147,8 +163,8 @@ def generar_pdf_presupuesto(presupuesto, cliente, output_path=None):
     total_str = f"{presupuesto.total:.2f}"
     page.insert_text((x_positions[5] + 5, y_row), total_str, fontsize=font_size_normal, color=(0, 0, 0))
     
-    # Línea debajo de la fila
-    y_row_bottom = y_row + 15
+    # Línea debajo de la fila (ajustada para las dos líneas de texto)
+    y_row_bottom = y_row_2 + 10
     page.draw_line((x_start, y_row_bottom), (x_start + sum(col_widths), y_row_bottom), color=(0, 0, 0), width=1)
     
     # === OBSERVACIONES ===
@@ -156,73 +172,187 @@ def generar_pdf_presupuesto(presupuesto, cliente, output_path=None):
     page.insert_text((50, y_obs), "OBSERVACIONES:", fontsize=font_size_header, color=(0, 0, 0))
     y_obs += 20
     
-    # Insertar observaciones del presupuesto (pueden ser largas, usar texto multilínea)
-    def insertar_texto_multilinea(texto, x, y_start, max_chars_per_line, fontsize):
-        """Función auxiliar para insertar texto multilínea"""
+    # Insertar observaciones del presupuesto (justificado, usando ancho completo)
+    def insertar_texto_justificado(texto, x_start, x_end, y_start, fontsize):
+        """Función auxiliar para insertar texto multilínea justificado"""
         words = texto.split(' ')
         current_line = ""
         y_current = y_start
+        ancho_disponible = x_end - x_start
+        
         for word in words:
             test_line = current_line + word + " " if current_line else word + " "
-            if len(test_line) > max_chars_per_line and current_line:
-                page.insert_text((x, y_current), current_line.strip(), fontsize=fontsize, color=(0, 0, 0))
+            # Estimar ancho del texto (aproximación: 0.5 puntos por carácter)
+            ancho_test = len(test_line) * fontsize * 0.5
+            
+            if ancho_test > ancho_disponible and current_line:
+                # Insertar línea actual
+                page.insert_text((x_start, y_current), current_line.strip(), fontsize=fontsize, color=(0, 0, 0))
                 y_current += fontsize + 2
                 current_line = word + " "
             else:
                 current_line = test_line
+        
+        # Insertar última línea
         if current_line.strip():
-            page.insert_text((x, y_current), current_line.strip(), fontsize=fontsize, color=(0, 0, 0))
+            page.insert_text((x_start, y_current), current_line.strip(), fontsize=fontsize, color=(0, 0, 0))
             y_current += fontsize + 2
+        
         return y_current
+    
+    # Usar ancho completo del documento para justificar mejor (márgenes de 50 a cada lado)
+    x_start_texto = 50
+    x_end_texto = 545  # 595.2756 - 50 (margen derecho)
     
     obs_lines = OBSERVACIONES_PRESUPUESTO.split('\n')
     for line in obs_lines:
         if line.strip():
-            y_obs = insertar_texto_multilinea(line.strip(), 50, y_obs, 90, font_size_small)
+            y_obs = insertar_texto_justificado(line.strip(), x_start_texto, x_end_texto, y_obs, font_size_small)
             y_obs += 5  # Espacio entre párrafos
     
-    # === RESUMEN (cuadro derecho) ===
-    y_resumen = y_tabla + 50
-    x_resumen = 400
+    # === RECUADRO DE TRANSFERENCIA ===
+    y_obs += 25  # Separar más del resto
+    texto_transferencia = "En el caso de estar de acuerdo con la cotización ofrecida, rogamos hagan el ingreso por transferencia a la cuenta nº "
+    numero_cuenta = "ES38 0078 0076 4440 0000 3347 "
+    texto_transferencia_fin = "  (adjunten copia de la misma a este email) para poder poner en marcha el servicio."
     
-    # Caja de resumen
-    box_height = 60
-    box_width = 150
-    box_rect = fitz.Rect(x_resumen, y_resumen, x_resumen + box_width, y_resumen + box_height)
+    # Dimensiones del recuadro
+    x_recuadro = 50
+    ancho_recuadro = 495  # 545 - 50
+    ancho_texto_disponible = ancho_recuadro - 20  # Margen de 10 a cada lado
+    font_size_recuadro = font_size_small + 1
+    
+    # Calcular altura necesaria para el texto (aproximadamente 2-3 líneas)
+    alto_recuadro = 60
+    y_recuadro_top = y_obs
+    y_recuadro_bottom = y_obs + alto_recuadro
+    
+    # Dibujar recuadro
+    box_rect = fitz.Rect(x_recuadro, y_recuadro_top, x_recuadro + ancho_recuadro, y_recuadro_bottom)
     page.draw_rect(box_rect, color=(0, 0, 0), width=1)
     
-    # Texto dentro del resumen
-    y_resumen_text = y_resumen + 15
-    page.insert_text((x_resumen + 5, y_resumen_text), f"Sujeto a retención: {presupuesto.importe:.2f} €", fontsize=font_size_small, color=(0, 0, 0))
-    y_resumen_text += 15
-    page.insert_text((x_resumen + 5, y_resumen_text), f"IVA: {presupuesto.iva:.2f} €", fontsize=font_size_small, color=(0, 0, 0))
-    y_resumen_text += 15
-    page.insert_text((x_resumen + 5, y_resumen_text), f"Total: {presupuesto.total:.2f} €", fontsize=font_size_small, color=(0, 0, 0))
+    # Insertar texto dentro del recuadro usando función multilínea
+    y_texto_recuadro = y_recuadro_top + 15
+    x_texto_inicio = x_recuadro + 10
     
-    # === POLÍTICA DE PRIVACIDAD (parte inferior) ===
-    y_privacidad = 800  # Bajar un poco más para que no se corte
-    # Dividir el texto de privacidad en líneas
-    privacidad_lines = TEXTO_PRIVACIDAD.split('. ')
-    y_priv = y_privacidad
-    for line in privacidad_lines[:3]:  # Mostrar primeras líneas principales
-        if line.strip():
-            if len(line) > 120:
-                words = line.split(' ')
-                current_line = ""
-                for word in words:
-                    if len(current_line + word) < 120:
-                        current_line += word + " "
+    # Construir texto completo con número de cuenta destacado
+    # Primera línea: texto hasta el número de cuenta
+    texto_completo = texto_transferencia + numero_cuenta + texto_transferencia_fin
+    
+    # Insertar texto con manejo de múltiples líneas y número de cuenta en negrita
+    # Dividir el texto en partes: antes del número, número, después del número
+    partes = texto_completo.split(numero_cuenta)
+    
+    if len(partes) == 2:
+        # Primera parte (antes del número de cuenta)
+        texto_antes = partes[0].strip()
+        texto_despues = partes[1].strip()
+        
+        # Insertar texto completo línea por línea, insertando el número de cuenta en la misma línea cuando corresponda
+        words_antes = texto_antes.split(' ')
+        words_despues = texto_despues.split(' ')
+        all_words = words_antes + [numero_cuenta] + words_despues
+        
+        current_line = ""
+        y_current = y_texto_recuadro
+        x_current = x_texto_inicio
+        encontrado_numero = False
+        
+        for word in all_words:
+            # Verificar si esta palabra es el número de cuenta
+            es_numero_cuenta = word == numero_cuenta
+            
+            test_line = current_line + word + " " if current_line else word + " "
+            ancho_test = len(test_line) * font_size_recuadro * 0.5
+            
+            if ancho_test > ancho_texto_disponible and current_line:
+                # Insertar línea actual
+                if numero_cuenta in current_line and not encontrado_numero:
+                    # Dividir la línea para insertar el número de cuenta en negrita
+                    partes_linea = current_line.split(numero_cuenta)
+                    if len(partes_linea) == 2:
+                        # Insertar parte antes del número
+                        if partes_linea[0].strip():
+                            page.insert_text((x_current, y_current), partes_linea[0].strip(), fontsize=font_size_recuadro, color=(0, 0, 0))
+                            ancho_antes = len(partes_linea[0].strip()) * font_size_recuadro * 0.5
+                            x_cuenta = x_current + ancho_antes
+                        else:
+                            x_cuenta = x_current
+                        # Insertar número de cuenta (mismo tamaño, pero en negrita visual con fuente más grande ligeramente)
+                        page.insert_text((x_cuenta, y_current), numero_cuenta, fontsize=font_size_recuadro, color=(0, 0, 0))
+                        ancho_cuenta = len(numero_cuenta) * font_size_recuadro * 0.5
+                        # Insertar parte después del número
+                        if partes_linea[1].strip():
+                            page.insert_text((x_cuenta + ancho_cuenta, y_current), partes_linea[1].strip(), fontsize=font_size_recuadro, color=(0, 0, 0))
+                        encontrado_numero = True
                     else:
-                        if current_line:
-                            page.insert_text((50, y_priv), current_line.strip() + ".", fontsize=7, color=(0, 0, 0))
-                            y_priv += 10
-                        current_line = word + " "
-                if current_line:
-                    page.insert_text((50, y_priv), current_line.strip() + ".", fontsize=7, color=(0, 0, 0))
-                    y_priv += 10
+                        page.insert_text((x_current, y_current), current_line.strip(), fontsize=font_size_recuadro, color=(0, 0, 0))
+                else:
+                    page.insert_text((x_current, y_current), current_line.strip(), fontsize=font_size_recuadro, color=(0, 0, 0))
+                y_current += font_size_recuadro + 2
+                current_line = word + " "
             else:
-                page.insert_text((50, y_priv), line.strip() + ".", fontsize=7, color=(0, 0, 0))
-                y_priv += 10
+                current_line = test_line
+        
+        # Insertar última línea
+        if current_line.strip():
+            if numero_cuenta in current_line and not encontrado_numero:
+                partes_linea = current_line.split(numero_cuenta)
+                if len(partes_linea) == 2:
+                    if partes_linea[0].strip():
+                        page.insert_text((x_current, y_current), partes_linea[0].strip(), fontsize=font_size_recuadro, color=(0, 0, 0))
+                        ancho_antes = len(partes_linea[0].strip()) * font_size_recuadro * 0.5
+                        x_cuenta = x_current + ancho_antes
+                    else:
+                        x_cuenta = x_current
+                    page.insert_text((x_cuenta, y_current), numero_cuenta, fontsize=font_size_recuadro, color=(0, 0, 0))
+                    ancho_cuenta = len(numero_cuenta) * font_size_recuadro * 0.5
+                    if partes_linea[1].strip():
+                        page.insert_text((x_cuenta + ancho_cuenta, y_current), partes_linea[1].strip(), fontsize=font_size_recuadro, color=(0, 0, 0))
+                else:
+                    page.insert_text((x_current, y_current), current_line.strip(), fontsize=font_size_recuadro, color=(0, 0, 0))
+            else:
+                page.insert_text((x_current, y_current), current_line.strip(), fontsize=font_size_recuadro, color=(0, 0, 0))
+            y_current += font_size_recuadro + 2
+        
+        # Ajustar altura del recuadro
+        y_final_recuadro = y_current
+        if y_final_recuadro > y_recuadro_bottom - 5:
+            nuevo_alto = y_final_recuadro - y_recuadro_top + 10
+            box_rect = fitz.Rect(x_recuadro, y_recuadro_top, x_recuadro + ancho_recuadro, y_recuadro_top + nuevo_alto)
+            page.draw_rect(box_rect, color=(0, 0, 0), width=1)
+            y_recuadro_bottom = y_recuadro_top + nuevo_alto
+        else:
+            y_recuadro_bottom = y_final_recuadro + 5
+    else:
+        # Si no se encuentra el número, insertar texto normal
+        y_final = insertar_texto_justificado(texto_completo, x_texto_inicio, x_recuadro + ancho_recuadro - 10, y_texto_recuadro, font_size_recuadro)
+        # Ajustar altura del recuadro
+        if y_final > y_recuadro_bottom - 5:
+            nuevo_alto = y_final - y_recuadro_top + 10
+            box_rect = fitz.Rect(x_recuadro, y_recuadro_top, x_recuadro + ancho_recuadro, y_recuadro_top + nuevo_alto)
+            page.draw_rect(box_rect, color=(0, 0, 0), width=1)
+            y_recuadro_bottom = y_recuadro_top + nuevo_alto
+        else:
+            y_recuadro_bottom = y_final + 5
+    
+    # === POLÍTICA DE PRIVACIDAD (al pie del documento) ===
+    texto_privacidad = """Política de privacidad. Sus datos personales serán usados para nuestra relación y poder prestarle nuestros servicios. Dichos datos
+son necesarios para poder relacionarnos con usted, lo que nos permite el uso de su información dentro de la legalidad. Asimismo,
+podrán tener conocimiento de su información aquellas entidades que necesiten tener acceso a la misma para que podamos
+prestarle nuestros servicios. Conservaremos sus datos durante nuestra relación y mientras nos obliguen las leyes aplicables. En
+cualquier momento puede dirigirse a nosotros para saber qué información tenemos sobre usted, rectificarla si fuese incorrecta y
+eliminarla una vez finalizada nuestra relación. También tiene derecho a solicitar el traspaso de su información a otra entidad
+(portabilidad). Para solicitar alguno de estos derechos, deberá realizar una solicitud escrita a nuestra dirección, junto con una
+fotocopia de su DNI: ---- CP 06800, Mérida (Badajoz). En caso de que entienda que sus derechos han sido desatendidos, puede
+formular una reclamación en la Agencia Española de Protección de Datos (www.agpd.es)."""
+    
+    # Insertar texto justificado después del recuadro
+    y_privacidad = y_recuadro_bottom + 15
+    font_size_privacidad = 7
+    
+    # Insertar texto justificado con márgenes laterales (50 a 545)
+    insertar_texto_justificado(texto_privacidad, 50, 600, y_privacidad, font_size_privacidad)
     
     # Guardar PDF
     if generar_en_memoria:

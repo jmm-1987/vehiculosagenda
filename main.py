@@ -54,6 +54,10 @@ try:
     ensure_column_exists('caja_cobro', 'entrada_en_caja', 'FLOAT', 0.0)
     # Añadir cliente_id a presupuesto si existe la tabla
     ensure_column_exists('presupuesto', 'cliente_id', 'INTEGER', None)
+    # Añadir campos bultos, kg y medidas a presupuesto
+    ensure_column_exists('presupuesto', 'bultos', 'VARCHAR(50)', '')
+    ensure_column_exists('presupuesto', 'kg', 'VARCHAR(50)', '')
+    ensure_column_exists('presupuesto', 'medidas', 'VARCHAR(200)', '')
 except Exception as e:
     print(f"Error en migraciones: {e}")
     pass

@@ -276,11 +276,13 @@
                 <p>Ver y gestionar incidencias</p>
             </a>
 
+            {% if current_user.username != 'caja' %}
             <a href="/caja" class="portada-card card-caja" style="border-top: 5px solid #20c997;">
                 <i class="fas fa-cash-register"></i>
                 <h2>Contados</h2>
                 <p>Gestión de cobros, pagos y arqueo</p>
             </a>
+            {% endif %}
 
             <a href="/caja-reembolsos" class="portada-card card-caja-reembolsos" style="border-top: 5px solid #ffc107;">
                 <i class="fas fa-money-bill-wave"></i>

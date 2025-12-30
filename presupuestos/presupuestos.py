@@ -120,7 +120,15 @@ def register_presupuestos_routes(app):
             if not cliente_id:
                 return jsonify({"success": False, "error": "Debe seleccionar un cliente"}), 400
             
-            concepto = request.form.get("concepto", "")
+            concepto = request.form.get("concepto", "")  # Mantener por compatibilidad
+            bultos = request.form.get("bultos", "")
+            kg = request.form.get("kg", "")
+            medidas = request.form.get("medidas", "")
+            
+            # Validar campos obligatorios
+            if not bultos or not kg or not medidas:
+                return jsonify({"success": False, "error": "Los campos Bultos, Kg y Medidas son obligatorios"}), 400
+            
             try:
                 importe = float(request.form.get("importe", 0) or 0)
             except (ValueError, TypeError):
@@ -143,7 +151,10 @@ def register_presupuestos_routes(app):
                 numero_presupuesto=numero_presupuesto,
                 fecha_presupuesto=fecha_presupuesto,
                 cliente_id=cliente_id,
-                concepto=concepto,
+                concepto=concepto,  # Mantener por compatibilidad
+                bultos=bultos,
+                kg=kg,
+                medidas=medidas,
                 importe=importe,
                 iva=iva,
                 total=total,
@@ -180,20 +191,32 @@ def register_presupuestos_routes(app):
             if not cliente:
                 return jsonify({"error": "Cliente no encontrado"}), 404
             
-            # Generar PDF en memoria (sin guardar en servidor)
-            pdf_bytes = generar_pdf_presupuesto(presupuesto, cliente)
+            # Generar PDF en memoria cada vez (sin guardar en servidor)
+            # Siempre generar de nuevo para tener los datos más actualizados
+            pdf_bytes = generar_pdf_presupuesto(presupuesto, cliente, output_path=None)
             
             # Crear objeto BytesIO para enviar el PDF
             pdf_io = BytesIO(pdf_bytes)
             pdf_io.seek(0)
             
-            # Enviar archivo directamente desde memoria
-            return send_file(
+            # Agregar timestamp al nombre para evitar cache del navegador
+            from datetime import datetime
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            
+            # Enviar archivo directamente desde memoria con headers para evitar cache
+            response = send_file(
                 pdf_io,
                 as_attachment=True,
-                download_name=f'presupuesto_{presupuesto.numero_presupuesto}.pdf',
+                download_name=f'presupuesto_{presupuesto.numero_presupuesto}_{timestamp}.pdf',
                 mimetype='application/pdf'
             )
+            
+            # Headers para evitar cache del navegador
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+            
+            return response
         except Exception as e:
             import traceback
             error_traceback = traceback.format_exc()

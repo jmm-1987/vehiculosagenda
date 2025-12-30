@@ -160,9 +160,19 @@
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label for="concepto">Concepto</label>
-                    <textarea id="concepto" name="concepto" rows="2">{{ presupuesto_editar.concepto or '' }}</textarea>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bultos">Bultos (*)</label>
+                        <input type="text" id="bultos" name="bultos" value="{{ presupuesto_editar.bultos or '' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="kg">Kg (*)</label>
+                        <input type="text" id="kg" name="kg" value="{{ presupuesto_editar.kg or '' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="medidas">Medidas (*)</label>
+                        <input type="text" id="medidas" name="medidas" value="{{ presupuesto_editar.medidas or '' }}" required>
+                    </div>
                 </div>
 
                 <div class="form-row">
@@ -199,7 +209,7 @@
 
                 <div class="form-group">
                     <label for="observaciones">Observaciones</label>
-                    <textarea id="observaciones" name="observaciones" rows="2">{{ presupuesto_editar.observaciones or '' }}</textarea>
+                    <textarea id="observaciones" name="observaciones" rows="2" placeholder="Introduce aquí origen y destino de la mercancía">{{ presupuesto_editar.observaciones or '' }}</textarea>
                 </div>
 
                 <div class="btn-group">

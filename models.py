@@ -441,7 +441,10 @@ class Presupuesto(db.Base):
     fecha_presupuesto = Column(DateTime, nullable=False)
     cliente_id = Column(Integer, ForeignKey('clientes_presupuestos.id'), nullable=False)
     cliente = Column(String(200), default='')  # Columna legacy para compatibilidad con BD existente, usar cliente_id
-    concepto = Column(String(500))
+    concepto = Column(String(500))  # Mantener por compatibilidad con BD existente
+    bultos = Column(String(50))  # Campo obligatorio en formulario
+    kg = Column(String(50))  # Campo obligatorio en formulario
+    medidas = Column(String(200))  # Campo obligatorio en formulario
     importe = Column(Float, default=0.0)
     iva = Column(Float, default=0.0)
     total = Column(Float, default=0.0)
@@ -456,13 +459,16 @@ class Presupuesto(db.Base):
     cliente_obj = relationship("ClientePresupuesto", backref="presupuestos")
     
     def __init__(self, numero_presupuesto, fecha_presupuesto, cliente_id, concepto="", 
-                 importe=0.0, iva=0.0, total=0.0, estado='PENDIENTE', observaciones="", 
+                 bultos="", kg="", medidas="", importe=0.0, iva=0.0, total=0.0, estado='PENDIENTE', observaciones="", 
                  nombre_doc="", activo=True, fecha_creacion=None, usuario_creacion=""):
         self.numero_presupuesto = numero_presupuesto
         self.fecha_presupuesto = fecha_presupuesto
         self.cliente_id = cliente_id
         self.cliente = ''  # Valor por defecto para columna legacy (compatibilidad con BD)
-        self.concepto = concepto
+        self.concepto = concepto  # Mantener por compatibilidad
+        self.bultos = bultos
+        self.kg = kg
+        self.medidas = medidas
         self.importe = importe
         self.iva = iva
         self.total = total

@@ -243,6 +243,18 @@
                             </td>
                 </tr>
                 {% endfor %}
+                {% if pagos %}
+                <tr style="background-color: #ffe8e8; font-weight: bold; border-top: 3px solid #dc3545;">
+                    {# Pagos: 3 columnas básicas + Base + IVA = 5 columnas antes del total #}
+                    <td colspan="5" style="text-align: right; padding: 15px; font-size: 15px;">
+                        <strong>Total Movimientos:</strong>
+                    </td>
+                    <td class="text-right" style="font-size: 18px; color: #dc3545; padding: 15px; font-weight: bold;">
+                        <strong>{{ "%.2f"|format(total_pagos) }}€</strong>
+                    </td>
+                    <td colspan="2"></td>
+                </tr>
+                {% endif %}
             </tbody>
         </table>
         {% else %}

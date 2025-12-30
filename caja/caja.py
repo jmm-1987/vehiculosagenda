@@ -4,84 +4,97 @@ Soporta dos tipos de caja: CAJA y REEMBOLSOS
 """
 from flask import render_template, request, redirect, url_for, jsonify, flash
 from flask_login import login_required, current_user
+from functools import wraps
 from models import CajaCobro, CajaPago, CajaArqueo
 from datetime import datetime, date
 import db
 from sqlalchemy import func
+import sys
 
 
 def register_caja_routes(app):
     """Registra las rutas del módulo de Caja"""
     
+    def solo_reembolsos_required(f):
+        """Decorador para restringir acceso: usuario 'caja' solo puede acceder a reembolsos"""
+        @wraps(f)
+        @login_required
+        def decorated_function(*args, **kwargs):
+            if current_user.username == 'caja':
+                flash('No tienes acceso a esta sección. Solo puedes acceder a Caja Reembolsos.', 'error')
+                return redirect(url_for('caja_reembolsos_index'))
+            return f(*args, **kwargs)
+        return decorated_function
+    
     # ========== CAJA NORMAL ==========
     @app.route('/caja')
-    @login_required
+    @solo_reembolsos_required
     def caja_index():
         """Página principal de Caja con Cobros y Pagos en la misma pantalla"""
         return _caja_index('CAJA', 'Caja')
     
     @app.route('/caja/cobros')
-    @login_required
+    @solo_reembolsos_required
     def caja_cobros():
         """Lista de cobros no arqueados de Caja normal"""
         return _caja_cobros('CAJA')
     
     @app.route('/caja/cobros/crear', methods=['GET', 'POST'])
-    @login_required
+    @solo_reembolsos_required
     def crear_cobro():
         """Crear nuevo cobro en Caja normal"""
         return _crear_cobro('CAJA', 'caja_cobros')
     
     @app.route('/caja/cobros/editar/<int:id>', methods=['GET', 'POST'])
-    @login_required
+    @solo_reembolsos_required
     def editar_cobro(id):
         """Editar cobro existente de Caja normal"""
         return _editar_cobro(id, 'CAJA', 'caja_cobros')
     
     @app.route('/caja/cobros/eliminar/<int:id>', methods=['POST'])
-    @login_required
+    @solo_reembolsos_required
     def eliminar_cobro(id):
         """Eliminar cobro de Caja normal"""
         return _eliminar_cobro(id, 'CAJA', 'caja_cobros')
     
     @app.route('/caja/pagos')
-    @login_required
+    @solo_reembolsos_required
     def caja_pagos():
         """Lista de pagos no arqueados de Caja normal"""
         return _caja_pagos('CAJA')
     
     @app.route('/caja/pagos/crear', methods=['GET', 'POST'])
-    @login_required
+    @solo_reembolsos_required
     def crear_pago():
         """Crear nuevo pago en Caja normal"""
         return _crear_pago('CAJA', 'caja_pagos')
     
     @app.route('/caja/pagos/editar/<int:id>', methods=['GET', 'POST'])
-    @login_required
+    @solo_reembolsos_required
     def editar_pago(id):
         """Editar pago existente de Caja normal"""
         return _editar_pago(id, 'CAJA', 'caja_pagos')
     
     @app.route('/caja/pagos/eliminar/<int:id>', methods=['POST'])
-    @login_required
+    @solo_reembolsos_required
     def eliminar_pago(id):
         """Eliminar pago de Caja normal"""
         return _eliminar_pago(id, 'CAJA', 'caja_pagos')
     
     @app.route('/caja/arqueo')
-    @login_required
+    @solo_reembolsos_required
     def caja_arqueo():
         """Página de arqueo de Caja normal"""
         return _caja_arqueo('CAJA', 'Caja')
     
     @app.route('/caja/arqueo/<int:id>', endpoint='ver_arqueo_detalle')
-    @login_required
+    @solo_reembolsos_required
     def ver_arqueo_detalle(id):
         """Ver detalles de un arqueo de Caja normal"""
         return _ver_arqueo_detalle(id, 'CAJA', 'Caja')
     
     @app.route('/caja/arqueo/procesar', methods=['POST'])
-    @login_required
+    @solo_reembolsos_required
     def procesar_arqueo():
         """Procesar arqueo de Caja normal"""
         return _procesar_arqueo('CAJA', 'caja_arqueo')
@@ -167,11 +180,33 @@ def _caja_index(tipo_caja, titulo_caja):
     cobros = db.session.query(CajaCobro).filter_by(arqueado=False, tipo_caja=tipo_caja).order_by(CajaCobro.fecha_albaran.desc()).all()
     pagos = db.session.query(CajaPago).filter_by(arqueado=False, tipo_caja=tipo_caja).order_by(CajaPago.fecha_albaran.desc()).all()
     
-    total_cobros = sum(
-        c.reembolso + c.portes_pagados + c.portes_debidos + c.iva - c.comision_reembolso
-        for c in cobros
-    )
-    total_pagos = sum(p.base + p.iva for p in pagos)
+    if tipo_caja == 'CAJA':
+        # Para caja de contados: suma de entrada_en_caja
+        # Asegurarse de que todos los valores sean float y manejar None correctamente
+        total_cobros = 0.0
+        sys.stdout.write(f"\n=== DEBUG CAJA INDEX ===\n")
+        sys.stdout.write(f"Tipo caja: {tipo_caja}\n")
+        sys.stdout.write(f"Cobros encontrados: {len(cobros)}\n")
+        sys.stdout.flush()
+        for c in cobros:
+            # Asegurarse de acceder correctamente al atributo
+            valor_entrada = getattr(c, 'entrada_en_caja', None)
+            valor_iva = getattr(c, 'iva', None)
+            if valor_entrada is None:
+                valor_entrada = 0.0
+            sys.stdout.write(f"Cobro ID {c.id}: Expedición={c.expedicion}, entrada_en_caja={valor_entrada}, iva={valor_iva}, tipo_entrada={type(valor_entrada)}\n")
+            sys.stdout.flush()
+            total_cobros += float(valor_entrada)
+        sys.stdout.write(f"Total calculado: {total_cobros}\n")
+        sys.stdout.write(f"=== FIN DEBUG ===\n\n")
+        sys.stdout.flush()
+    else:
+        # Para reembolsos: la comisión suma
+        total_cobros = sum(
+            float(c.reembolso or 0.0) + float(c.comision_reembolso or 0.0) + float(c.portes_pagados or 0.0) + float(c.portes_debidos or 0.0) + float(c.iva or 0.0)
+            for c in cobros
+        )
+    total_pagos = sum(float(p.base or 0.0) + float(p.iva or 0.0) for p in pagos)
     diferencia = total_cobros - total_pagos
     
     return render_template('caja/index.html', 
@@ -186,7 +221,25 @@ def _caja_index(tipo_caja, titulo_caja):
 def _caja_cobros(tipo_caja):
     """Función helper para lista de cobros"""
     cobros = db.session.query(CajaCobro).filter_by(arqueado=False, tipo_caja=tipo_caja).order_by(CajaCobro.fecha_albaran.desc()).all()
-    return render_template('caja/cobros.html', cobros=cobros, tipo_caja=tipo_caja)
+    
+    # Calcular total según el tipo de caja
+    if tipo_caja == 'CAJA':
+        # Para caja de contados: suma de entrada_en_caja
+        # Asegurarse de que todos los valores sean float y manejar None correctamente
+        total_cobros = 0.0
+        for c in cobros:
+            valor = c.entrada_en_caja
+            if valor is None:
+                valor = 0.0
+            total_cobros += float(valor)
+    else:
+        # Para reembolsos: suma de todos los conceptos - usar EXACTAMENTE el mismo orden que en el template
+        total_cobros = sum(
+            float(c.reembolso or 0.0) + float(c.comision_reembolso or 0.0) + float(c.portes_pagados or 0.0) + float(c.portes_debidos or 0.0) + float(c.iva or 0.0)
+            for c in cobros
+        )
+    
+    return render_template('caja/cobros.html', cobros=cobros, tipo_caja=tipo_caja, total_cobros=total_cobros)
 
 def _crear_cobro(tipo_caja, redirect_route):
     """Función helper para crear cobro"""
@@ -213,6 +266,12 @@ def _crear_cobro(tipo_caja, redirect_route):
                 es_factura=request.form.get('es_factura') == 'on',
                 tipo_caja=tipo_caja
             )
+            print(f"\n=== DEBUG CREAR COBRO ===")
+            print(f"Tipo caja: {tipo_caja}")
+            print(f"Valor entrada_en_caja del form: {request.form.get('entrada_en_caja', 0)}")
+            print(f"Valor entrada_en_caja guardado: {cobro.entrada_en_caja}")
+            print(f"Valor IVA guardado: {cobro.iva}")
+            print(f"=== FIN DEBUG CREAR COBRO ===\n")
             db.session.add(cobro)
             db.session.commit()
             flash('Cobro creado correctamente', 'success')
@@ -280,7 +339,11 @@ def _eliminar_cobro(id, tipo_caja, redirect_route):
 def _caja_pagos(tipo_caja):
     """Función helper para lista de pagos"""
     pagos = db.session.query(CajaPago).filter_by(arqueado=False, tipo_caja=tipo_caja).order_by(CajaPago.fecha_albaran.desc()).all()
-    return render_template('caja/pagos.html', pagos=pagos, tipo_caja=tipo_caja)
+    
+    # Calcular total: suma de base + iva
+    total_pagos = sum(p.base + p.iva for p in pagos)
+    
+    return render_template('caja/pagos.html', pagos=pagos, tipo_caja=tipo_caja, total_pagos=total_pagos)
 
 def _crear_pago(tipo_caja, redirect_route):
     """Función helper para crear pago"""
@@ -357,11 +420,22 @@ def _caja_arqueo(tipo_caja, titulo_caja):
     cobros = db.session.query(CajaCobro).filter_by(arqueado=False, tipo_caja=tipo_caja).all()
     pagos = db.session.query(CajaPago).filter_by(arqueado=False, tipo_caja=tipo_caja).all()
     
-    total_cobros = sum(
-        c.reembolso + c.portes_pagados + c.portes_debidos + c.iva - c.comision_reembolso
-        for c in cobros
-    )
-    total_pagos = sum(p.base + p.iva for p in pagos)
+    if tipo_caja == 'CAJA':
+        # Para caja de contados: suma de entrada_en_caja
+        # Asegurarse de que todos los valores sean float y manejar None correctamente
+        total_cobros = 0.0
+        for c in cobros:
+            valor = c.entrada_en_caja
+            if valor is None:
+                valor = 0.0
+            total_cobros += float(valor)
+    else:
+        # Para reembolsos: la comisión suma - usar EXACTAMENTE el mismo orden que en el template
+        total_cobros = sum(
+            float(c.reembolso or 0.0) + float(c.comision_reembolso or 0.0) + float(c.portes_pagados or 0.0) + float(c.portes_debidos or 0.0) + float(c.iva or 0.0)
+            for c in cobros
+        )
+    total_pagos = sum(float(p.base or 0.0) + float(p.iva or 0.0) for p in pagos)
     diferencia = total_cobros - total_pagos
     
     historial = db.session.query(CajaArqueo).filter_by(tipo_caja=tipo_caja).order_by(CajaArqueo.fecha_arqueo.desc()).limit(20).all()
@@ -386,11 +460,16 @@ def _procesar_arqueo(tipo_caja, redirect_route):
         cobros = db.session.query(CajaCobro).filter_by(arqueado=False, tipo_caja=tipo_caja).all()
         pagos = db.session.query(CajaPago).filter_by(arqueado=False, tipo_caja=tipo_caja).all()
         
-        total_cobros = sum(
-            c.reembolso + c.portes_pagados + c.portes_debidos + c.iva - c.comision_reembolso
-            for c in cobros
-        )
-        total_pagos = sum(p.base + p.iva for p in pagos)
+        if tipo_caja == 'CAJA':
+            # Para caja de contados: suma de entrada_en_caja
+            total_cobros = sum(float(c.entrada_en_caja or 0.0) for c in cobros)
+        else:
+            # Para reembolsos: la comisión suma - usar EXACTAMENTE el mismo orden que en el template
+            total_cobros = sum(
+                float(c.reembolso or 0.0) + float(c.comision_reembolso or 0.0) + float(c.portes_pagados or 0.0) + float(c.portes_debidos or 0.0) + float(c.iva or 0.0)
+                for c in cobros
+            )
+        total_pagos = sum(float(p.base or 0.0) + float(p.iva or 0.0) for p in pagos)
         diferencia = total_cobros - total_pagos
         
         if abs(diferencia - entrega_efectivo) > 0.01:

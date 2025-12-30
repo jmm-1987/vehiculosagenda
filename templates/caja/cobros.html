@@ -177,12 +177,6 @@
                 <tr>
                     <th>Fecha Albarán</th>
                     <th>Expedición</th>
-                    <th>Agencia</th>
-                    <th>Remitente</th>
-                    <th>Población Origen</th>
-                    <th>Destinatario</th>
-                    <th>Población Destino</th>
-                    <th>Observaciones</th>
                     <th class="text-right">Reembolso</th>
                     <th class="text-right">Comisión Reemb.</th>
                     <th class="text-right">Portes Pagados</th>
@@ -191,6 +185,7 @@
                     {% if tipo_caja == 'CAJA' %}
                     <th class="text-right">Entrada en Caja</th>
                     {% endif %}
+                    <th class="text-right">Total</th>
                     <th class="text-center">Es Factura</th>
                     <th class="text-center">Estado</th>
                     <th class="text-center">Acciones</th>
@@ -201,12 +196,6 @@
                 <tr>
                     <td>{{ cobro.fecha_albaran.strftime('%d/%m/%Y') }}</td>
                     <td>{{ cobro.expedicion }}</td>
-                    <td>{{ cobro.agencia }}</td>
-                    <td>{{ cobro.remitente }}</td>
-                    <td>{{ cobro.poblacion_origen }}</td>
-                    <td>{{ cobro.destinatario }}</td>
-                    <td>{{ cobro.poblacion_destino }}</td>
-                    <td>{{ cobro.observaciones }}</td>
                     <td class="text-right">{{ "%.2f"|format(cobro.reembolso) }}€</td>
                     <td class="text-right">{{ "%.2f"|format(cobro.comision_reembolso) }}€</td>
                     <td class="text-right">{{ "%.2f"|format(cobro.portes_pagados) }}€</td>
@@ -214,6 +203,9 @@
                     <td class="text-right">{{ "%.2f"|format(cobro.iva) }}€</td>
                     {% if tipo_caja == 'CAJA' %}
                     <td class="text-right">{{ "%.2f"|format(cobro.entrada_en_caja or 0.0) }}€</td>
+                    <td class="text-right" style="font-weight: bold; color: #28a745;">{{ "%.2f"|format(cobro.entrada_en_caja or 0.0) }}€</td>
+                    {% else %}
+                    <td class="text-right" style="font-weight: bold; color: #28a745;">{{ "%.2f"|format((cobro.reembolso or 0.0) + (cobro.comision_reembolso or 0.0) + (cobro.portes_pagados or 0.0) + (cobro.portes_debidos or 0.0) + (cobro.iva or 0.0)) }}€</td>
                     {% endif %}
                     <td class="text-center">
                         {% if cobro.es_factura %}
@@ -265,6 +257,29 @@
                             </td>
                 </tr>
                 {% endfor %}
+                {% if cobros %}
+                <tr style="background-color: #e8f5e9; font-weight: bold; border-top: 3px solid #28a745;">
+                    {% if tipo_caja == 'CAJA' %}
+                    {# CAJA: 7 columnas antes de Total (Fecha, Expedición, Reembolso, Comisión, Portes Pag, Portes Deb, IVA, Entrada en Caja) #}
+                    <td colspan="8" style="text-align: right; padding: 15px; font-size: 15px;">
+                        <strong>Total Movimientos:</strong>
+                    </td>
+                    <td class="text-right" style="font-size: 18px; color: #28a745; padding: 15px; font-weight: bold;">
+                        <strong>{{ "%.2f"|format(total_cobros) }}€</strong>
+                    </td>
+                    <td colspan="3"></td>
+                    {% else %}
+                    {# REEMBOLSOS: 7 columnas antes de Total (Fecha, Expedición, Reembolso, Comisión, Portes Pag, Portes Deb, IVA) #}
+                    <td colspan="7" style="text-align: right; padding: 15px; font-size: 15px;">
+                        <strong>Total Movimientos:</strong>
+                    </td>
+                    <td class="text-right" style="font-size: 18px; color: #28a745; padding: 15px; font-weight: bold;">
+                        <strong>{{ "%.2f"|format(total_cobros) }}€</strong>
+                    </td>
+                    <td colspan="3"></td>
+                    {% endif %}
+                </tr>
+                {% endif %}
             </tbody>
         </table>
         {% else %}

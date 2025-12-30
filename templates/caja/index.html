@@ -237,6 +237,9 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h1><i class="fas fa-cash-register"></i> {{ titulo_caja|default('Gestión de Caja') }}</h1>
             <div style="display: flex; gap: 10px;">
+                <a href="{{ url_for('portada') }}" class="btn" style="background: #6c757d;">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
                 {% if tipo_caja == 'CAJA' %}
                     <a href="{{ url_for('caja_cobros') }}" class="btn" style="background: #28a745;">
                         <i class="fas fa-list"></i> Listado Cobros
@@ -294,9 +297,15 @@
         <div style="background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 style="margin: 0; color: #28a745;"><i class="fas fa-arrow-down"></i> Cobros</h2>
-                <a href="{{ url_for('crear_cobro') }}" class="btn">
-                    <i class="fas fa-plus"></i> Nuevo Cobro
-                </a>
+                {% if tipo_caja == 'CAJA' %}
+                    <a href="{{ url_for('crear_cobro') }}" class="btn">
+                        <i class="fas fa-plus"></i> Nuevo Cobro
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('crear_cobro_reembolsos') }}" class="btn">
+                        <i class="fas fa-plus"></i> Nuevo Cobro
+                    </a>
+                {% endif %}
             </div>
 
             {% if cobros %}
@@ -306,9 +315,6 @@
                         <tr>
                             <th>Fecha</th>
                             <th>Expedición</th>
-                            <th>Agencia</th>
-                            <th>Remitente</th>
-                            <th>Destinatario</th>
                             <th class="text-right">Reembolso</th>
                             <th class="text-right">Comisión</th>
                             <th class="text-right">Portes Pag.</th>
@@ -317,6 +323,7 @@
                             {% if tipo_caja == 'CAJA' %}
                             <th class="text-right">Entrada en Caja</th>
                             {% endif %}
+                            <th class="text-right">Total</th>
                             <th class="text-center">Factura</th>
                             <th class="text-center">Estado</th>
                             <th class="text-center">Acciones</th>
@@ -327,9 +334,6 @@
                         <tr>
                             <td>{{ cobro.fecha_albaran.strftime('%d/%m/%Y') }}</td>
                             <td>{{ cobro.expedicion }}</td>
-                            <td>{{ cobro.agencia }}</td>
-                            <td>{{ cobro.remitente }}</td>
-                            <td>{{ cobro.destinatario }}</td>
                             <td class="text-right">{{ "%.2f"|format(cobro.reembolso) }}€</td>
                             <td class="text-right">{{ "%.2f"|format(cobro.comision_reembolso) }}€</td>
                             <td class="text-right">{{ "%.2f"|format(cobro.portes_pagados) }}€</td>
@@ -337,6 +341,9 @@
                             <td class="text-right">{{ "%.2f"|format(cobro.iva) }}€</td>
                             {% if tipo_caja == 'CAJA' %}
                             <td class="text-right">{{ "%.2f"|format(cobro.entrada_en_caja or 0.0) }}€</td>
+                            <td class="text-right" style="font-weight: bold; color: #28a745;">{{ "%.2f"|format(cobro.entrada_en_caja or 0.0) }}€</td>
+                            {% else %}
+                            <td class="text-right" style="font-weight: bold; color: #28a745;">{{ "%.2f"|format((cobro.reembolso or 0.0) + (cobro.comision_reembolso or 0.0) + (cobro.portes_pagados or 0.0) + (cobro.portes_debidos or 0.0) + (cobro.iva or 0.0)) }}€</td>
                             {% endif %}
                             <td class="text-center">
                                 {% if cobro.es_factura %}
@@ -416,6 +423,7 @@
                             <th>Observaciones</th>
                             <th class="text-right">Base</th>
                             <th class="text-right">IVA</th>
+                            <th class="text-right">Total</th>
                             <th class="text-center">Factura</th>
                             <th class="text-center">Estado</th>
                             <th class="text-center">Acciones</th>
@@ -429,6 +437,7 @@
                             <td>{{ pago.observaciones }}</td>
                             <td class="text-right">{{ "%.2f"|format(pago.base) }}€</td>
                             <td class="text-right">{{ "%.2f"|format(pago.iva) }}€</td>
+                            <td class="text-right" style="font-weight: bold; color: #dc3545;">{{ "%.2f"|format(pago.base + pago.iva) }}€</td>
                             <td class="text-center">
                                 {% if pago.es_factura %}
                                     <span class="badge badge-success">Sí</span>
