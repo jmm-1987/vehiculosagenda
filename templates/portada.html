@@ -263,7 +263,7 @@
         <p class="portada-subtitle"></p>
         
         <div class="cards-grid">
-            {% if current_user.username != 'presupuestos' %}
+            {% if current_user.username != 'presupuestos' and current_user.username != 'caja' %}
             <!-- Primera fila -->
             <a href="/index" class="portada-card card-vehiculos">
                 <i class="fas fa-dashboard"></i>
@@ -285,6 +285,16 @@
             </a>
             {% endif %}
 
+            {% if current_user.username != 'caja' %}
+            <a href="/caja-reembolsos" class="portada-card card-caja-reembolsos" style="border-top: 5px solid #ffc107;">
+                <i class="fas fa-money-bill-wave"></i>
+                <h2>Caja Reembolsos</h2>
+                <p>Gestión de cobros, pagos y arqueo de reembolsos</p>
+            </a>
+            {% endif %}
+            {% endif %}
+
+            {% if current_user.username == 'caja' %}
             <a href="/caja-reembolsos" class="portada-card card-caja-reembolsos" style="border-top: 5px solid #ffc107;">
                 <i class="fas fa-money-bill-wave"></i>
                 <h2>Caja Reembolsos</h2>
@@ -292,14 +302,16 @@
             </a>
             {% endif %}
 
+            {% if current_user.username != 'presupuestos' and current_user.username != 'caja' %}
             <a href="/presupuestos" class="portada-card card-presupuestos">
                 <i class="fas fa-file-invoice-dollar"></i>
                 <h2>Presupuestos</h2>
                 <p>Gestión de presupuestos</p>
             </a>
+            {% endif %}
 
             <!-- Segunda fila - Bloqueadas para todos excepto rocio y jmurillo -->
-            {% if current_user.username != 'presupuestos' %}
+            {% if current_user.username != 'presupuestos' and current_user.username != 'caja' %}
                 {% if current_user.username == "rocio" or current_user.username == "jmurillo" %}
                 <a href="/email_destinatarios" class="portada-card card-email">
                     <i class="fas fa-envelope"></i>

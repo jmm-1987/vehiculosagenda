@@ -150,6 +150,8 @@ def portada():
         return redirect(url_for('email_destinatarios'))
     if username and username.username == 'presupuestos':
         return redirect(url_for('lista_presupuestos'))
+    if username and username.username == 'caja':
+        return redirect(url_for('caja_reembolsos_index'))
     
     # Redirección por rol
     try:
@@ -173,6 +175,9 @@ def home():
     # Bloquear acceso al usuario 'presupuestos'
     if current_user.username == 'presupuestos':
         return redirect(url_for('lista_presupuestos'))
+    # Bloquear acceso al usuario 'caja'
+    if current_user.username == 'caja':
+        return redirect(url_for('caja_reembolsos_index'))
     
     # Redirección por rol
     try:
@@ -324,6 +329,9 @@ def email_destinatarios():
     # Bloquear acceso al usuario 'presupuestos'
     if current_user.username == 'presupuestos':
         return redirect(url_for('lista_presupuestos'))
+    # Bloquear acceso al usuario 'caja'
+    if current_user.username == 'caja':
+        return redirect(url_for('caja_reembolsos_index'))
     from urllib.parse import quote
     from urllib.parse import urlencode
     
@@ -360,6 +368,9 @@ def descargar_db():
     # Bloquear acceso al usuario 'presupuestos'
     if current_user.username == 'presupuestos':
         return redirect(url_for('lista_presupuestos'))
+    # Bloquear acceso al usuario 'caja'
+    if current_user.username == 'caja':
+        return redirect(url_for('caja_reembolsos_index'))
     fecha = datetime.now().strftime('%d%m%Y')
     nombre = f'VEHICULOS_{fecha}.db'
     return send_file(
