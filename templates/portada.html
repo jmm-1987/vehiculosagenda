@@ -263,6 +263,7 @@
         <p class="portada-subtitle"></p>
         
         <div class="cards-grid">
+            {% if current_user.username != 'presupuestos' %}
             <!-- Primera fila -->
             <a href="/index" class="portada-card card-vehiculos">
                 <i class="fas fa-dashboard"></i>
@@ -289,6 +290,7 @@
                 <h2>Caja Reembolsos</h2>
                 <p>Gestión de cobros, pagos y arqueo de reembolsos</p>
             </a>
+            {% endif %}
 
             <a href="/presupuestos" class="portada-card card-presupuestos">
                 <i class="fas fa-file-invoice-dollar"></i>
@@ -297,42 +299,44 @@
             </a>
 
             <!-- Segunda fila - Bloqueadas para todos excepto rocio y jmurillo -->
-            {% if current_user.username == "rocio" or current_user.username == "jmurillo" %}
-            <a href="/email_destinatarios" class="portada-card card-email">
-                <i class="fas fa-envelope"></i>
-                <h2>Email Destinatarios</h2>
-                <p>Generar emails de seguimiento</p>
-            </a>
+            {% if current_user.username != 'presupuestos' %}
+                {% if current_user.username == "rocio" or current_user.username == "jmurillo" %}
+                <a href="/email_destinatarios" class="portada-card card-email">
+                    <i class="fas fa-envelope"></i>
+                    <h2>Email Destinatarios</h2>
+                    <p>Generar emails de seguimiento</p>
+                </a>
 
-            <a href="/ftp_transfer" class="portada-card card-ftp">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <h2>FTP Transfer</h2>
-                <p>Transferencia de archivos FTP</p>
-            </a>
+                <a href="/ftp_transfer" class="portada-card card-ftp">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h2>FTP Transfer</h2>
+                    <p>Transferencia de archivos FTP</p>
+                </a>
 
-            <a href="/ficheros" class="portada-card card-ficheros">
-                <i class="fas fa-folder-open"></i>
-                <h2>Ficheros</h2>
-                <p>Gestión de ficheros del sistema</p>
-            </a>
-            {% else %}
-            <div class="portada-card card-email card-blocked">
-                <i class="fas fa-envelope"></i>
-                <h2>Email Destinatarios</h2>
-                <p>Generar emails de seguimiento</p>
-            </div>
+                <a href="/ficheros" class="portada-card card-ficheros">
+                    <i class="fas fa-folder-open"></i>
+                    <h2>Ficheros</h2>
+                    <p>Gestión de ficheros del sistema</p>
+                </a>
+                {% else %}
+                <div class="portada-card card-email card-blocked">
+                    <i class="fas fa-envelope"></i>
+                    <h2>Email Destinatarios</h2>
+                    <p>Generar emails de seguimiento</p>
+                </div>
 
-            <div class="portada-card card-ftp card-blocked">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <h2>FTP Transfer</h2>
-                <p>Transferencia de archivos FTP</p>
-            </div>
+                <div class="portada-card card-ftp card-blocked">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h2>FTP Transfer</h2>
+                    <p>Transferencia de archivos FTP</p>
+                </div>
 
-            <div class="portada-card card-ficheros card-blocked">
-                <i class="fas fa-folder-open"></i>
-                <h2>Ficheros</h2>
-                <p>Gestión de ficheros del sistema</p>
-            </div>
+                <div class="portada-card card-ficheros card-blocked">
+                    <i class="fas fa-folder-open"></i>
+                    <h2>Ficheros</h2>
+                    <p>Gestión de ficheros del sistema</p>
+                </div>
+                {% endif %}
             {% endif %}
             
         </div>

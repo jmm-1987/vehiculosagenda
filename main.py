@@ -1,5 +1,5 @@
 from flask import Flask, render_template, session, request, redirect, url_for, send_file
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import db
 from ftp_transfer.ftp_transfer import register_ftp_transfer_routes, iniciar_scheduler
 from models import Itv, Seguro, Tacografo, Rodaje, Extintor, Usuario, Vehiculo, Taller, IncidenciaAldipod, CajaCobro, CajaPago, CajaArqueo, Presupuesto, ClientePresupuesto
@@ -148,6 +148,8 @@ def portada():
     username = session.get('_user_id') and db.session.query(Usuario).filter_by(id=session.get('_user_id')).first()
     if username and username.username == 'email':
         return redirect(url_for('email_destinatarios'))
+    if username and username.username == 'presupuestos':
+        return redirect(url_for('lista_presupuestos'))
     
     # Redirección por rol
     try:
@@ -168,6 +170,10 @@ def portada():
 @app.route('/index')
 @login_required
 def home():
+    # Bloquear acceso al usuario 'presupuestos'
+    if current_user.username == 'presupuestos':
+        return redirect(url_for('lista_presupuestos'))
+    
     # Redirección por rol
     try:
         with open('static/roles_config.json', 'r') as f:
@@ -315,6 +321,9 @@ def home():
 @app.route('/email_destinatarios', methods=['GET', 'POST'])
 @login_required
 def email_destinatarios():
+    # Bloquear acceso al usuario 'presupuestos'
+    if current_user.username == 'presupuestos':
+        return redirect(url_for('lista_presupuestos'))
     from urllib.parse import quote
     from urllib.parse import urlencode
     
@@ -348,6 +357,9 @@ def email_destinatarios():
 @app.route('/descargar_db')
 @login_required
 def descargar_db():
+    # Bloquear acceso al usuario 'presupuestos'
+    if current_user.username == 'presupuestos':
+        return redirect(url_for('lista_presupuestos'))
     fecha = datetime.now().strftime('%d%m%Y')
     nombre = f'VEHICULOS_{fecha}.db'
     return send_file(
