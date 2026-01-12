@@ -129,42 +129,79 @@ def generar_pdf_presupuesto(presupuesto, cliente, output_path=None):
     y_row = y_header + 20
     page.insert_text((x_positions[0] + 5, y_row), "1", fontsize=font_size_normal, color=(0, 0, 0))
     
-    # Observaciones (primera línea)
+    # Observaciones con manejo de múltiples líneas
     observaciones_texto = presupuesto.observaciones if presupuesto.observaciones else ""
-    # Truncar si es muy largo
-    if len(observaciones_texto) > 50:
-        observaciones_texto = observaciones_texto[:47] + "..."
-    page.insert_text((x_positions[1] + 5, y_row), observaciones_texto, fontsize=font_size_normal, color=(0, 0, 0))
+    ancho_col_observaciones = col_widths[1] - 10  # Ancho disponible menos márgenes
+    y_obs_current = y_row
     
-    # Segunda línea: Bultos, Kg y Medidas
-    y_row_2 = y_row + 12
+    # Función para dividir texto en líneas según ancho disponible
+    def dividir_texto_en_lineas(texto, ancho_maximo, fontsize):
+        """Divide texto en líneas que caben en el ancho máximo"""
+        palabras = texto.split(' ')
+        lineas = []
+        linea_actual = ""
+        
+        for palabra in palabras:
+            test_linea = linea_actual + " " + palabra if linea_actual else palabra
+            # Estimar ancho: aproximadamente 0.5 puntos por carácter
+            ancho_test = len(test_linea) * fontsize * 0.5
+            
+            if ancho_test > ancho_maximo and linea_actual:
+                lineas.append(linea_actual)
+                linea_actual = palabra
+            else:
+                linea_actual = test_linea
+        
+        if linea_actual:
+            lineas.append(linea_actual)
+        
+        return lineas
+    
+    # Dividir observaciones en líneas si es necesario
+    if observaciones_texto:
+        lineas_observaciones = dividir_texto_en_lineas(observaciones_texto, ancho_col_observaciones, font_size_normal)
+        for i, linea in enumerate(lineas_observaciones):
+            page.insert_text((x_positions[1] + 5, y_obs_current), linea, fontsize=font_size_normal, color=(0, 0, 0))
+            y_obs_current += 13  # Espacio entre líneas (aumentado de 12 a 13)
+    else:
+        # Si no hay observaciones, dejar espacio mínimo
+        y_obs_current += 13
+    
+    # Segunda sección: Bultos, Kg y Medidas (con espacio adicional para evitar solapamiento)
+    y_row_2 = y_obs_current + 10  # Espacio adicional aumentado de 5 a 10 puntos para separar claramente
     bultos = presupuesto.bultos if presupuesto.bultos else "-"
     kg = presupuesto.kg if presupuesto.kg else "-"
     medidas = presupuesto.medidas if presupuesto.medidas else "-"
     detalle_texto = f"Bultos: {bultos}, Kg: {kg}, Medidas: {medidas}"
-    # Truncar si es muy largo
-    if len(detalle_texto) > 50:
-        detalle_texto = detalle_texto[:47] + "..."
-    page.insert_text((x_positions[1] + 5, y_row_2), detalle_texto, fontsize=font_size_small, color=(0, 0, 0))
     
-    # Precio
+    # Dividir también el texto de detalles si es muy largo
+    lineas_detalle = dividir_texto_en_lineas(detalle_texto, ancho_col_observaciones, font_size_small)
+    y_detalle_current = y_row_2
+    for linea in lineas_detalle:
+        page.insert_text((x_positions[1] + 5, y_detalle_current), linea, fontsize=font_size_small, color=(0, 0, 0))
+        y_detalle_current += 10  # Espacio entre líneas de detalles
+    
+    # Calcular la altura máxima de la fila (observaciones o detalles)
+    y_row_max = max(y_obs_current, y_detalle_current)
+    
+    # Precio (alineado con la primera línea de observaciones)
     precio_str = f"{presupuesto.importe:.2f}"
     page.insert_text((x_positions[2] + 5, y_row), precio_str, fontsize=font_size_normal, color=(0, 0, 0))
     
-    # % IVA
+    # % IVA (alineado con la primera línea de observaciones)
     iva_percent_str = f"{iva_percent:.0f}"
     page.insert_text((x_positions[3] + 5, y_row), iva_percent_str, fontsize=font_size_normal, color=(0, 0, 0))
     
-    # IVA
+    # IVA (alineado con la primera línea de observaciones)
     iva_str = f"{presupuesto.iva:.2f}"
     page.insert_text((x_positions[4] + 5, y_row), iva_str, fontsize=font_size_normal, color=(0, 0, 0))
     
-    # Total
+    # Total (alineado con la primera línea de observaciones)
     total_str = f"{presupuesto.total:.2f}"
     page.insert_text((x_positions[5] + 5, y_row), total_str, fontsize=font_size_normal, color=(0, 0, 0))
     
-    # Línea debajo de la fila (ajustada para las dos líneas de texto)
-    y_row_bottom = y_row_2 + 10
+    # Línea debajo de la fila (ajustada dinámicamente según el contenido más largo)
+    y_row_bottom = y_row_max + 10
     page.draw_line((x_start, y_row_bottom), (x_start + sum(col_widths), y_row_bottom), color=(0, 0, 0), width=1)
     
     # === OBSERVACIONES ===

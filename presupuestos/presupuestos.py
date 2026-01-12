@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, request, jsonify, send_file
+from flask import render_template, redirect, url_for, request, jsonify, send_file, flash
 from flask_login import login_required, current_user
 import db
 from datetime import datetime
@@ -223,4 +223,61 @@ def register_presupuestos_routes(app):
             print(f"Error al generar PDF: {str(e)}")
             print(f"Traceback: {error_traceback}")
             return jsonify({"error": str(e)}), 500
+
+    @app.route('/presupuestos/clientes')
+    @login_required
+    def lista_clientes_presupuestos():
+        """Lista todos los clientes de presupuestos"""
+        clientes = db.session.query(ClientePresupuesto).order_by(ClientePresupuesto.nombre).all()
+        return render_template('clientes_presupuestos.html', lista_clientes=clientes)
+
+    @app.route('/presupuestos/clientes/editar/<int:id>', methods=['GET', 'POST'])
+    @login_required
+    def editar_cliente_presupuesto(id):
+        """Editar un cliente de presupuestos"""
+        cliente = db.session.query(ClientePresupuesto).filter_by(id=id).first()
+        if not cliente:
+            flash('Cliente no encontrado', 'error')
+            return redirect(url_for('lista_clientes_presupuestos'))
+        
+        if request.method == 'POST':
+            try:
+                nombre = request.form.get("nombre", "").strip()
+                cif = request.form.get("cif", "").strip()
+                direccion = request.form.get("direccion", "").strip()
+                poblacion = request.form.get("poblacion", "").strip()
+                telefono = request.form.get("telefono", "").strip()
+                email = request.form.get("email", "").strip()
+                activo = request.form.get("activo") == "on"
+                
+                if not nombre or not cif or not direccion:
+                    flash('Los campos Nombre, CIF y Dirección son obligatorios', 'error')
+                    return redirect(url_for('editar_cliente_presupuesto', id=id))
+                
+                # Verificar si ya existe otro cliente con el mismo CIF (excluyendo el actual)
+                cliente_existente = db.session.query(ClientePresupuesto).filter(
+                    ClientePresupuesto.cif == cif,
+                    ClientePresupuesto.id != id,
+                    ClientePresupuesto.activo == True
+                ).first()
+                if cliente_existente:
+                    flash('Ya existe otro cliente activo con este CIF', 'error')
+                    return redirect(url_for('editar_cliente_presupuesto', id=id))
+                
+                cliente.nombre = nombre
+                cliente.cif = cif
+                cliente.direccion = direccion
+                cliente.poblacion = poblacion
+                cliente.telefono = telefono
+                cliente.email = email
+                cliente.activo = activo
+                
+                db.session.commit()
+                flash('Cliente actualizado correctamente', 'success')
+                return redirect(url_for('lista_clientes_presupuestos'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error al actualizar cliente: {str(e)}', 'error')
+        
+        return render_template('form_editar_cliente_presupuesto.html', cliente=cliente)
 
