@@ -212,7 +212,10 @@ def generar_pdf_presupuesto(presupuesto, cliente, output_path=None):
     # Insertar observaciones del presupuesto (justificado, usando ancho completo)
     def insertar_texto_justificado(texto, x_start, x_end, y_start, fontsize):
         """Función auxiliar para insertar texto multilínea justificado"""
-        words = texto.split(' ')
+        # Reemplazar saltos de línea por espacios para procesamiento uniforme
+        texto = texto.replace('\n', ' ')
+        # Dividir por espacios y filtrar espacios vacíos
+        words = [w for w in texto.split(' ') if w.strip()]
         current_line = ""
         y_current = y_start
         ancho_disponible = x_end - x_start
@@ -384,12 +387,12 @@ eliminarla una vez finalizada nuestra relación. También tiene derecho a solici
 fotocopia de su DNI: ---- CP 06800, Mérida (Badajoz). En caso de que entienda que sus derechos han sido desatendidos, puede
 formular una reclamación en la Agencia Española de Protección de Datos (www.agpd.es)."""
     
-    # Insertar texto justificado después del recuadro
-    y_privacidad = y_recuadro_bottom + 15
+    # Insertar texto justificado después del recuadro con más espacio para evitar solapamiento
+    y_privacidad = y_recuadro_bottom + 30  # Espacio aumentado de 15 a 30 puntos para evitar solapamiento
     font_size_privacidad = 7
     
-    # Insertar texto justificado con márgenes laterales (50 a 545)
-    insertar_texto_justificado(texto_privacidad, 50, 600, y_privacidad, font_size_privacidad)
+    # Insertar texto justificado con márgenes laterales (50 a 545) y capturar posición final
+    y_final_privacidad = insertar_texto_justificado(texto_privacidad, 50, 545, y_privacidad, font_size_privacidad)
     
     # Guardar PDF
     if generar_en_memoria:
