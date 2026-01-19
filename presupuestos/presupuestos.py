@@ -280,4 +280,3 @@ def register_presupuestos_routes(app):
                 flash(f'Error al actualizar cliente: {str(e)}', 'error')
         
         return render_template('form_editar_cliente_presupuesto.html', cliente=cliente)
-

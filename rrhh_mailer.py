@@ -17,7 +17,7 @@ from typing import BinaryIO, Mapping, MutableMapping, Optional, Union
 
 # Correos por defecto solicitados por el usuario.
 DEFAULT_SENDER = "rrhh@alditraex.es"
-DEFAULT_RECIPIENT = "jmurillo@alditraex.es"
+DEFAULT_RECIPIENT = "info@alditraex.es"
 
 # Campos mínimos esperados en el formulario mostrado en la captura.
 REQUIRED_FIELDS = {
