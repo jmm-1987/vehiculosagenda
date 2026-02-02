@@ -2,9 +2,10 @@ from flask import render_template, redirect, url_for, request, jsonify, send_fil
 from flask_login import login_required, current_user
 import db
 from datetime import datetime
-from models import Presupuesto, ClientePresupuesto
+from models import Presupuesto, ClientePresupuesto, FacturaProforma
 from sqlalchemy import func
 from presupuestos.generar_pdf import generar_pdf_presupuesto
+from presupuestos.generar_pdf_factura_proforma import generar_pdf_factura_proforma
 import os
 
 
@@ -14,7 +15,7 @@ def register_presupuestos_routes(app):
     def lista_presupuestos():
         todos_presupuestos = db.session.query(Presupuesto, ClientePresupuesto).join(
             ClientePresupuesto, Presupuesto.cliente_id == ClientePresupuesto.id
-        ).filter(Presupuesto.activo == True).order_by(Presupuesto.fecha_presupuesto.desc()).all()
+        ).filter(Presupuesto.activo == True).order_by(Presupuesto.id.desc()).all()
         clientes = db.session.query(ClientePresupuesto).filter(ClientePresupuesto.activo == True).order_by(ClientePresupuesto.nombre).all()
         return render_template('presupuestos.html', lista_presupuestos=todos_presupuestos, lista_clientes=clientes)
 
@@ -23,7 +24,7 @@ def register_presupuestos_routes(app):
     def lista_presupuestos_todos():
         todos_presupuestos = db.session.query(Presupuesto, ClientePresupuesto).join(
             ClientePresupuesto, Presupuesto.cliente_id == ClientePresupuesto.id
-        ).order_by(Presupuesto.fecha_presupuesto.desc()).all()
+        ).order_by(Presupuesto.id.desc()).all()
         clientes = db.session.query(ClientePresupuesto).filter(ClientePresupuesto.activo == True).order_by(ClientePresupuesto.nombre).all()
         return render_template('presupuestos.html', lista_presupuestos=todos_presupuestos, lista_clientes=clientes)
 
@@ -280,3 +281,129 @@ def register_presupuestos_routes(app):
                 flash(f'Error al actualizar cliente: {str(e)}', 'error')
         
         return render_template('form_editar_cliente_presupuesto.html', cliente=cliente)
+
+    @app.route("/generar_factura_proforma/<int:id>", methods=['POST', 'GET'])
+    @login_required
+    def generar_factura_proforma(id):
+        """Genera una factura proforma desde un presupuesto aprobado"""
+        try:
+            presupuesto = db.session.query(Presupuesto).filter_by(id=id).first()
+            if not presupuesto:
+                flash('Presupuesto no encontrado', 'error')
+                return redirect(url_for('lista_presupuestos'))
+            
+            if presupuesto.estado != 'APROBADO':
+                flash('Solo se pueden generar facturas proforma de presupuestos aprobados', 'error')
+                return redirect(url_for('lista_presupuestos'))
+            
+            # Verificar si ya existe una factura proforma para este presupuesto
+            factura_existente = db.session.query(FacturaProforma).filter_by(presupuesto_id=id).first()
+            if factura_existente:
+                flash('Ya existe una factura proforma para este presupuesto', 'info')
+                return redirect(url_for('exportar_factura_proforma_pdf', id=factura_existente.id))
+            
+            cliente = db.session.query(ClientePresupuesto).filter_by(id=presupuesto.cliente_id).first()
+            if not cliente:
+                flash('Cliente no encontrado', 'error')
+                return redirect(url_for('lista_presupuestos'))
+            
+            # Generar número de factura proforma: año + contador
+            año_actual = datetime.now().year
+            # Obtener el último número de factura proforma del año actual
+            ultima_factura = db.session.query(FacturaProforma).filter(
+                FacturaProforma.numero_factura_proforma.like(f"{año_actual}%")
+            ).order_by(FacturaProforma.id.desc()).first()
+            
+            if ultima_factura:
+                # Extraer el número del último formato (año + número)
+                try:
+                    ultimo_numero = int(ultima_factura.numero_factura_proforma.replace(str(año_actual), ''))
+                    siguiente_numero = ultimo_numero + 1
+                except:
+                    siguiente_numero = 1
+            else:
+                siguiente_numero = 1
+            
+            numero_factura_proforma = f"{año_actual}{siguiente_numero:04d}"  # Formato: 20260001
+            
+            # Crear factura proforma
+            factura_proforma = FacturaProforma(
+                numero_factura_proforma=numero_factura_proforma,
+                fecha_factura_proforma=datetime.now(),
+                presupuesto_id=presupuesto.id,
+                cliente_id=presupuesto.cliente_id,
+                bultos=presupuesto.bultos,
+                kg=presupuesto.kg,
+                medidas=presupuesto.medidas,
+                importe=presupuesto.importe,
+                iva=presupuesto.iva,
+                total=presupuesto.total,
+                observaciones=presupuesto.observaciones,
+                fecha_creacion=datetime.now(),
+                usuario_creacion=current_user.username if current_user else ""
+            )
+            
+            db.session.add(factura_proforma)
+            db.session.commit()
+            
+            flash(f'Factura proforma {numero_factura_proforma} generada correctamente', 'success')
+            return redirect(url_for('exportar_factura_proforma_pdf', id=factura_proforma.id))
+            
+        except Exception as e:
+            db.session.rollback()
+            import traceback
+            error_traceback = traceback.format_exc()
+            print(f"Error al generar factura proforma: {str(e)}")
+            print(f"Traceback: {error_traceback}")
+            flash(f'Error al generar factura proforma: {str(e)}', 'error')
+            return redirect(url_for('lista_presupuestos'))
+
+    @app.route("/exportar_factura_proforma_pdf/<int:id>")
+    @login_required
+    def exportar_factura_proforma_pdf(id):
+        """Exporta una factura proforma a PDF"""
+        try:
+            from io import BytesIO
+            
+            factura_proforma = db.session.query(FacturaProforma).filter_by(id=id).first()
+            if not factura_proforma:
+                return jsonify({"error": "Factura proforma no encontrada"}), 404
+            
+            presupuesto = db.session.query(Presupuesto).filter_by(id=factura_proforma.presupuesto_id).first()
+            if not presupuesto:
+                return jsonify({"error": "Presupuesto no encontrado"}), 404
+            
+            cliente = db.session.query(ClientePresupuesto).filter_by(id=factura_proforma.cliente_id).first()
+            if not cliente:
+                return jsonify({"error": "Cliente no encontrado"}), 404
+            
+            # Generar PDF en memoria
+            pdf_bytes = generar_pdf_factura_proforma(factura_proforma, presupuesto, cliente, output_path=None)
+            
+            # Crear objeto BytesIO para enviar el PDF
+            pdf_io = BytesIO(pdf_bytes)
+            pdf_io.seek(0)
+            
+            # Agregar timestamp al nombre para evitar cache del navegador
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            
+            # Enviar archivo directamente desde memoria con headers para evitar cache
+            response = send_file(
+                pdf_io,
+                as_attachment=True,
+                download_name=f'factura_proforma_{factura_proforma.numero_factura_proforma}_{timestamp}.pdf',
+                mimetype='application/pdf'
+            )
+            
+            # Headers para evitar cache del navegador
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+            
+            return response
+        except Exception as e:
+            import traceback
+            error_traceback = traceback.format_exc()
+            print(f"Error al generar PDF de factura proforma: {str(e)}")
+            print(f"Traceback: {error_traceback}")
+            return jsonify({"error": str(e)}), 500

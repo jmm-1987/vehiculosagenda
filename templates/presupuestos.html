@@ -471,6 +471,12 @@
                                 <a href="/form_editar_presupuesto/{{ presupuesto.id }}" class="btn btn-primary btn-sm" title="Editar">
                                     <i class="fas fa-edit"></i>
                                 </a>
+                                {% if presupuesto.estado == 'APROBADO' %}
+                                <a href="/generar_factura_proforma/{{ presupuesto.id }}" class="btn btn-info btn-sm" title="Generar Factura Proforma" 
+                                   onclick="return confirm('¿Generar factura proforma para este presupuesto?');">
+                                    <i class="fas fa-file-invoice"></i>
+                                </a>
+                                {% endif %}
                             </td>
                             {% if current_user.username == "jmurillo" or current_user.username == "javimurillo" %}
                             <td class="text-center">

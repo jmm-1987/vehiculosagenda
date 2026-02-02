@@ -2,7 +2,7 @@ from flask import Flask, render_template, session, request, redirect, url_for, s
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import db
 from ftp_transfer.ftp_transfer import register_ftp_transfer_routes, iniciar_scheduler
-from models import Itv, Seguro, Tacografo, Rodaje, Extintor, Usuario, Vehiculo, Taller, IncidenciaAldipod, CajaCobro, CajaPago, CajaArqueo, Presupuesto, ClientePresupuesto
+from models import Itv, Seguro, Tacografo, Rodaje, Extintor, Usuario, Vehiculo, Taller, IncidenciaAldipod, CajaCobro, CajaPago, CajaArqueo, Presupuesto, ClientePresupuesto, FacturaProforma
 from datetime import datetime, timedelta
 import json
 from vehiculos.vehiculos import register_vehiculos_routes
@@ -58,6 +58,7 @@ try:
     ensure_column_exists('presupuesto', 'bultos', 'VARCHAR(50)', '')
     ensure_column_exists('presupuesto', 'kg', 'VARCHAR(50)', '')
     ensure_column_exists('presupuesto', 'medidas', 'VARCHAR(200)', '')
+    # La tabla factura_proforma se creará automáticamente con SQLAlchemy
 except Exception as e:
     print(f"Error en migraciones: {e}")
     pass

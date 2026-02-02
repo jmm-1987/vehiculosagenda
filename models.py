@@ -478,3 +478,42 @@ class Presupuesto(db.Base):
         self.activo = activo
         self.fecha_creacion = fecha_creacion
         self.usuario_creacion = usuario_creacion
+
+
+class FacturaProforma(db.Base):
+    __tablename__ = "factura_proforma"
+    id = Column(Integer, primary_key=True)
+    numero_factura_proforma = Column(String(100), nullable=False)  # Formato: aaaa + contador
+    fecha_factura_proforma = Column(DateTime, nullable=False)
+    presupuesto_id = Column(Integer, ForeignKey('presupuesto.id'), nullable=False)
+    cliente_id = Column(Integer, ForeignKey('clientes_presupuestos.id'), nullable=False)
+    bultos = Column(String(50))
+    kg = Column(String(50))
+    medidas = Column(String(200))
+    importe = Column(Float, default=0.0)
+    iva = Column(Float, default=0.0)
+    total = Column(Float, default=0.0)
+    observaciones = Column(String(1000))
+    fecha_creacion = Column(DateTime, nullable=False)
+    usuario_creacion = Column(String(100))
+    
+    # Relaciones
+    presupuesto_obj = relationship("Presupuesto", backref="facturas_proforma")
+    cliente_obj = relationship("ClientePresupuesto", backref="facturas_proforma")
+    
+    def __init__(self, numero_factura_proforma, fecha_factura_proforma, presupuesto_id, cliente_id,
+                 bultos="", kg="", medidas="", importe=0.0, iva=0.0, total=0.0, observaciones="",
+                 fecha_creacion=None, usuario_creacion=""):
+        self.numero_factura_proforma = numero_factura_proforma
+        self.fecha_factura_proforma = fecha_factura_proforma
+        self.presupuesto_id = presupuesto_id
+        self.cliente_id = cliente_id
+        self.bultos = bultos
+        self.kg = kg
+        self.medidas = medidas
+        self.importe = importe
+        self.iva = iva
+        self.total = total
+        self.observaciones = observaciones
+        self.fecha_creacion = fecha_creacion
+        self.usuario_creacion = usuario_creacion
