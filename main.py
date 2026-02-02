@@ -66,6 +66,12 @@ except Exception as e:
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '78587fgrtyth'
 
+# Configurar cierre automático de sesión de BD al final de cada request
+@app.teardown_appcontext
+def close_db(error):
+    """Cierra la sesión de BD al final de cada request con commit automático"""
+    db.close_session(error)
+
 #instancia del logi
 login_manager = LoginManager(app)
 
