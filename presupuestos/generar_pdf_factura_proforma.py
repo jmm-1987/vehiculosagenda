@@ -61,18 +61,22 @@ def generar_pdf_factura_proforma(factura_proforma, presupuesto, cliente, output_
     page.insert_text((50, y_pos), EMPRESA_DIRECCION_2, fontsize=font_size_normal, color=(0, 0, 0))
     y_pos += 12
     page.insert_text((50, y_pos), f"CIF: {EMPRESA_CIF}", fontsize=font_size_normal, color=(0, 0, 0))
-    page.insert_text((350, y_pos_cliente), "CLIENTE:", fontsize=font_size_normal, color=(0, 0, 0))
+    page.insert_text((320, y_pos_cliente), "CLIENTE:", fontsize=font_size_normal, color=(0, 0, 0))
     y_pos_cliente += 12
-    page.insert_text((350, y_pos_cliente), f"Nombre: {cliente.nombre}", fontsize=font_size_normal, color=(0, 0, 0))
+    page.insert_text((320, y_pos_cliente), f"Nombre: {cliente.nombre}", fontsize=font_size_normal, color=(0, 0, 0))
     y_pos_cliente += 12
-    page.insert_text((350, y_pos_cliente), f"Dirección: {cliente.direccion}", fontsize=font_size_normal, color=(0, 0, 0))
+    page.insert_text((320, y_pos_cliente), f"Dirección: {cliente.direccion}", fontsize=font_size_normal, color=(0, 0, 0))
     y_pos_cliente += 12
     if cliente.poblacion:
-        page.insert_text((350, y_pos_cliente), f"Población: {cliente.poblacion}", fontsize=font_size_normal, color=(0, 0, 0))
+        page.insert_text((320, y_pos_cliente), f"Población: {cliente.poblacion}", fontsize=font_size_normal, color=(0, 0, 0))
         y_pos_cliente += 12
-    page.insert_text((350, y_pos_cliente), "Provincia:", fontsize=font_size_normal, color=(0, 0, 0))
+    page.insert_text((320, y_pos_cliente), "Provincia:", fontsize=font_size_normal, color=(0, 0, 0))
     y_pos_cliente += 12
-    page.insert_text((350, y_pos_cliente), f"CIF/NIF: {cliente.cif}", fontsize=font_size_normal, color=(0, 0, 0))
+    page.insert_text((320, y_pos_cliente), f"CIF/NIF: {cliente.cif}", fontsize=font_size_normal, color=(0, 0, 0))
+    y_pos_cliente += 12
+    if cliente.email:
+        page.insert_text((320, y_pos_cliente), f"Email: {cliente.email}", fontsize=font_size_normal, color=(0, 0, 0))
+        y_pos_cliente += 12
     
     # === TÍTULO: FACTURA PROFORMA (centrado, en negrita) ===
     y_pos_titulo = y_pos_cliente + 20

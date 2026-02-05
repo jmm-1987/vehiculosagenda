@@ -47,7 +47,7 @@
             padding: 20px;
         }
         .btn {
-            padding: 10px 20px;
+            padding: 6px 14px;
             background: #6f42c1;
             color: white;
             border: none;
@@ -55,8 +55,8 @@
             cursor: pointer;
             text-decoration: none;
             display: inline-block;
-            margin: 5px;
-            font-size: 14px;
+            margin: 0;
+            font-size: 13px;
             transition: all 0.3s;
         }
         .btn:hover {
@@ -99,6 +99,49 @@
         .header-buttons {
             display: flex;
             gap: 10px;
+            align-items: center;
+        }
+        .filters-section {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-right: 15px;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+        .filters-section input[type="text"] {
+            padding: 6px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 13px;
+            width: 220px;
+            transition: border-color 0.3s;
+        }
+        .filters-section input[type="text"]:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+        }
+        .filters-section input[type="date"] {
+            padding: 6px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 13px;
+            width: 140px;
+            transition: border-color 0.3s;
+        }
+        .filters-section input[type="date"]:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+        }
+        .filters-section label {
+            font-size: 12px;
+            color: #495057;
+            font-weight: 500;
+            white-space: nowrap;
         }
         table {
             width: 100%;
@@ -189,6 +232,18 @@
                 flex-direction: column;
                 align-items: center;
                 height: auto;
+            }
+            .filters-section {
+                flex-wrap: wrap;
+                width: 100%;
+                margin-bottom: 10px;
+                margin-right: 0;
+            }
+            .filters-section input[type="text"] {
+                width: 100%;
+            }
+            .filters-section input[type="date"] {
+                width: calc(50% - 4px);
             }
             .header-actions {
                 flex-direction: column;
@@ -397,6 +452,13 @@
         <div class="header-actions">
             <h1><i class="fas fa-file-invoice-dollar"></i> Gestión de Presupuestos</h1>
             <div class="header-buttons">
+                <div class="filters-section">
+                    <input type="text" id="buscarPresupuesto" placeholder="Buscar..." onkeyup="filtrarPresupuestos()">
+                    <label for="filtroDesde">Desde:</label>
+                    <input type="date" id="filtroDesde" onchange="filtrarPresupuestos()">
+                    <label for="filtroHasta">Hasta:</label>
+                    <input type="date" id="filtroHasta" onchange="filtrarPresupuestos()">
+                </div>
                 <a href="/presupuestos/clientes" class="btn btn-primary">
                     <i class="fas fa-users"></i> Clientes
                 </a>
@@ -421,7 +483,7 @@
         <div class="content-card">
             {% if lista_presupuestos %}
             <div style="overflow-x: auto;">
-                <table>
+                <table id="tablaPresupuestos">
                     <thead>
                         <tr>
                             <th>Nº</th>
@@ -440,7 +502,12 @@
                     </thead>
                     <tbody>
                         {% for presupuesto, cliente in lista_presupuestos %}
-                        <tr class="{% if not presupuesto.activo %}no-activo{% endif %}">
+                        <tr class="{% if not presupuesto.activo %}no-activo{% endif %}" 
+                            data-numero="{{ presupuesto.numero_presupuesto }}"
+                            data-fecha="{{ presupuesto.fecha_presupuesto.strftime('%Y-%m-%d') if presupuesto.fecha_presupuesto else '' }}"
+                            data-cliente="{{ cliente.nombre|lower }}"
+                            data-estado="{{ presupuesto.estado|lower }}"
+                            data-observaciones="{{ (presupuesto.observaciones or '')|lower }}">
                             <td><strong>{{ presupuesto.numero_presupuesto }}</strong></td>
                             <td>{{ presupuesto.fecha_presupuesto.strftime('%d/%m/%Y') }}</td>
                             <td>{{ cliente.nombre }}</td>
@@ -959,6 +1026,77 @@
 
         // Agregar un estado al historial para poder prevenir el back
         history.pushState(null, null, window.location.href);
+
+        // Establecer fechas por defecto (hace un mes hasta hoy)
+        document.addEventListener('DOMContentLoaded', function() {
+            const hoy = new Date();
+            const haceUnMes = new Date();
+            haceUnMes.setMonth(haceUnMes.getMonth() - 1);
+            
+            // Formatear fechas como YYYY-MM-DD para los inputs de tipo date
+            const formatoFecha = (fecha) => {
+                const año = fecha.getFullYear();
+                const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+                const dia = String(fecha.getDate()).padStart(2, '0');
+                return `${año}-${mes}-${dia}`;
+            };
+            
+            const filtroDesde = document.getElementById('filtroDesde');
+            const filtroHasta = document.getElementById('filtroHasta');
+            
+            if (filtroDesde) {
+                filtroDesde.value = formatoFecha(haceUnMes);
+            }
+            if (filtroHasta) {
+                filtroHasta.value = formatoFecha(hoy);
+            }
+            
+            // Aplicar filtro inicial con las fechas por defecto
+            filtrarPresupuestos();
+        });
+
+        // Función para filtrar presupuestos
+        function filtrarPresupuestos() {
+            const textoBusqueda = (document.getElementById('buscarPresupuesto').value || '').toLowerCase();
+            const fechaDesde = document.getElementById('filtroDesde').value;
+            const fechaHasta = document.getElementById('filtroHasta').value;
+            
+            const table = document.getElementById('tablaPresupuestos');
+            if (!table) return;
+            
+            const rows = table.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const numero = (row.getAttribute('data-numero') || '').toLowerCase();
+                const fecha = row.getAttribute('data-fecha') || '';
+                const cliente = row.getAttribute('data-cliente') || '';
+                const estado = row.getAttribute('data-estado') || '';
+                const observaciones = row.getAttribute('data-observaciones') || '';
+                
+                let visible = true;
+                
+                // Filtro de texto de búsqueda
+                if (textoBusqueda) {
+                    const coincide = numero.includes(textoBusqueda) ||
+                                   cliente.includes(textoBusqueda) ||
+                                   estado.includes(textoBusqueda) ||
+                                   observaciones.includes(textoBusqueda);
+                    if (!coincide) visible = false;
+                }
+                
+                // Filtro de fecha desde
+                if (fechaDesde && fecha < fechaDesde) {
+                    visible = false;
+                }
+                
+                // Filtro de fecha hasta
+                if (fechaHasta && fecha > fechaHasta) {
+                    visible = false;
+                }
+                
+                row.style.display = visible ? '' : 'none';
+            });
+        }
     </script>
 </body>
 </html>
