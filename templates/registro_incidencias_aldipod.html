@@ -669,9 +669,26 @@
 
         // Inicializar contadores al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
+            // Establecer fechas por defecto: últimos 3 días
+            const hoy = new Date();
+            const hace3Dias = new Date();
+            hace3Dias.setDate(hoy.getDate() - 3);
+            
+            // Formatear fechas como YYYY-MM-DD para los inputs de tipo date
+            const formatoFecha = (fecha) => {
+                const año = fecha.getFullYear();
+                const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+                const dia = String(fecha.getDate()).padStart(2, '0');
+                return `${año}-${mes}-${dia}`;
+            };
+            
+            // Establecer valores por defecto en los campos de fecha
+            document.getElementById('filtroDesde').value = formatoFecha(hace3Dias);
+            document.getElementById('filtroHasta').value = formatoFecha(hoy);
+            
             actualizarContadorSeleccionadas();
             actualizarContadores();
-            // Aplicar filtro por defecto (solo mostrar no comunicadas)
+            // Aplicar filtro por defecto (con fechas y solo mostrar no comunicadas)
             filtrarTablaAvanzado();
         });
 

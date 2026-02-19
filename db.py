@@ -4,12 +4,21 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import declarative_base
 from flask import g, has_request_context
 import logging
+import os
 
 # Configurar logging para detectar problemas
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-engine = create_engine('sqlite:///database/VEHICULOS.db',
+# Obtener la ruta absoluta del directorio donde está este archivo
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE_PATH = os.path.join(BASE_DIR, 'database', 'VEHICULOS.db')
+
+# Asegurar que el directorio database existe
+os.makedirs(os.path.dirname(DATABASE_PATH), exist_ok=True)
+
+# Usar ruta absoluta para evitar problemas con el directorio de trabajo actual
+engine = create_engine(f'sqlite:///{DATABASE_PATH}',
 connect_args={'check_same_thread': False})
 
 Session = sessionmaker(bind=engine)
