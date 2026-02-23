@@ -107,7 +107,8 @@ def generar_pdf_factura_proforma(factura_proforma, presupuesto, cliente, output_
     
     # Encabezados de la tabla
     headers = ["N°", "OBSERVACIONES", "PRECIO", "% IVA", "IVA", "TOTAL"]
-    col_widths = [30, 250, 70, 50, 70, 80]
+    # Columnas más estrechas: Precio, % IVA, IVA, Total; más espacio para Observaciones
+    col_widths = [30, 330, 50, 35, 50, 55]
     x_start = 50
     x_positions = [x_start]
     for i in range(len(col_widths) - 1):

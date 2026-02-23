@@ -491,12 +491,10 @@
                             <th>Cliente</th>
                             <th>Bultos</th>
                             <th>Kg</th>
-                            <th>Medidas</th>
                             <th class="text-right">Importe</th>
                             <th class="text-right">IVA</th>
                             <th class="text-right">Total</th>
                             <th class="text-center">Estado</th>
-                            <th>Observaciones</th>
                             <th class="text-center" colspan="2">Acciones</th>
                         </tr>
                     </thead>
@@ -513,7 +511,6 @@
                             <td>{{ cliente.nombre }}</td>
                             <td>{{ presupuesto.bultos or '-' }}</td>
                             <td>{{ presupuesto.kg or '-' }}</td>
-                            <td>{{ presupuesto.medidas or '-' }}</td>
                             <td class="text-right">{{ "%.2f"|format(presupuesto.importe) }}€</td>
                             <td class="text-right">{{ "%.2f"|format(presupuesto.iva) }}€</td>
                             <td class="text-right"><strong style="color: #6f42c1;">{{ "%.2f"|format(presupuesto.total) }}€</strong></td>
@@ -527,9 +524,6 @@
                                 {% else %}
                                     <span class="badge badge-secondary">{{ presupuesto.estado }}</span>
                                 {% endif %}
-                            </td>
-                            <td title="{{ presupuesto.observaciones|e if presupuesto.observaciones else '' }}">
-                                {{ presupuesto.observaciones[:25] if presupuesto.observaciones else '-' }}{% if presupuesto.observaciones and presupuesto.observaciones|length > 25 %}...{% endif %}
                             </td>
                             <td class="text-center">
                                 <a href="/exportar_presupuesto_pdf/{{ presupuesto.id }}" class="btn btn-success btn-sm" title="Exportar PDF">
