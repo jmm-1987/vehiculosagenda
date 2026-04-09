@@ -184,7 +184,7 @@
                     <div class="form-group">
                         <label for="iva_percent">Tipo de IVA (%)</label>
                         <input type="number" id="iva_percent" name="iva_percent" step="0.01" min="0" max="100" 
-                               value="{{ "%.2f"|format(iva_percent) if iva_percent else "21" }}" onchange="calcularTotal()">
+                               value="{{ '%.2f'|format(iva_percent) }}" onchange="calcularTotal()">
                     </div>
                     <div class="form-group">
                         <label for="iva_cantidad">Cantidad IVA (€)</label>

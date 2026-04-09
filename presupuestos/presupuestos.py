@@ -299,7 +299,18 @@ def register_presupuestos_routes(app):
             # Verificar si ya existe una factura proforma para este presupuesto
             factura_existente = db.session.query(FacturaProforma).filter_by(presupuesto_id=id).first()
             if factura_existente:
-                flash('Ya existe una factura proforma para este presupuesto', 'info')
+                # Sincronizar datos de la proforma con el presupuesto actual.
+                # Esto evita que se mantengan importes/IVA antiguos al regenerar.
+                factura_existente.cliente_id = presupuesto.cliente_id
+                factura_existente.bultos = presupuesto.bultos
+                factura_existente.kg = presupuesto.kg
+                factura_existente.medidas = presupuesto.medidas
+                factura_existente.importe = presupuesto.importe
+                factura_existente.iva = presupuesto.iva
+                factura_existente.total = presupuesto.total
+                factura_existente.observaciones = presupuesto.observaciones
+                db.session.commit()
+                flash('Factura proforma existente actualizada con los datos actuales del presupuesto', 'success')
                 return redirect(url_for('exportar_factura_proforma_pdf', id=factura_existente.id))
             
             cliente = db.session.query(ClientePresupuesto).filter_by(id=presupuesto.cliente_id).first()
