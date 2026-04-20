@@ -9,11 +9,14 @@ from .funciones_scanner import (
     limpiar_nombre_archivo,
     guardar_imagen_temporal,
     limpiar_archivos_temporales,
-    registrar_incidencia
+    registrar_incidencia,
+    conectar_sftp_backup,
+    obtener_backup_local_root
 )
 import os
 import io
 import re
+import time
 from datetime import datetime
 
 def register_scanner_ftp_routes(app):
@@ -419,10 +422,23 @@ def register_scanner_ftp_routes(app):
             enlace = incidencia.enlace_imagen
             print(f"DEBUG: Enlace de imagen: {enlace}")  # Debug
             
-            if enlace.startswith('sftp://'):
+            if enlace.startswith('local://'):
+                # Manejar copias locales en VPS
+                ruta_relativa = enlace.replace('local://', '', 1).lstrip('/\\')
+                backup_root = obtener_backup_local_root()
+                ruta_absoluta = os.path.abspath(os.path.join(backup_root, ruta_relativa))
+                if os.path.commonpath([backup_root, ruta_absoluta]) != backup_root:
+                    return "Ruta local no válida", 400
+                if not os.path.exists(ruta_absoluta):
+                    return f"Archivo local no encontrado: {ruta_relativa}", 404
+
+                filename = os.path.basename(ruta_absoluta)
+                temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f'_{filename}')
+                with open(ruta_absoluta, 'rb') as f_src, open(temp_file.name, 'wb') as f_dst:
+                    f_dst.write(f_src.read())
+
+            elif enlace.startswith('sftp://'):
                 # Manejar enlaces SFTP
-                import paramiko
-                
                 # Extraer componentes del URL SFTP: sftp://user@host/path/file
                 url_parts = enlace.replace('sftp://', '').split('/')
                 user_host = url_parts[0]
@@ -435,39 +451,140 @@ def register_scanner_ftp_routes(app):
                 
                 print(f"DEBUG: SFTP Host: {host}, User: {user}, File path: {file_path}, Filename: {filename}")  # Debug
                 
-                # Configuración SFTP de backup
-                sftp_config = {
-                    'host': 'home613353667.1and1-data.host',
-                    'user': 'u83991941-tsb',
-                    'password': 'tsb010Tx.MX',
-                    'port': 22
-                }
-                
-                # Conectar por SFTP
-                ssh = paramiko.SSHClient()
-                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                ssh.connect(sftp_config['host'], port=sftp_config['port'], 
-                           username=sftp_config['user'], password=sftp_config['password'])
-                
-                sftp = ssh.open_sftp()
-                
-                # Verificar si el archivo existe
-                try:
-                    file_stat = sftp.stat(file_path)
-                    print(f"DEBUG: Archivo encontrado, tamaño: {file_stat.st_size} bytes")  # Debug
-                except FileNotFoundError:
+                # Conectar por SFTP con helper robusto (IPv4 + socket + reintentos)
+                ssh, sftp, ultimo_error_conexion = conectar_sftp_backup(max_intentos=4)
+
+                if sftp:
+                    # Verificar si el archivo existe
+                    try:
+                        file_stat = sftp.stat(file_path)
+                        print(f"DEBUG: Archivo encontrado, tamaño: {file_stat.st_size} bytes")  # Debug
+                    except FileNotFoundError:
+                        sftp.close()
+                        ssh.close()
+                        return f"Archivo no encontrado en SFTP: {file_path}", 404
+                    
+                    # Crear archivo temporal
+                    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f'_{filename}')
+                    
+                    # Descargar archivo
+                    sftp.get(file_path, temp_file.name)
+                    
                     sftp.close()
                     ssh.close()
-                    return f"Archivo no encontrado en SFTP: {file_path}", 404
-                
-                # Crear archivo temporal
-                temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f'_{filename}')
-                
-                # Descargar archivo
-                sftp.get(file_path, temp_file.name)
-                
-                sftp.close()
-                ssh.close()
+                else:
+                    # Fallback: si SFTP cae (banner reset, timeout...), intentar por FTP principal.
+                    print(f"WARNING: SFTP no disponible ({ultimo_error_conexion}). Intentando fallback FTP.")
+                    from .funciones_scanner import cargar_configuracion_ftp
+                    ftp_config = cargar_configuracion_ftp()
+                    if not ftp_config:
+                        return f"No se pudo conectar al SFTP tras varios intentos: {str(ultimo_error_conexion)}", 500
+
+                    ftp = None
+                    ultimo_error_login_ftp = None
+                    # Intentar FTP explícito y, si falla, FTPS explícito (TLS)
+                    for usar_tls in (False, True):
+                        try:
+                            if usar_tls:
+                                from ftplib import FTP_TLS
+                                ftp = FTP_TLS()
+                            else:
+                                ftp = FTP()
+                            ftp.connect(ftp_config.get('host', ''), ftp_config.get('port', 21), timeout=15)
+                            ftp.login(ftp_config.get('user', ''), ftp_config.get('password', ''))
+                            if usar_tls:
+                                ftp.prot_p()
+                            break
+                        except Exception as ftp_login_err:
+                            ultimo_error_login_ftp = ftp_login_err
+                            try:
+                                if ftp:
+                                    ftp.quit()
+                            except Exception:
+                                pass
+                            ftp = None
+
+                    if not ftp:
+                        return (
+                            f"No se pudo conectar al SFTP tras varios intentos: {str(ultimo_error_conexion)}. "
+                            f"Fallback FTP/FTPS falló: {str(ultimo_error_login_ftp)}",
+                            500
+                        )
+
+                    # Rutas candidatas en FTP para el mismo fichero.
+                    posibles_rutas = []
+                    if file_path:
+                        raw_path = file_path.lstrip('/')
+                        posibles_rutas.append(raw_path)
+                        if raw_path.startswith('ALDIPOD_BACKUP/'):
+                            posibles_rutas.append(raw_path.replace('ALDIPOD_BACKUP/', 'ALDIPOD/', 1))
+
+                    # Ruta por tipo de documento como respaldo final
+                    tipo_doc = (incidencia.tipo_documento or '').strip()
+                    if tipo_doc == 'alb_clientes':
+                        posibles_rutas.append(f"ALDIPOD/CLIENTES/{filename}")
+                    elif tipo_doc == 'POD':
+                        posibles_rutas.append(f"ALDIPOD/POD/{filename}")
+                    else:
+                        directorio = (ftp_config.get('directory') or '').strip('/')
+                        if directorio:
+                            posibles_rutas.append(f"{directorio}/{filename}")
+                        posibles_rutas.append(filename)
+
+                    # Quitar duplicados conservando orden
+                    rutas_unicas = []
+                    for ruta in posibles_rutas:
+                        if ruta and ruta not in rutas_unicas:
+                            rutas_unicas.append(ruta)
+
+                    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f'_{filename}')
+                    ruta_ok = None
+                    ultimo_error_ftp = None
+                    for ruta in rutas_unicas:
+                        try:
+                            # Estrategia 1: ruta completa
+                            try:
+                                ftp.size(ruta)
+                            except Exception:
+                                pass
+                            with open(temp_file.name, 'wb') as f:
+                                ftp.retrbinary(f'RETR {ruta}', f.write)
+                            ruta_ok = ruta
+                            break
+                        except Exception as ftp_err:
+                            # Estrategia 2: cambiar a carpeta y descargar por nombre de fichero
+                            try:
+                                dir_ruta, nombre_ruta = ruta.rsplit('/', 1) if '/' in ruta else ('', ruta)
+                                cwd_original = ftp.pwd()
+                                if dir_ruta:
+                                    ftp.cwd('/')
+                                    for segmento in [s for s in dir_ruta.split('/') if s]:
+                                        ftp.cwd(segmento)
+                                with open(temp_file.name, 'wb') as f:
+                                    ftp.retrbinary(f'RETR {nombre_ruta}', f.write)
+                                ruta_ok = ruta
+                                try:
+                                    ftp.cwd(cwd_original)
+                                except Exception:
+                                    pass
+                                break
+                            except Exception as ftp_err_2:
+                                ultimo_error_ftp = ftp_err_2
+                                continue
+
+                    ftp.quit()
+
+                    if not ruta_ok:
+                        try:
+                            os.unlink(temp_file.name)
+                        except Exception:
+                            pass
+                        return (
+                            f"No se pudo descargar el archivo por SFTP ni por FTP. "
+                            f"SFTP: {str(ultimo_error_conexion)} | FTP: {str(ultimo_error_ftp)}",
+                            500
+                        )
+                    print(f"DEBUG: Descarga por FTP fallback exitosa en ruta: {ruta_ok}")
                 
             elif enlace.startswith('ftp://'):
                 # Manejar enlaces FTP (compatibilidad hacia atrás)
@@ -692,11 +809,11 @@ def register_scanner_ftp_routes(app):
                 return jsonify({'success': False, 'mensaje': f'Error creando PDF: {err}'})
 
             # Subir PDF
-            success, mensaje = subir_archivo_ftp(ruta_pdf, nombre_pdf, cliente_id, tipo_registro)
+            success, mensaje, enlace_generado = subir_archivo_ftp(ruta_pdf, nombre_pdf, cliente_id, tipo_registro)
             if success:
                 # Registrar incidencia en la base de datos
                 registro_ok, registro_msg, incidencia_id = registrar_incidencia(
-                    usuario, cliente_id, codigo_barras, nombre_pdf, tipo_registro, medidas_a_usar, observaciones
+                    usuario, cliente_id, codigo_barras, nombre_pdf, tipo_registro, medidas_a_usar, observaciones, enlace_generado
                 )
                 if not registro_ok:
                     # Si falla el registro, reportar el error

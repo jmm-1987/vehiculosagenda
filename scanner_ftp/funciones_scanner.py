@@ -4,6 +4,9 @@ Funciones auxiliares para el scanner de códigos de barras y subida FTP
 import ftplib
 import json
 import os
+import shutil
+import socket
+import time
 from datetime import datetime, timezone, timedelta
 try:
     from zoneinfo import ZoneInfo
@@ -19,6 +22,80 @@ except ImportError:
 import db
 from models import IncidenciaAldipod
 from typing import List, Tuple
+import paramiko
+
+SFTP_BACKUP_HOST = 'home613353667.1and1-data.host'
+SFTP_BACKUP_USER = 'u83991941-tsb'
+SFTP_BACKUP_PASS = 'tsb010Tx.MX'
+SFTP_BACKUP_PORT = 22
+LOCAL_BACKUP_ROOT = '/var/lib/vehiculosagenda/aldipod_backup'
+
+
+def conectar_sftp_backup(max_intentos=4):
+    """
+    Conecta al SFTP de backup forzando IPv4 y reintentando para evitar
+    cortes intermitentes durante el banner SSH.
+    """
+    ultimo_error = None
+    ips = []
+
+    try:
+        info = socket.getaddrinfo(
+            SFTP_BACKUP_HOST,
+            SFTP_BACKUP_PORT,
+            family=socket.AF_INET,
+            type=socket.SOCK_STREAM
+        )
+        for item in info:
+            ip = item[4][0]
+            if ip not in ips:
+                ips.append(ip)
+    except Exception:
+        # Fallback: dejar que paramiko resuelva el host
+        ips = [SFTP_BACKUP_HOST]
+
+    for intento in range(1, max_intentos + 1):
+        for destino in ips:
+            ssh = None
+            sock = None
+            try:
+                sock = socket.create_connection((destino, SFTP_BACKUP_PORT), timeout=12)
+                sock.settimeout(25)
+
+                ssh = paramiko.SSHClient()
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                ssh.connect(
+                    hostname=SFTP_BACKUP_HOST,
+                    username=SFTP_BACKUP_USER,
+                    password=SFTP_BACKUP_PASS,
+                    sock=sock,
+                    timeout=15,
+                    banner_timeout=35,
+                    auth_timeout=25,
+                    look_for_keys=False,
+                    allow_agent=False
+                )
+                transport = ssh.get_transport()
+                if transport:
+                    transport.set_keepalive(15)
+                sftp = ssh.open_sftp()
+                return ssh, sftp, None
+            except Exception as e:
+                ultimo_error = e
+                try:
+                    if ssh:
+                        ssh.close()
+                except Exception:
+                    pass
+                try:
+                    if sock:
+                        sock.close()
+                except Exception:
+                    pass
+        if intento < max_intentos:
+            time.sleep(1.2 * intento)
+
+    return None, None, ultimo_error
 
 def cargar_configuracion_ftp():
     """Carga la configuración del FTP desde el archivo JSON"""
@@ -40,6 +117,41 @@ def cargar_configuracion_ftp():
         print(f"Error al cargar configuración FTP: {e}")
         return None
 
+
+def obtener_backup_local_root():
+    """
+    Ruta base de backup local fuera del proyecto.
+    Fijada en código para evitar dependencia de variables de entorno.
+    """
+    return os.path.abspath(LOCAL_BACKUP_ROOT)
+
+
+def guardar_copia_local_backup(archivo_local, nombre_remoto, tipo_documento):
+    """
+    Guarda una copia local en el VPS para no depender del backup SFTP.
+    Retorna (ok, ruta_relativa_local, error)
+    """
+    try:
+        fecha_hoy = datetime.now().strftime('%Y/%m/%d')
+        if tipo_documento == 'POD':
+            subdir = os.path.join('POD', fecha_hoy)
+        elif tipo_documento == 'alb_clientes':
+            subdir = os.path.join('CLIENTES', fecha_hoy)
+        else:
+            subdir = fecha_hoy
+
+        backup_root = obtener_backup_local_root()
+        directorio_destino = os.path.join(backup_root, subdir)
+        os.makedirs(directorio_destino, exist_ok=True)
+        destino = os.path.join(directorio_destino, nombre_remoto)
+        shutil.copy2(archivo_local, destino)
+
+        # Guardar ruta relativa al root de backups para mantenerla portable
+        ruta_relativa = os.path.relpath(destino, start=backup_root).replace('\\', '/')
+        return True, ruta_relativa, None
+    except Exception as e:
+        return False, None, e
+
 def subir_archivo_ftp(archivo_local, nombre_remoto, cliente_id=None, tipo_documento="INCIDENCIA"):
     """
     Sube un archivo al servidor FTP
@@ -51,12 +163,12 @@ def subir_archivo_ftp(archivo_local, nombre_remoto, cliente_id=None, tipo_docume
         tipo_documento: tipo de documento (INCIDENCIA, MEDIDAS, POD)
     
     Returns:
-        tuple: (success: bool, message: str)
+        tuple: (success: bool, message: str, enlace_imagen: str)
     """
     config = cargar_configuracion_ftp()
     
     if not config:
-        return False, "No se pudo cargar la configuración FTP"
+        return False, "No se pudo cargar la configuración FTP", None
     
     try:
         # Conectar al servidor FTP
@@ -64,6 +176,9 @@ def subir_archivo_ftp(archivo_local, nombre_remoto, cliente_id=None, tipo_docume
         ftp.connect(config.get('host', 'localhost'), config.get('port', 21))
         ftp.login(config.get('user', ''), config.get('password', ''))
         
+        ftp_remote_path = None
+        backup_local_ok = False
+
         # Si es tipo POD, subir al directorio ALDIPOD/POD
         # Si es tipo alb_clientes, subir al directorio ALDIPOD/CLIENTES
         if tipo_documento == 'POD':
@@ -105,6 +220,7 @@ def subir_archivo_ftp(archivo_local, nombre_remoto, cliente_id=None, tipo_docume
             # Subir al directorio ALDIPOD/POD
             with open(archivo_local, 'rb') as file:
                 ftp.storbinary(f'STOR {nombre_remoto}', file)
+            ftp_remote_path = f"ALDIPOD/POD/{nombre_remoto}"
             print(f"DEBUG FTP: Archivo subido al directorio ALDIPOD/POD")
         
         elif tipo_documento == 'alb_clientes':
@@ -146,6 +262,7 @@ def subir_archivo_ftp(archivo_local, nombre_remoto, cliente_id=None, tipo_docume
             # Subir al directorio ALDIPOD/CLIENTES
             with open(archivo_local, 'rb') as file:
                 ftp.storbinary(f'STOR {nombre_remoto}', file)
+            ftp_remote_path = f"ALDIPOD/CLIENTES/{nombre_remoto}"
             print(f"DEBUG FTP: Archivo subido al directorio ALDIPOD/CLIENTES")
         
         else:
@@ -172,86 +289,36 @@ def subir_archivo_ftp(archivo_local, nombre_remoto, cliente_id=None, tipo_docume
             # Subir al destino principal
             with open(archivo_local, 'rb') as file:
                 ftp.storbinary(f'STOR {nombre_remoto}', file)
+            ftp_remote_path = f"{destino_principal}/{nombre_remoto}" if destino_principal else nombre_remoto
         
         # Cerrar conexión FTP principal
         ftp.quit()
         
-        # Adicional: subir copia a servidor SFTP de backup
-        try:
-            import paramiko
-            import stat
-            
-            # Configuración del servidor SFTP de backup
-            sftp_host = 'home613353667.1and1-data.host'
-            sftp_user = 'u83991941-tsb'
-            sftp_pass = 'tsb010Tx.MX'
-            sftp_port = 22
-            
-            # Directorio según el tipo de documento
-            if tipo_documento == 'POD':
-                sftp_dir = 'ALDIPOD_BACKUP/POD'
-            elif tipo_documento == 'alb_clientes':
-                sftp_dir = 'ALDIPOD_BACKUP/CLIENTES'
-            else:
-                sftp_dir = 'ALDIPOD_BACKUP'
-            
-            print(f"DEBUG SFTP: Intentando conectar a {sftp_host}:{sftp_port} con usuario {sftp_user}")
-            
-            # Conectar por SFTP
-            ssh = paramiko.SSHClient()
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(sftp_host, port=sftp_port, username=sftp_user, password=sftp_pass, timeout=30)
-            print("DEBUG SFTP: Conexión SSH exitosa")
-            
-            sftp = ssh.open_sftp()
-            print("DEBUG SFTP: Conexión SFTP exitosa")
-            
-            # Crear directorio si no existe (manejar rutas con /)
-            partes_dir = sftp_dir.split('/')
-            ruta_acumulada = ''
-            for parte in partes_dir:
-                if ruta_acumulada:
-                    ruta_acumulada = f"{ruta_acumulada}/{parte}"
-                else:
-                    ruta_acumulada = parte
-                
-                try:
-                    sftp.mkdir(ruta_acumulada)
-                    print(f"DEBUG SFTP: Directorio {ruta_acumulada} creado")
-                except FileExistsError:
-                    print(f"DEBUG SFTP: Directorio {ruta_acumulada} ya existe")
-                except OSError as mkdir_err:
-                    if "File exists" in str(mkdir_err) or "Failure" in str(mkdir_err):
-                        print(f"DEBUG SFTP: Directorio {ruta_acumulada} ya existe (OSError)")
-                except Exception as mkdir_err:
-                    print(f"DEBUG SFTP: Error al crear directorio {ruta_acumulada}: {mkdir_err}")
-            
-            # Subir archivo
-            remote_path = f"{sftp_dir}/{nombre_remoto}"
-            print(f"DEBUG SFTP: Subiendo archivo a {remote_path}")
-            sftp.put(archivo_local, remote_path)
-            print(f"DEBUG SFTP: Archivo subido exitosamente")
-            
-            sftp.close()
-            ssh.close()
-            print("DEBUG SFTP: Conexiones cerradas correctamente")
-            
-        except ImportError:
-            print("WARNING: paramiko no está instalado. No se puede subir backup SFTP.")
-        except paramiko.AuthenticationException as auth_err:
-            print(f"WARNING: Error de autenticación SFTP: {auth_err}")
-        except paramiko.SSHException as ssh_err:
-            print(f"WARNING: Error SSH/SFTP: {ssh_err}")
-        except Exception as sftp_error:
-            print(f"WARNING: Error al subir backup SFTP: {type(sftp_error).__name__}: {str(sftp_error)}")
-            # No fallar la operación principal por error de backup
-        
-        return True, f"Archivo {nombre_remoto} subido correctamente (principal y SFTP backup)"
+        # Copia de respaldo local en el VPS (sustituye backup remoto SFTP)
+        ruta_local_relativa = None
+        ok_local, ruta_local_relativa, local_err = guardar_copia_local_backup(
+            archivo_local=archivo_local,
+            nombre_remoto=nombre_remoto,
+            tipo_documento=tipo_documento
+        )
+        if ok_local:
+            backup_local_ok = True
+            print(f"DEBUG BACKUP LOCAL: Copia guardada en static/{ruta_local_relativa}")
+        else:
+            print(f"WARNING: Error al guardar copia local en VPS: {local_err}")
+
+        # Construir enlace final según dónde esté disponible realmente el archivo.
+        if backup_local_ok and ruta_local_relativa:
+            enlace_imagen = f"local://{ruta_local_relativa}"
+        else:
+            enlace_imagen = f"ftp://{config.get('host', 'localhost')}/{ftp_remote_path or nombre_remoto}"
+
+        return True, f"Archivo {nombre_remoto} subido correctamente", enlace_imagen
         
     except ftplib.all_errors as e:
-        return False, f"Error FTP: {str(e)}"
+        return False, f"Error FTP: {str(e)}", None
     except Exception as e:
-        return False, f"Error: {str(e)}"
+        return False, f"Error: {str(e)}", None
 
 def validar_codigo_barras(codigo):
     """
@@ -511,7 +578,7 @@ def limpiar_archivos_temporales():
                 except:
                     pass
 
-def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo, tipo_documento="INCIDENCIA", medidas=None, observaciones=None):
+def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo, tipo_documento="INCIDENCIA", medidas=None, observaciones=None, enlace_imagen=None):
     """
     Registra una incidencia en la base de datos
     
@@ -565,20 +632,15 @@ def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo, tipo_d
     
     nombre_cliente = clientes_map.get(cliente_id, f'Cliente {cliente_id}')
     
-    # Construir enlace al servidor SFTP de backup (más confiable para descargas)
-    sftp_host = 'home613353667.1and1-data.host'
-    sftp_user = 'u83991941-tsb'
-    
-    # Directorio según el tipo de documento en el SFTP
-    if tipo_documento == 'POD':
-        sftp_dir = 'ALDIPOD_BACKUP/POD'
-    elif tipo_documento == 'alb_clientes':
-        sftp_dir = 'ALDIPOD_BACKUP/CLIENTES'
-    else:
-        sftp_dir = 'ALDIPOD_BACKUP'
-    
-    # El enlace SIEMPRE debe apuntar al archivo original sin modificar
-    enlace = f"sftp://{sftp_user}@{sftp_host}/{sftp_dir}/{nombre_archivo}"
+    # Si no viene enlace explícito, guardar por defecto en copia local del VPS.
+    if not enlace_imagen:
+        fecha_hoy = datetime.now().strftime('%Y/%m/%d')
+        if tipo_documento == 'POD':
+            enlace_imagen = f"local://POD/{fecha_hoy}/{nombre_archivo}"
+        elif tipo_documento == 'alb_clientes':
+            enlace_imagen = f"local://CLIENTES/{fecha_hoy}/{nombre_archivo}"
+        else:
+            enlace_imagen = f"local://{fecha_hoy}/{nombre_archivo}"
     
     # NOTA: Las medidas NO deben modificar el nombre del archivo en el enlace
     # El archivo físico se guarda con su nombre original basado en la referencia
@@ -619,7 +681,7 @@ def registrar_incidencia(usuario, cliente_id, referencia, nombre_archivo, tipo_d
             usuario=usuario,
             cliente=nombre_cliente,
             referencia=referencia,
-            enlace_imagen=enlace,
+            enlace_imagen=enlace_imagen,
             tipo_documento=tipo_documento,
             ubicacion=ubicacion,
             observaciones=obs_final

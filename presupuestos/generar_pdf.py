@@ -139,38 +139,47 @@ def generar_pdf_presupuesto(presupuesto, cliente, output_path=None):
     ancho_col_observaciones = col_widths[1] - 10  # Ancho disponible menos márgenes
     y_obs_current = y_row
     
-    # Función para dividir texto en líneas según ancho disponible
-    def dividir_texto_en_lineas(texto, ancho_maximo, fontsize):
-        """Divide texto en líneas que caben en el ancho máximo"""
-        palabras = texto.split(' ')
+    # Función para dividir texto en líneas con máximo de caracteres
+    def dividir_texto_en_lineas(texto, max_chars_por_linea=50):
+        """Divide texto en líneas de hasta max_chars_por_linea, respetando palabras y saltos manuales."""
+        if not texto:
+            return []
+
         lineas = []
-        linea_actual = ""
-        
-        for palabra in palabras:
-            test_linea = linea_actual + " " + palabra if linea_actual else palabra
-            # Estimar ancho: aproximadamente 0.5 puntos por carácter
-            ancho_test = len(test_linea) * fontsize * 0.5
-            
-            if ancho_test > ancho_maximo and linea_actual:
+        parrafos = texto.replace('\r', '').split('\n')
+
+        for parrafo in parrafos:
+            palabras = [p for p in parrafo.split(' ') if p]
+            if not palabras:
+                lineas.append("")
+                continue
+
+            linea_actual = ""
+            for palabra in palabras:
+                test_linea = f"{linea_actual} {palabra}".strip() if linea_actual else palabra
+                if len(test_linea) > max_chars_por_linea and linea_actual:
+                    lineas.append(linea_actual)
+                    linea_actual = palabra
+                else:
+                    linea_actual = test_linea
+
+            if linea_actual:
                 lineas.append(linea_actual)
-                linea_actual = palabra
-            else:
-                linea_actual = test_linea
-        
-        if linea_actual:
-            lineas.append(linea_actual)
-        
+
         return lineas
     
-    # Dividir observaciones en líneas si es necesario
+    # Dividir observaciones en líneas y reservar siempre un mínimo de 3 líneas visibles
+    lineas_observaciones = []
     if observaciones_texto:
-        lineas_observaciones = dividir_texto_en_lineas(observaciones_texto, ancho_col_observaciones, font_size_normal)
-        for i, linea in enumerate(lineas_observaciones):
-            page.insert_text((x_positions[1] + 5, y_obs_current), linea, fontsize=font_size_normal, color=(0, 0, 0))
-            y_obs_current += 13  # Espacio entre líneas (aumentado de 12 a 13)
-    else:
-        # Si no hay observaciones, dejar espacio mínimo
-        y_obs_current += 13
+        lineas_observaciones = dividir_texto_en_lineas(observaciones_texto, max_chars_por_linea=50)
+
+    lineas_visibles_minimas = 3
+    total_lineas_reservadas = max(len(lineas_observaciones), lineas_visibles_minimas)
+
+    for i in range(total_lineas_reservadas):
+        if i < len(lineas_observaciones):
+            page.insert_text((x_positions[1] + 5, y_obs_current), lineas_observaciones[i], fontsize=font_size_normal, color=(0, 0, 0))
+        y_obs_current += 13  # Espacio entre líneas (aumentado de 12 a 13)
     
     # Segunda sección: Bultos, Kg y Medidas (con espacio adicional para evitar solapamiento)
     y_row_2 = y_obs_current + 10  # Espacio adicional aumentado de 5 a 10 puntos para separar claramente
@@ -180,7 +189,7 @@ def generar_pdf_presupuesto(presupuesto, cliente, output_path=None):
     detalle_texto = f"Bultos: {bultos}, Kg: {kg}, Medidas: {medidas}"
     
     # Dividir también el texto de detalles si es muy largo
-    lineas_detalle = dividir_texto_en_lineas(detalle_texto, ancho_col_observaciones, font_size_small)
+    lineas_detalle = dividir_texto_en_lineas(detalle_texto, max_chars_por_linea=50)
     y_detalle_current = y_row_2
     for linea in lineas_detalle:
         page.insert_text((x_positions[1] + 5, y_detalle_current), linea, fontsize=font_size_small, color=(0, 0, 0))

@@ -465,6 +465,9 @@
                 <a href="/presupuestos_todos" class="btn btn-secondary">
                     <i class="fas fa-list"></i> Mostrar todos
                 </a>
+                <a href="/exportar_presupuestos_excel" class="btn btn-primary" id="btnExportarExcel">
+                    <i class="fas fa-file-excel"></i> Exportar Excel
+                </a>
                 <button type="button" class="btn btn-success" onclick="abrirModalPresupuesto()">
                     <i class="fas fa-plus"></i> Nuevo Presupuesto
                 </button>
@@ -1090,6 +1093,22 @@
                 
                 row.style.display = visible ? '' : 'none';
             });
+
+            actualizarEnlaceExportacionExcel();
+        }
+
+        function actualizarEnlaceExportacionExcel() {
+            const fechaDesde = document.getElementById('filtroDesde').value;
+            const fechaHasta = document.getElementById('filtroHasta').value;
+            const btnExportarExcel = document.getElementById('btnExportarExcel');
+
+            if (!btnExportarExcel) return;
+
+            const params = new URLSearchParams();
+            if (fechaDesde) params.set('desde', fechaDesde);
+            if (fechaHasta) params.set('hasta', fechaHasta);
+
+            btnExportarExcel.href = `/exportar_presupuestos_excel?${params.toString()}`;
         }
     </script>
 </body>

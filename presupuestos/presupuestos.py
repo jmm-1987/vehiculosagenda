@@ -7,6 +7,8 @@ from sqlalchemy import func
 from presupuestos.generar_pdf import generar_pdf_presupuesto
 from presupuestos.generar_pdf_factura_proforma import generar_pdf_factura_proforma
 import os
+from io import BytesIO
+from openpyxl import Workbook
 
 
 def register_presupuestos_routes(app):
@@ -223,6 +225,73 @@ def register_presupuestos_routes(app):
             error_traceback = traceback.format_exc()
             print(f"Error al generar PDF: {str(e)}")
             print(f"Traceback: {error_traceback}")
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/exportar_presupuestos_excel")
+    @login_required
+    def exportar_presupuestos_excel():
+        """Exporta la parrilla de presupuestos a Excel según rango de fechas."""
+        try:
+            fecha_desde_str = (request.args.get("desde") or "").strip()
+            fecha_hasta_str = (request.args.get("hasta") or "").strip()
+
+            query = db.session.query(Presupuesto, ClientePresupuesto).join(
+                ClientePresupuesto, Presupuesto.cliente_id == ClientePresupuesto.id
+            ).filter(Presupuesto.activo == True)
+
+            if fecha_desde_str:
+                try:
+                    fecha_desde = datetime.strptime(fecha_desde_str, "%Y-%m-%d").date()
+                    query = query.filter(func.date(Presupuesto.fecha_presupuesto) >= fecha_desde)
+                except ValueError:
+                    pass
+
+            if fecha_hasta_str:
+                try:
+                    fecha_hasta = datetime.strptime(fecha_hasta_str, "%Y-%m-%d").date()
+                    query = query.filter(func.date(Presupuesto.fecha_presupuesto) <= fecha_hasta)
+                except ValueError:
+                    pass
+
+            registros = query.order_by(Presupuesto.id.desc()).all()
+
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Presupuestos"
+
+            headers = [
+                "Nº Presupuesto", "Fecha", "Cliente", "Bultos", "Kg",
+                "Importe", "IVA", "Total", "Estado", "Observaciones"
+            ]
+            ws.append(headers)
+
+            for presupuesto, cliente in registros:
+                ws.append([
+                    presupuesto.numero_presupuesto or "",
+                    presupuesto.fecha_presupuesto.strftime("%d/%m/%Y") if presupuesto.fecha_presupuesto else "",
+                    cliente.nombre or "",
+                    presupuesto.bultos or "",
+                    presupuesto.kg or "",
+                    float(presupuesto.importe or 0),
+                    float(presupuesto.iva or 0),
+                    float(presupuesto.total or 0),
+                    presupuesto.estado or "",
+                    presupuesto.observaciones or ""
+                ])
+
+            excel_io = BytesIO()
+            wb.save(excel_io)
+            excel_io.seek(0)
+
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            return send_file(
+                excel_io,
+                as_attachment=True,
+                download_name=f'presupuestos_{timestamp}.xlsx',
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+        except Exception as e:
+            print(f"Error al exportar presupuestos a Excel: {str(e)}")
             return jsonify({"error": str(e)}), 500
 
     @app.route('/presupuestos/clientes')
