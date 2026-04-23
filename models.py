@@ -437,7 +437,7 @@ class ClientePresupuesto(db.Base):
 class Presupuesto(db.Base):
     __tablename__ = "presupuesto"
     id = Column(Integer, primary_key=True)
-    numero_presupuesto = Column(String(100), nullable=False)
+    numero_presupuesto = Column(String(100), nullable=False, unique=True)
     fecha_presupuesto = Column(DateTime, nullable=False)
     cliente_id = Column(Integer, ForeignKey('clientes_presupuestos.id'), nullable=False)
     cliente = Column(String(200), default='')  # Columna legacy para compatibilidad con BD existente, usar cliente_id

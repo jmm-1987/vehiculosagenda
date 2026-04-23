@@ -4,6 +4,7 @@ import db
 from datetime import datetime
 from models import Presupuesto, ClientePresupuesto, FacturaProforma
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from presupuestos.generar_pdf import generar_pdf_presupuesto
 from presupuestos.generar_pdf_factura_proforma import generar_pdf_factura_proforma
 import os
@@ -12,6 +13,26 @@ from openpyxl import Workbook
 
 
 def register_presupuestos_routes(app):
+    def obtener_siguiente_numero_presupuesto_disponible():
+        """Obtiene el siguiente número de presupuesto disponible (solo números enteros)."""
+        filas = db.session.query(Presupuesto.numero_presupuesto).all()
+        numeros_usados = set()
+        max_numero = 0
+
+        for (numero,) in filas:
+            numero_str = (numero or "").strip()
+            if numero_str.isdigit():
+                n = int(numero_str)
+                numeros_usados.add(n)
+                if n > max_numero:
+                    max_numero = n
+
+        candidato = max_numero + 1
+        while candidato in numeros_usados:
+            candidato += 1
+
+        return str(candidato)
+
     @app.route('/presupuestos')
     @login_required
     def lista_presupuestos():
@@ -41,10 +62,7 @@ def register_presupuestos_routes(app):
     def siguiente_numero_presupuesto():
         """Obtiene el siguiente número de presupuesto disponible"""
         try:
-            # Obtener el último ID para asegurar secuencia
-            ultimo_id = db.session.query(func.max(Presupuesto.id)).scalar()
-            siguiente_num = (ultimo_id or 0) + 1
-            return jsonify({"numero": siguiente_num})
+            return jsonify({"numero": obtener_siguiente_numero_presupuesto_disponible()})
         except Exception as e:
             return jsonify({"numero": 1})
     
@@ -109,9 +127,17 @@ def register_presupuestos_routes(app):
             if numero_presupuesto_input:
                 numero_presupuesto = numero_presupuesto_input
             else:
-                # Obtener el último ID y sumar 1
-                ultimo_id = db.session.query(func.max(Presupuesto.id)).scalar() or 0
-                numero_presupuesto = str(ultimo_id + 1)
+                numero_presupuesto = obtener_siguiente_numero_presupuesto_disponible()
+
+            # Validar duplicado de número de presupuesto
+            existe_numero = db.session.query(Presupuesto).filter(
+                Presupuesto.numero_presupuesto == numero_presupuesto
+            ).first()
+            if existe_numero:
+                return jsonify({
+                    "success": False,
+                    "error": f"El número de presupuesto {numero_presupuesto} ya existe. Recarga y vuelve a intentarlo."
+                }), 400
             
             fecha_presupuesto_str = request.form.get("fecha_presupuesto")
             cliente_id_str = request.form.get("cliente_id", "0")
@@ -170,6 +196,12 @@ def register_presupuestos_routes(app):
             db.session.add(presupuesto)
             db.session.commit()
             return redirect(url_for('lista_presupuestos'))
+        except IntegrityError:
+            db.session.rollback()
+            return jsonify({
+                "success": False,
+                "error": "Número de presupuesto duplicado detectado en base de datos. Vuelve a intentarlo."
+            }), 400
         except Exception as e:
             db.session.rollback()
             import traceback
