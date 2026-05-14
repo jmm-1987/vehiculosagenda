@@ -456,14 +456,17 @@ def iniciar_scheduler():
         print(f"Iniciando scheduler... PID: {os.getpid()}", file=sys.stderr)
         _scheduler = BackgroundScheduler(daemon=False)
         _scheduler.add_job(
-            tarea_programada, 
-            'interval', 
+            tarea_programada,
+            'interval',
             minutes=30,
             id='tarea_ftp_transfer',
-            replace_existing=True
+            replace_existing=True,
+            max_instances=1,
+            coalesce=True,
+            next_run_time=datetime.datetime.now() + datetime.timedelta(minutes=30)
         )
         _scheduler.start()
-        print(f"Scheduler iniciado correctamente. Tarea programada cada 5 minutos. PID: {os.getpid()}", file=sys.stderr)
+        print(f"Scheduler iniciado correctamente. Tarea programada cada 30 minutos. PID: {os.getpid()}", file=sys.stderr)
         print(f"Estado del scheduler: running={_scheduler.running}", file=sys.stderr)
         
         # Verificar que el job está programado

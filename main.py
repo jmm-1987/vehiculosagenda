@@ -118,7 +118,7 @@ register_presupuestos_routes(app)
 register_presupuestoedit_routes(app)
 
 # Iniciar scheduler después de registrar todas las rutas
-iniciar_scheduler()
+#iniciar_scheduler() LO DEJO COMENTADO PORQUE SE EJECUTABA EN 6 WORKERS
 
 @app.route('/')
 def index():
