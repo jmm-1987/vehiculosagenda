@@ -1,172 +1,239 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-#from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import declarative_base
+from sqlalchemy.pool import NullPool
 from flask import g, has_request_context
 import logging
 import os
 
-# Configurar logging para detectar problemas
+# Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Obtener la ruta absoluta del directorio donde está este archivo
+# Ruta base
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE_PATH = os.path.join(BASE_DIR, 'database', 'VEHICULOS.db')
 
-# Asegurar que el directorio database existe
+# Asegurar carpeta database
 os.makedirs(os.path.dirname(DATABASE_PATH), exist_ok=True)
 
-# Usar ruta absoluta para evitar problemas con el directorio de trabajo actual
-engine = create_engine(f'sqlite:///{DATABASE_PATH}',
-connect_args={'check_same_thread': False})
+# Engine SQLite sin pool para evitar QueuePool limit
+engine = create_engine(
+    f'sqlite:///{DATABASE_PATH}',
+    connect_args={
+        'check_same_thread': False,
+        'timeout': 30
+    },
+    poolclass=NullPool,
+)
 
 Session = sessionmaker(bind=engine)
 Base = declarative_base()
 
+
 class SessionProxy:
     """
-    Proxy para la sesión de base de datos que obtiene la sesión del request actual.
-    Permite usar db.session como antes pero con sesiones por request.
+    Proxy de sesion para mantener compatibilidad con db.session
     """
+
     def __getattr__(self, name):
         if has_request_context():
             if 'db_session' not in g:
                 g.db_session = Session()
-                logger.info("Nueva sesión de BD creada para el request")
+                logger.info("Nueva sesion de BD creada para el request")
+
             return getattr(g.db_session, name)
-        else:
-            # Fuera de contexto de request (ej: scripts, inicialización)
-            # Crear una sesión temporal
-            if not hasattr(self, '_temp_session'):
-                self._temp_session = Session()
-                logger.warning("Sesión temporal creada fuera de contexto de request")
-            return getattr(self._temp_session, name)
-    
+
+        temp_session = Session()
+
+        try:
+            return getattr(temp_session, name)
+        finally:
+            temp_session.close()
+
     def __call__(self, *args, **kwargs):
-        """Permite usar db.session() como función"""
         if has_request_context():
             if 'db_session' not in g:
                 g.db_session = Session()
+                logger.info("Nueva sesion de BD creada para el request")
+
             return g.db_session
-        else:
-            if not hasattr(self, '_temp_session'):
-                self._temp_session = Session()
-            return self._temp_session
+
+        logger.warning("Sesion temporal creada fuera de contexto request")
+        return Session()
+
 
 def get_session():
     """
-    Obtiene o crea una sesión de base de datos para el request actual.
-    Usa Flask's g para almacenar la sesión por request.
+    Obtener o crear sesion del request actual
     """
+
     if has_request_context():
         if 'db_session' not in g:
             g.db_session = Session()
-            logger.info("Nueva sesión de BD creada para el request")
+            logger.info("Nueva sesion de BD creada para el request")
+
         return g.db_session
-    else:
-        # Fuera de contexto de request
-        session = Session()
-        logger.warning("Sesión creada fuera de contexto de request")
-        return session
+
+    logger.warning("Sesion creada fuera de contexto request")
+    return Session()
+
 
 def close_session(error=None):
     """
-    Cierra la sesión de base de datos al final del request.
-    Hace commit automático si no hay errores y hay cambios pendientes, rollback si hay errores.
+    Cerrar sesion al terminar request
     """
+
     if not has_request_context():
         return
-    
-    session = g.pop('db_session', None)
-    if session is not None:
-        try:
-            if error is None:
-                # Solo hacer commit si hay cambios pendientes y la sesión está activa
-                if session.is_active:
-                    # Verificar si hay objetos nuevos o modificados
-                    if session.new or session.dirty or session.deleted:
-                        try:
-                            session.commit()
-                            logger.info("Sesión de BD cerrada con commit automático exitoso")
-                        except Exception as commit_error:
-                            # Si el commit falla (ej: ya se hizo commit), hacer rollback
-                            logger.warning(f"Error en commit automático (posible commit previo): {commit_error}")
-                            try:
-                                session.rollback()
-                            except:
-                                pass
-                    else:
-                        logger.debug("Sesión de BD cerrada sin cambios pendientes")
-                else:
-                    logger.debug("Sesión de BD ya estaba cerrada o inactiva")
-            else:
-                session.rollback()
-                logger.warning(f"Sesión de BD cerrada con rollback debido a error: {error}")
-        except Exception as e:
-            logger.error(f"Error al cerrar sesión de BD: {e}")
-            try:
-                session.rollback()
-            except:
-                pass
-        finally:
-            try:
-                session.close()
-            except:
-                pass
 
-# Crear el proxy de sesión para compatibilidad con código existente
+    session = g.pop('db_session', None)
+
+    if session is None:
+        return
+
+    try:
+        if error is not None:
+            session.rollback()
+            logger.warning(
+                f"Sesion de BD cerrada con rollback por error: {error}"
+            )
+        else:
+            try:
+                if session.new or session.dirty or session.deleted:
+                    session.commit()
+                    logger.info(
+                        "Sesion de BD cerrada con commit automatico"
+                    )
+                else:
+                    session.rollback()
+
+            except Exception as commit_error:
+                logger.error(
+                    f"Error commit/rollback sesion: {commit_error}"
+                )
+                session.rollback()
+                raise
+
+    except Exception as e:
+        logger.error(f"Error cerrando sesion de BD: {e}")
+
+        try:
+            session.rollback()
+        except Exception:
+            pass
+
+    finally:
+        try:
+            session.close()
+        except Exception:
+            pass
+
+
 session = SessionProxy()
 
-# Utilidad: asegurar columnas en SQLite sin migraciones
-def ensure_column_exists(table_name: str, column_name: str, column_type_sql: str, default_value: str = None) -> None:
+
+def ensure_column_exists(
+    table_name: str,
+    column_name: str,
+    column_type_sql: str,
+    default_value: str = None
+) -> None:
     """
-    Añade una columna a una tabla SQLite si no existe.
-    Si se añade o está a NULL, opcionalmente asigna un valor por defecto a filas existentes.
+    Anade columna SQLite si no existe
     """
+
     try:
         with engine.connect() as conn:
-            # Verificar que la tabla existe
-            tables_check = conn.execute(text("SELECT name FROM sqlite_master WHERE type='table' AND name=:table_name"), {"table_name": table_name})
+            tables_check = conn.execute(
+                text(
+                    "SELECT name FROM sqlite_master "
+                    "WHERE type='table' AND name=:table_name"
+                ),
+                {"table_name": table_name}
+            )
+
             if not tables_check.fetchone():
-                # La tabla no existe, se creará automáticamente con SQLAlchemy
                 return
-            
-            # Consultar esquema actual
-            pragma = conn.execute(text(f"PRAGMA table_info({table_name})"))
+
+            pragma = conn.execute(
+                text(f"PRAGMA table_info({table_name})")
+            )
+
             columns = [row[1] for row in pragma.fetchall()]
+
             if column_name not in columns:
-                # Añadir la columna
                 if default_value is not None:
-                    # Para valores booleanos, no usar comillas
-                    if isinstance(default_value, bool) or (isinstance(default_value, int) and default_value in [0, 1]):
-                        conn.execute(text(
-                            f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type_sql} DEFAULT {default_value}"
-                        ))
+                    if (
+                        isinstance(default_value, bool)
+                        or (
+                            isinstance(default_value, int)
+                            and default_value in [0, 1]
+                        )
+                    ):
+                        conn.execute(
+                            text(
+                                f"ALTER TABLE {table_name} "
+                                f"ADD COLUMN {column_name} "
+                                f"{column_type_sql} "
+                                f"DEFAULT {default_value}"
+                            )
+                        )
                     else:
-                        conn.execute(text(
-                            f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type_sql} DEFAULT '{default_value}'"
-                        ))
+                        conn.execute(
+                            text(
+                                f"ALTER TABLE {table_name} "
+                                f"ADD COLUMN {column_name} "
+                                f"{column_type_sql} "
+                                f"DEFAULT '{default_value}'"
+                            )
+                        )
                 else:
-                    conn.execute(text(
-                        f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type_sql}"
-                    ))
+                    conn.execute(
+                        text(
+                            f"ALTER TABLE {table_name} "
+                            f"ADD COLUMN {column_name} "
+                            f"{column_type_sql}"
+                        )
+                    )
+
                 conn.commit()
-            # Rellenar valores nulos con el default si procede
+
             if default_value is not None:
                 try:
-                    # Para valores booleanos, no usar comillas
-                    if isinstance(default_value, bool) or (isinstance(default_value, int) and default_value in [0, 1]):
-                        conn.execute(text(
-                            f"UPDATE {table_name} SET {column_name} = {default_value} WHERE {column_name} IS NULL"
-                        ))
+                    if (
+                        isinstance(default_value, bool)
+                        or (
+                            isinstance(default_value, int)
+                            and default_value in [0, 1]
+                        )
+                    ):
+                        conn.execute(
+                            text(
+                                f"UPDATE {table_name} "
+                                f"SET {column_name} = {default_value} "
+                                f"WHERE {column_name} IS NULL"
+                            )
+                        )
                     else:
-                        conn.execute(text(
-                            f"UPDATE {table_name} SET {column_name} = '{default_value}' WHERE {column_name} IS NULL"
-                        ))
+                        conn.execute(
+                            text(
+                                f"UPDATE {table_name} "
+                                f"SET {column_name} = '{default_value}' "
+                                f"WHERE {column_name} IS NULL"
+                            )
+                        )
+
                     conn.commit()
+
                 except Exception as e:
-                    print(f"Error actualizando valores por defecto en {table_name}.{column_name}: {e}")
+                    print(
+                        f"Error actualizando valores por defecto "
+                        f"en {table_name}.{column_name}: {e}"
+                    )
+
     except Exception as e:
-        # Mostrar el error para debugging pero no interrumpir el arranque
-        print(f"Error añadiendo columna {column_name} a {table_name}: {e}")
+        print(
+            f"Error anadiendo columna "
+            f"{column_name} a {table_name}: {e}"
+        )
