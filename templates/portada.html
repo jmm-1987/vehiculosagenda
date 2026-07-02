@@ -263,6 +263,19 @@
         <p class="portada-subtitle"></p>
         
         <div class="cards-grid">
+            {% if current_user.username|lower == 'yramos' %}
+            <a href="/registro_incidencias_aldipod" class="portada-card card-aldipod">
+                <i class="fas fa-file-alt"></i>
+                <h2>Registros Aldipod</h2>
+                <p>Ver y gestionar incidencias</p>
+            </a>
+
+            <a href="/presupuestos" class="portada-card card-presupuestos">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <h2>Presupuestos</h2>
+                <p>Gestión de presupuestos</p>
+            </a>
+            {% else %}
             {% if current_user.username != 'presupuestos' and current_user.username != 'caja' %}
             <!-- Primera fila -->
             <a href="/index" class="portada-card card-vehiculos">
@@ -349,6 +362,7 @@
                     <p>Gestión de ficheros del sistema</p>
                 </div>
                 {% endif %}
+            {% endif %}
             {% endif %}
             
         </div>

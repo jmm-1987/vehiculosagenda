@@ -52,6 +52,61 @@
             background-color: #a01200;
         }
 
+        .top-bar-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+            z-index: 2;
+        }
+
+        .top-button-presupuestos {
+            background-color: #6f42c1 !important;
+            padding: 6px 14px !important;
+            font-weight: bold;
+        }
+
+        .top-button-presupuestos:hover {
+            background-color: #5a32a3 !important;
+        }
+
+        .nav-modulos-yramos {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .nav-modulos-yramos a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+
+        .nav-modulos-yramos a.btn-incidencias {
+            background-color: #dc3545;
+        }
+
+        .nav-modulos-yramos a.btn-presupuestos {
+            background-color: #6f42c1;
+        }
+
+        .nav-modulos-yramos a.btn-portada {
+            background-color: #343a40;
+        }
+
+        .nav-modulos-yramos a:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
         .container {
             max-width: 1400px;
             margin: 30px auto;
@@ -287,15 +342,30 @@
 </head>
 <body>
     <div class="top-bar">
-        <a href="/index">
+        <a href="{% if current_user.username|lower == 'yramos' %}/portada{% else %}/index{% endif %}">
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo Alditraex">
         </a>
         <span class="top-user" style="position: absolute; left: 50%; transform: translateX(-50%);">{{ current_user.username if current_user.is_authenticated else 'No logueado' }}</span>
-        <a href="/logout" class="top-button">Cerrar Sesión</a>
+        <div class="top-bar-actions">
+            {% if current_user.username|lower == 'yramos' %}
+            <a href="/presupuestos" class="top-button top-button-presupuestos">
+                <i class="fas fa-file-invoice-dollar"></i> Presupuestos
+            </a>
+            {% endif %}
+            <a href="/logout" class="top-button">Cerrar Sesión</a>
+        </div>
     </div>
 
     <div class="container">
         <h1><i class="fas fa-clipboard-list"></i> Panel de control ALDIPOD</h1>
+
+        {% if current_user.username|lower == 'yramos' %}
+        <div class="nav-modulos-yramos">
+            <a href="/portada" class="btn-portada"><i class="fas fa-home"></i> Inicio</a>
+            <a href="/registro_incidencias_aldipod" class="btn-incidencias"><i class="fas fa-clipboard-list"></i> Incidencias</a>
+            <a href="/presupuestos" class="btn-presupuestos"><i class="fas fa-file-invoice-dollar"></i> Presupuestos</a>
+        </div>
+        {% endif %}
 
 
 

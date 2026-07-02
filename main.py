@@ -58,6 +58,8 @@ try:
     ensure_column_exists('presupuesto', 'bultos', 'VARCHAR(50)', '')
     ensure_column_exists('presupuesto', 'kg', 'VARCHAR(50)', '')
     ensure_column_exists('presupuesto', 'medidas', 'VARCHAR(200)', '')
+    ensure_column_exists('presupuesto', 'usuario_creacion', 'VARCHAR(100)', '')
+    ensure_column_exists('presupuesto', 'fecha_creacion', 'DATETIME', None)
     # La tabla factura_proforma se creará automáticamente con SQLAlchemy
 except Exception as e:
     print(f"Error en migraciones: {e}")
@@ -170,7 +172,7 @@ def portada():
             return redirect(url_for('scanner_clientes'))
         if rol == 'oficina':
             return redirect(url_for('scanner_clientes'))
-        if rol == 'incidencias':
+        if rol == 'incidencias' and (not username_str or username_str.strip().lower() != 'yramos'):
             return redirect(url_for('registro_incidencias_aldipod'))
     except Exception:
         pass
@@ -185,6 +187,8 @@ def home():
     # Bloquear acceso al usuario 'caja'
     if current_user.username == 'caja':
         return redirect(url_for('caja_reembolsos_index'))
+    if current_user.username and current_user.username.strip().lower() == 'yramos':
+        return redirect(url_for('portada'))
     
     # Redirección por rol
     try:
@@ -196,7 +200,7 @@ def home():
             return redirect(url_for('scanner_clientes'))
         if rol == 'oficina':
             return redirect(url_for('scanner_clientes'))
-        if rol == 'incidencias':
+        if rol == 'incidencias' and (not username or username.strip().lower() != 'yramos'):
             return redirect(url_for('registro_incidencias_aldipod'))
     except Exception:
         pass
