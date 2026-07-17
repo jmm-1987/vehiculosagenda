@@ -1,0 +1,267 @@
+{# Contenido del documento Orden de Carga — compartido entre formulario e impresión #}
+{% macro celda(valor) -%}
+{{ valor if valor else '—' }}
+{%- endmacro %}
+
+<div class="sheet">
+  <div class="head">
+    <div class="head-logo">
+      <img src="{{ static_logo }}" alt="Alditraex">
+    </div>
+    <div class="head-right">
+      <p class="doc-title">Orden de Carga</p>
+      <p class="doc-sub">Alditraex Mérida S.L.</p>
+    </div>
+  </div>
+  <svg class="swoop" viewBox="0 0 1000 16" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,4 C250,16 650,-6 1000,8 L1000,16 L0,16 Z" fill="#c99a3b"/>
+  </svg>
+
+  <div class="order-strip">
+    <div>
+      <div class="label">Nº Orden de Carga</div>
+      {% if lectura %}
+      <div class="val">{{ orden.numero_orden }}</div>
+      {% else %}
+      <input type="text" name="numero_orden" id="orden-numero" value="{{ orden.numero_orden }}" required>
+      {% endif %}
+    </div>
+    <div class="num-block">
+      <div class="label">Emitida</div>
+      {% if lectura %}
+      <div class="fecha-val">{{ orden.fecha_emision.strftime('%d/%m/%Y') if orden.fecha_emision else '—' }}</div>
+      {% else %}
+      <input type="date" name="fecha_emision" value="{{ orden.fecha_emision.strftime('%Y-%m-%d') if orden.fecha_emision else '' }}" required
+             style="text-align:right;color:var(--ink-soft);font-family:'Inter',sans-serif;font-weight:500;font-size:14px;">
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="body-pad">
+    <div class="block-carga">
+      <div class="section-title"><span class="tag">Datos de Carga</span><span class="rule"></span></div>
+      <div class="grid attach-bottom">
+        <div class="field">
+          <label>Fecha carga</label>
+          {% if lectura %}
+          <div class="cell-val">{{ orden.fecha_carga.strftime('%d/%m/%Y') if orden.fecha_carga else '—' }}</div>
+          {% else %}
+          <input type="date" name="fecha_carga" value="{{ orden.fecha_carga.strftime('%Y-%m-%d') if orden.fecha_carga else '' }}">
+          {% endif %}
+        </div>
+        <div class="field">
+          <label>Fecha prevista de llegada</label>
+          {% if lectura %}
+          <div class="cell-val">{{ orden.fecha_prevista_llegada.strftime('%d/%m/%Y') if orden.fecha_prevista_llegada else '—' }}</div>
+          {% else %}
+          <input type="date" name="fecha_prevista_llegada" value="{{ orden.fecha_prevista_llegada.strftime('%Y-%m-%d') if orden.fecha_prevista_llegada else '' }}">
+          {% endif %}
+        </div>
+        <div class="field">
+          <label>Proveedor</label>
+          {% if lectura %}
+          <div class="cell-val">{{ celda(orden.proveedor) }}</div>
+          {% else %}
+          <select name="proveedor">
+            <option value="">Selecciona...</option>
+            {% for p in ['Transnatur','Decoexsa','Otros'] %}
+            <option value="{{ p }}" {% if orden.proveedor == p %}selected{% endif %}>{{ p }}</option>
+            {% endfor %}
+          </select>
+          {% endif %}
+        </div>
+        <div class="field">
+          <label>Referencia</label>
+          {% if lectura %}
+          <div class="cell-val">{{ celda(orden.referencia) }}</div>
+          {% else %}
+          <input type="text" name="referencia" value="{{ orden.referencia or '' }}" list="dl-referencia" placeholder="—">
+          <datalist id="dl-referencia"><option value="Pedido"><option value="Albarán"><option value="Factura"></datalist>
+          {% endif %}
+        </div>
+      </div>
+      <div class="grid grid-3 attach-top">
+        <div class="field">
+          <label>Pallets</label>
+          {% if lectura %}
+          <div class="cell-val">{{ celda(orden.pallets) }}</div>
+          {% else %}
+          <input type="text" name="pallets" value="{{ orden.pallets or '' }}" placeholder="—">
+          {% endif %}
+        </div>
+        <div class="field">
+          <label>Peso (kg)</label>
+          {% if lectura %}
+          <div class="cell-val">{{ celda(orden.peso_kg) }}</div>
+          {% else %}
+          <input type="text" name="peso_kg" value="{{ orden.peso_kg or '' }}" placeholder="—">
+          {% endif %}
+        </div>
+        <div class="field">
+          <label>Volumen (m³)</label>
+          {% if lectura %}
+          <div class="cell-val">{{ celda(orden.volumen_m3) }}</div>
+          {% else %}
+          <input type="text" name="volumen_m3" value="{{ orden.volumen_m3 or '' }}" placeholder="—">
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="delivery">
+      <div class="section-title"><span class="tag">Datos de Entrega</span><span class="rule"></span></div>
+      <div class="grid">
+        <div class="field wide-2">
+          <label>Nombre</label>
+          {% if lectura %}
+          <div class="cell-val">{{ celda(orden.nombre_entrega) }}</div>
+          {% else %}
+          <div class="autocomplete-wrap">
+            <input type="text" name="nombre_entrega" id="nombre-input" value="{{ orden.nombre_entrega or '' }}" autocomplete="off" placeholder="—">
+            <div id="nombre-suggestions" class="suggestions-list"></div>
+          </div>
+          {% endif %}
+        </div>
+        <div class="field wide-2">
+          <label class="icon-label">
+            <svg class="ico" viewBox="0 0 24 24"><path d="M12 22s7-6.1 7-12A7 7 0 1 0 5 10c0 5.9 7 12 7 12z"/><circle cx="12" cy="10" r="2.4"/></svg>
+            Dirección
+          </label>
+          {% if lectura %}
+          <div class="cell-val">{{ celda(orden.direccion) }}</div>
+          {% else %}
+          <input type="text" name="direccion" id="direccion-input" value="{{ orden.direccion or '' }}" placeholder="—">
+          {% endif %}
+        </div>
+        <div class="field">
+          <label>C.P.</label>
+          {% if lectura %}
+          <div class="cell-val">{{ celda(orden.cp) }}</div>
+          {% else %}
+          <input type="text" name="cp" id="cp-input" value="{{ orden.cp or '' }}" placeholder="—">
+          {% endif %}
+        </div>
+        <div class="field">
+          <label>Población</label>
+          {% if lectura %}
+          <div class="cell-val">{{ celda(orden.poblacion) }}</div>
+          {% else %}
+          <input type="text" name="poblacion" id="poblacion-input" value="{{ orden.poblacion or '' }}" placeholder="—">
+          {% endif %}
+        </div>
+        <div class="field">
+          <label>País</label>
+          {% if lectura %}
+          <div class="cell-val">{{ celda(orden.pais) }}</div>
+          {% else %}
+          <input type="text" name="pais" id="pais-input" value="{{ orden.pais or '' }}" placeholder="—">
+          {% endif %}
+        </div>
+        <div class="field">
+          <label class="icon-label">
+            <svg class="ico" viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1.1-.2 1.2.4 2.5.6 3.8.6.6 0 1 .4 1 1V20.5c0 .6-.4 1-1 1C10.6 21.5 2.5 13.4 2.5 3.7c0-.6.4-1 1-1H7.2c.6 0 1 .4 1 1 0 1.3.2 2.6.6 3.8.1.4 0 .8-.2 1.1L6.6 10.8z"/></svg>
+            Tlf
+          </label>
+          {% if lectura %}
+          <div class="cell-val">{{ celda(orden.telefono) }}</div>
+          {% else %}
+          <input type="text" name="telefono" id="tlf-input" value="{{ orden.telefono or '' }}" placeholder="—">
+          {% endif %}
+        </div>
+        <div class="field wide-2">
+          <label>Contacto</label>
+          {% if lectura %}
+          <div class="cell-val">{{ celda(orden.contacto) }}</div>
+          {% else %}
+          <input type="text" name="contacto" id="contacto-input" value="{{ orden.contacto or '' }}" placeholder="—">
+          {% endif %}
+        </div>
+        <div class="field wide-2 obs">
+          <label>Observaciones</label>
+          {% if lectura %}
+          <div class="cell-val">{{ celda(orden.observaciones) }}</div>
+          {% else %}
+          <textarea name="observaciones" rows="1" placeholder="—">{{ orden.observaciones or '' }}</textarea>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="costs">
+      <p class="costs-title">Costes del Transporte</p>
+      <div class="costs-row">
+        <div class="cost-item">
+          <label>Portes</label>
+          <div class="amount">
+            <span class="curr">€</span>
+            {% if lectura %}
+            <span class="valor">{{ format_importe(orden.portes) }}</span>
+            {% else %}
+            <input type="text" name="portes" id="c-portes" class="cost-input" value="{{ format_importe(orden.portes) }}" placeholder="0,00">
+            {% endif %}
+          </div>
+        </div>
+        <div class="cost-item">
+          <label>MAUT / LSVA / SULFUR</label>
+          <div class="amount">
+            <span class="curr">€</span>
+            {% if lectura %}
+            <span class="valor">{{ format_importe(orden.maut_lsva) }}</span>
+            {% else %}
+            <input type="text" name="maut_lsva" id="c-maut" class="cost-input" value="{{ format_importe(orden.maut_lsva) }}" placeholder="0,00">
+            {% endif %}
+          </div>
+        </div>
+        <div class="cost-item">
+          <label>Carburante</label>
+          <div class="amount">
+            <span class="curr">€</span>
+            {% if lectura %}
+            <span class="valor">{{ format_importe(orden.carburante) }}</span>
+            {% else %}
+            <input type="text" name="carburante" id="c-carburante" class="cost-input" value="{{ format_importe(orden.carburante) }}" placeholder="0,00">
+            {% endif %}
+          </div>
+        </div>
+        <div class="cost-item total">
+          <label>Total</label>
+          <div class="amount">
+            <span class="curr">€</span>
+            {% if lectura %}
+            <span class="valor">{{ format_importe(orden.total) }}</span>
+            {% else %}
+            <input type="text" id="c-total" readonly value="{{ format_importe(orden.total) }}" placeholder="0,00">
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if not lectura %}
+    <div class="oc-adjunto no-print">
+      <label><strong>PDF adjunto</strong> (se añadirá al imprimir como páginas extra)</label><br>
+      {% if orden.pdf_adjunto %}
+      <p>Archivo actual: <strong>{{ orden.pdf_adjunto }}</strong></p>
+      {% endif %}
+      <input type="file" name="pdf_adjunto" accept="application/pdf,.pdf">
+    </div>
+    {% endif %}
+
+    <div class="footer-zone">
+      <div class="contacts-title">Personas de Contacto</div>
+      <div class="contacts">
+        <div class="contact-card">
+          <span class="role">Departamento de Tráfico</span>
+          <span class="name">Iván Castro</span>
+          <span class="line">icastro@alditraex.es<span class="dot">·</span>658 933 159</span>
+        </div>
+        <div class="contact-card" style="text-align:right;">
+          <span class="role">Departamento de Tráfico</span>
+          <span class="name">Pedro A. Serrano Matilla</span>
+          <span class="line">pserrano@alditraex.es<span class="dot">·</span>613 034 449</span>
+        </div>
+      </div>
+      <div class="foot-strip">Alditraex Mérida S.L. — Documento interno de gestión de transporte</div>
+    </div>
+  </div>
+</div>

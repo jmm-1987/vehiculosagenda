@@ -275,6 +275,17 @@
                 <h2>Presupuestos</h2>
                 <p>Gestión de presupuestos</p>
             </a>
+            {% elif current_user.username == 'presupuestos' %}
+            <a href="/presupuestos" class="portada-card card-presupuestos">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <h2>Presupuestos</h2>
+                <p>Gestión de presupuestos</p>
+            </a>
+            <a href="/ordenes_carga_internacionales" class="portada-card" style="border-top: 5px solid #17a2b8;">
+                <i class="fas fa-truck-loading"></i>
+                <h2>Órdenes de Carga Internacionales</h2>
+                <p>Gestión de órdenes de carga y transporte</p>
+            </a>
             {% else %}
             {% if current_user.username != 'presupuestos' and current_user.username != 'caja' %}
             <!-- Primera fila -->
@@ -320,6 +331,11 @@
                 <i class="fas fa-file-invoice-dollar"></i>
                 <h2>Presupuestos</h2>
                 <p>Gestión de presupuestos</p>
+            </a>
+            <a href="/ordenes_carga_internacionales" class="portada-card" style="border-top: 5px solid #17a2b8;">
+                <i class="fas fa-truck-loading"></i>
+                <h2>Órdenes de Carga Internacionales</h2>
+                <p>Gestión de órdenes de carga y transporte</p>
             </a>
             {% endif %}
 

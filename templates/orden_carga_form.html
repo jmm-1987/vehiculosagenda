@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% if es_nueva %}Nueva{% else %}Editar{% endif %} Orden de Carga</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='orden_carga.css') }}">
+</head>
+<body class="oc-body">
+<div class="toolbar no-print">
+    <span>Orden de Carga · Alditraex Mérida S.L.</span>
+    <button type="submit" form="form-orden">Guardar</button>
+    <button type="button" class="btn-secondary" onclick="imprimirOrden()">Imprimir</button>
+    <a href="{{ url_for('lista_ordenes_carga') }}" class="btn-secondary">Listado</a>
+</div>
+
+<form id="form-orden" method="POST" action="{{ url_for('guardar_orden_carga') }}" enctype="multipart/form-data">
+<input type="hidden" name="id" value="{{ orden.id if orden.id else '' }}">
+
+{% set lectura = false %}
+{% set static_logo = url_for('static', filename='logo.png') %}
+{% include '_orden_carga_sheet.html' %}
+</form>
+
+{% if orden.id and orden.pdf_adjunto %}
+<form method="POST" action="{{ url_for('eliminar_adjunto_orden', id=orden.id) }}" class="no-print" style="max-width:210mm;margin:0 auto 20px;text-align:right;">
+    <button type="submit" class="btn-secondary">Quitar PDF adjunto</button>
+</form>
+{% endif %}
+
+<script>
+let clientsDB = {};
+function parseAmount(v){ if(!v) return 0; const n = v.replace(/\./g,'').replace(',','.').replace(/[^0-9.\-]/g,''); const f = parseFloat(n); return isNaN(f)?0:f; }
+function formatAmount(n){ return n.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function recalcTotal(){
+    const t = parseAmount(document.getElementById('c-portes').value) + parseAmount(document.getElementById('c-maut').value) + parseAmount(document.getElementById('c-carburante').value);
+    document.getElementById('c-total').value = formatAmount(t);
+}
+document.querySelectorAll('.cost-input').forEach(el => el.addEventListener('input', recalcTotal));
+
+async function loadClients(){
+    const r = await fetch('{{ url_for("api_clientes_orden_carga") }}');
+    clientsDB = await r.json();
+}
+function applyClient(name){
+    const d = clientsDB[name]; if(!d) return;
+    document.getElementById('direccion-input').value = d.direccion||'';
+    document.getElementById('cp-input').value = d.cp||'';
+    document.getElementById('poblacion-input').value = d.poblacion||'';
+    document.getElementById('pais-input').value = d.pais||'';
+    document.getElementById('tlf-input').value = d.telefono||'';
+    document.getElementById('contacto-input').value = d.contacto||'';
+}
+const nombreInput = document.getElementById('nombre-input');
+const sugList = document.getElementById('nombre-suggestions');
+nombreInput.addEventListener('input', ()=>{
+    const q = nombreInput.value.trim().toLowerCase();
+    const matches = Object.keys(clientsDB).filter(n => n.toLowerCase().includes(q)).slice(0,8);
+    sugList.innerHTML = matches.map(n => `<div class="suggestion-item" data-n="${n.replace(/"/g,'&quot;')}">${n}</div>`).join('');
+    sugList.classList.toggle('open', matches.length > 0);
+    if(clientsDB[nombreInput.value.trim()]) applyClient(nombreInput.value.trim());
+});
+sugList.addEventListener('mousedown', e=>{
+    const item = e.target.closest('.suggestion-item');
+    if(!item) return;
+    e.preventDefault();
+    nombreInput.value = item.dataset.n;
+    applyClient(item.dataset.n);
+    sugList.classList.remove('open');
+});
+function imprimirOrden(){
+    {% if orden.id %}
+    const tieneAdj = {{ 'true' if orden.pdf_adjunto else 'false' }};
+    if(tieneAdj){
+        window.open('{{ url_for("pdf_combinado_orden_carga", id=orden.id) }}', '_blank');
+    } else {
+        window.open('{{ url_for("imprimir_orden_carga", id=orden.id) }}', '_blank');
+    }
+    {% else %}
+    alert('Guarda la orden antes de imprimir.');
+    {% endif %}
+}
+loadClients();
+</script>
+</body>
+</html>

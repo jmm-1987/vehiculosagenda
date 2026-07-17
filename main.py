@@ -37,6 +37,7 @@ from rrhh.rrhh_routes import register_rrhh_routes
 from caja.caja import register_caja_routes
 from presupuestos.presupuestos import register_presupuestos_routes
 from presupuestos.edicion import register_presupuestoedit_routes
+from ordenes_carga.ordenes_carga import register_ordenes_carga_routes
 from sqlalchemy import func
 
 # Asegurar columnas nuevas en SQLite al arranque (sin migraciones)
@@ -118,6 +119,10 @@ register_rrhh_routes(app)
 register_caja_routes(app)
 register_presupuestos_routes(app)
 register_presupuestoedit_routes(app)
+register_ordenes_carga_routes(app)
+
+with app.app_context():
+    db.Base.metadata.create_all(db.engine)
 
 # Iniciar scheduler después de registrar todas las rutas
 #iniciar_scheduler() LO DEJO COMENTADO PORQUE SE EJECUTABA EN 6 WORKERS
@@ -158,7 +163,7 @@ def portada():
     if username and username.username == 'email':
         return redirect(url_for('email_destinatarios'))
     if username and username.username == 'presupuestos':
-        return redirect(url_for('lista_presupuestos'))
+        return render_template('portada.html')
     if username and username.username == 'caja':
         return redirect(url_for('caja_reembolsos_index'))
     

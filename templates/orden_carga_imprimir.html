@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Orden de Carga {{ orden.numero_orden }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {% if solo_pdf %}
+    <link rel="stylesheet" href="orden_carga.css">
+    {% else %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='orden_carga.css') }}">
+    {% endif %}
+</head>
+<body class="oc-body">
+{% if not solo_pdf %}
+<div class="toolbar no-print">
+    <span>Impresión — Orden {{ orden.numero_orden }}</span>
+    {% if tiene_adjunto %}
+    <a href="{{ url_for('pdf_combinado_orden_carga', id=orden.id) }}" target="_blank" class="btn-secondary">Abrir PDF con adjunto</a>
+    {% endif %}
+    <button type="button" onclick="window.print()">Imprimir</button>
+</div>
+{% endif %}
+
+{% set lectura = true %}
+{% if solo_pdf %}
+{% set static_logo = 'logo.png' %}
+{% else %}
+{% set static_logo = url_for('static', filename='logo.png') %}
+{% endif %}
+{% include '_orden_carga_sheet.html' %}
+
+{% if not solo_pdf %}
+<script>window.addEventListener('load', function(){ setTimeout(function(){ window.print(); }, 500); });</script>
+{% endif %}
+</body>
+</html>

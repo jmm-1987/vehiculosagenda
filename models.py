@@ -517,3 +517,46 @@ class FacturaProforma(db.Base):
         self.observaciones = observaciones
         self.fecha_creacion = fecha_creacion
         self.usuario_creacion = usuario_creacion
+
+
+class ClienteOrdenCarga(db.Base):
+    __tablename__ = "clientes_orden_carga"
+    id = Column(Integer, primary_key=True)
+    nombre = Column(String(200), nullable=False, unique=True)
+    direccion = Column(String(300), default='')
+    cp = Column(String(20), default='')
+    poblacion = Column(String(100), default='')
+    pais = Column(String(100), default='')
+    telefono = Column(String(50), default='')
+    contacto = Column(String(200), default='')
+    activo = Column(Boolean, default=True)
+
+
+class OrdenCargaInternacional(db.Base):
+    __tablename__ = "orden_carga_internacional"
+    id = Column(Integer, primary_key=True)
+    numero_orden = Column(String(50), nullable=False, unique=True)
+    fecha_emision = Column(Date, nullable=False)
+    fecha_carga = Column(Date)
+    fecha_prevista_llegada = Column(Date)
+    proveedor = Column(String(100), default='')
+    referencia = Column(String(200), default='')
+    pallets = Column(String(50), default='')
+    peso_kg = Column(String(50), default='')
+    volumen_m3 = Column(String(50), default='')
+    nombre_entrega = Column(String(200), default='')
+    direccion = Column(String(300), default='')
+    cp = Column(String(20), default='')
+    poblacion = Column(String(100), default='')
+    pais = Column(String(100), default='')
+    telefono = Column(String(50), default='')
+    contacto = Column(String(200), default='')
+    observaciones = Column(String(2000), default='')
+    portes = Column(Float, default=0.0)
+    maut_lsva = Column(Float, default=0.0)
+    carburante = Column(Float, default=0.0)
+    total = Column(Float, default=0.0)
+    pdf_adjunto = Column(String(300), default='')
+    activo = Column(Boolean, default=True)
+    fecha_creacion = Column(DateTime, nullable=False)
+    usuario_creacion = Column(String(100), default='')
