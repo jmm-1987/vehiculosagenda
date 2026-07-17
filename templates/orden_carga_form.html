@@ -72,12 +72,7 @@ sugList.addEventListener('mousedown', e=>{
 });
 function imprimirOrden(){
     {% if orden.id %}
-    const tieneAdj = {{ 'true' if orden.pdf_adjunto else 'false' }};
-    if(tieneAdj){
-        window.open('{{ url_for("pdf_combinado_orden_carga", id=orden.id) }}', '_blank');
-    } else {
-        window.open('{{ url_for("imprimir_orden_carga", id=orden.id) }}', '_blank');
-    }
+    window.open('{{ url_for("imprimir_orden_carga", id=orden.id) }}', '_blank');
     {% else %}
     alert('Guarda la orden antes de imprimir.');
     {% endif %}

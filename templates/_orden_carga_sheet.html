@@ -12,10 +12,10 @@
       <p class="doc-title">Orden de Carga</p>
       <p class="doc-sub">Alditraex Mérida S.L.</p>
     </div>
+    <svg class="swoop" viewBox="0 0 1000 16" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,4 C250,16 650,-6 1000,8 L1000,16 L0,16 Z" fill="#c99a3b"/>
+    </svg>
   </div>
-  <svg class="swoop" viewBox="0 0 1000 16" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M0,4 C250,16 650,-6 1000,8 L1000,16 L0,16 Z" fill="#c99a3b"/>
-  </svg>
 
   <div class="order-strip">
     <div>
@@ -40,6 +40,43 @@
   <div class="body-pad">
     <div class="block-carga">
       <div class="section-title"><span class="tag">Datos de Carga</span><span class="rule"></span></div>
+      {% if lectura %}
+      <table class="oc-table">
+        <colgroup><col span="4" style="width:25%"></colgroup>
+        <tr>
+          <td class="field">
+            <label>Fecha carga</label>
+            <div class="cell-val">{{ orden.fecha_carga.strftime('%d/%m/%Y') if orden.fecha_carga else '—' }}</div>
+          </td>
+          <td class="field">
+            <label>Fecha prevista de llegada</label>
+            <div class="cell-val">{{ orden.fecha_prevista_llegada.strftime('%d/%m/%Y') if orden.fecha_prevista_llegada else '—' }}</div>
+          </td>
+          <td class="field">
+            <label>Proveedor</label>
+            <div class="cell-val">{{ celda(orden.proveedor) }}</div>
+          </td>
+          <td class="field">
+            <label>Referencia</label>
+            <div class="cell-val">{{ celda(orden.referencia) }}</div>
+          </td>
+        </tr>
+        <tr>
+          <td class="field">
+            <label>Pallets</label>
+            <div class="cell-val">{{ celda(orden.pallets) }}</div>
+          </td>
+          <td class="field">
+            <label>Peso (kg)</label>
+            <div class="cell-val">{{ celda(orden.peso_kg) }}</div>
+          </td>
+          <td class="field" colspan="2">
+            <label>Volumen (m³)</label>
+            <div class="cell-val">{{ celda(orden.volumen_m3) }}</div>
+          </td>
+        </tr>
+      </table>
+      {% else %}
       <div class="grid attach-bottom">
         <div class="field">
           <label>Fecha carga</label>
@@ -106,10 +143,54 @@
           {% endif %}
         </div>
       </div>
+      {% endif %}
     </div>
 
     <div class="delivery">
       <div class="section-title"><span class="tag">Datos de Entrega</span><span class="rule"></span></div>
+      {% if lectura %}
+      <table class="oc-table">
+        <colgroup><col span="4" style="width:25%"></colgroup>
+        <tr>
+          <td class="field" colspan="2">
+            <label>Nombre</label>
+            <div class="cell-val">{{ celda(orden.nombre_entrega) }}</div>
+          </td>
+          <td class="field" colspan="2">
+            <label>Dirección</label>
+            <div class="cell-val">{{ celda(orden.direccion) }}</div>
+          </td>
+        </tr>
+        <tr>
+          <td class="field">
+            <label>C.P.</label>
+            <div class="cell-val">{{ celda(orden.cp) }}</div>
+          </td>
+          <td class="field">
+            <label>Población</label>
+            <div class="cell-val">{{ celda(orden.poblacion) }}</div>
+          </td>
+          <td class="field">
+            <label>País</label>
+            <div class="cell-val">{{ celda(orden.pais) }}</div>
+          </td>
+          <td class="field">
+            <label>Tlf</label>
+            <div class="cell-val">{{ celda(orden.telefono) }}</div>
+          </td>
+        </tr>
+        <tr>
+          <td class="field" colspan="2">
+            <label>Contacto</label>
+            <div class="cell-val">{{ celda(orden.contacto) }}</div>
+          </td>
+          <td class="field" colspan="2">
+            <label>Observaciones</label>
+            <div class="cell-val">{{ celda(orden.observaciones) }}</div>
+          </td>
+        </tr>
+      </table>
+      {% else %}
       <div class="grid">
         <div class="field wide-2">
           <label>Nombre</label>
@@ -185,56 +266,64 @@
           {% endif %}
         </div>
       </div>
+      {% endif %}
     </div>
 
     <div class="costs">
       <p class="costs-title">Costes del Transporte</p>
+      {% if lectura %}
+      <table class="costs-table">
+        <tr>
+          <td class="cost-item">
+            <label>Portes</label>
+            <div class="amount"><span class="curr">€</span><span class="valor">{{ format_importe(orden.portes) }}</span></div>
+          </td>
+          <td class="cost-item">
+            <label>MAUT / LSVA / SULFUR</label>
+            <div class="amount"><span class="curr">€</span><span class="valor">{{ format_importe(orden.maut_lsva) }}</span></div>
+          </td>
+          <td class="cost-item">
+            <label>Carburante</label>
+            <div class="amount"><span class="curr">€</span><span class="valor">{{ format_importe(orden.carburante) }}</span></div>
+          </td>
+          <td class="cost-item total">
+            <label>Total</label>
+            <div class="amount"><span class="curr">€</span><span class="valor">{{ format_importe(orden.total) }}</span></div>
+          </td>
+        </tr>
+      </table>
+      {% else %}
       <div class="costs-row">
         <div class="cost-item">
           <label>Portes</label>
           <div class="amount">
             <span class="curr">€</span>
-            {% if lectura %}
-            <span class="valor">{{ format_importe(orden.portes) }}</span>
-            {% else %}
             <input type="text" name="portes" id="c-portes" class="cost-input" value="{{ format_importe(orden.portes) }}" placeholder="0,00">
-            {% endif %}
           </div>
         </div>
         <div class="cost-item">
           <label>MAUT / LSVA / SULFUR</label>
           <div class="amount">
             <span class="curr">€</span>
-            {% if lectura %}
-            <span class="valor">{{ format_importe(orden.maut_lsva) }}</span>
-            {% else %}
             <input type="text" name="maut_lsva" id="c-maut" class="cost-input" value="{{ format_importe(orden.maut_lsva) }}" placeholder="0,00">
-            {% endif %}
           </div>
         </div>
         <div class="cost-item">
           <label>Carburante</label>
           <div class="amount">
             <span class="curr">€</span>
-            {% if lectura %}
-            <span class="valor">{{ format_importe(orden.carburante) }}</span>
-            {% else %}
             <input type="text" name="carburante" id="c-carburante" class="cost-input" value="{{ format_importe(orden.carburante) }}" placeholder="0,00">
-            {% endif %}
           </div>
         </div>
         <div class="cost-item total">
           <label>Total</label>
           <div class="amount">
             <span class="curr">€</span>
-            {% if lectura %}
-            <span class="valor">{{ format_importe(orden.total) }}</span>
-            {% else %}
             <input type="text" id="c-total" readonly value="{{ format_importe(orden.total) }}" placeholder="0,00">
-            {% endif %}
           </div>
         </div>
       </div>
+      {% endif %}
     </div>
 
     {% if not lectura %}

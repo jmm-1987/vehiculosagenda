@@ -277,12 +277,12 @@
                                 <a href="{{ url_for('editar_orden_carga', id=o.id) }}" class="btn btn-primary btn-sm" title="Editar">
                                     <i class="fas fa-edit"></i> Editar
                                 </a>
-                                {% if o.pdf_adjunto %}
-                                <a href="{{ url_for('pdf_combinado_orden_carga', id=o.id) }}" target="_blank" class="btn btn-info btn-sm" title="Imprimir">
-                                    <i class="fas fa-print"></i> Imprimir
-                                {% else %}
                                 <a href="{{ url_for('imprimir_orden_carga', id=o.id) }}" target="_blank" class="btn btn-info btn-sm" title="Imprimir">
                                     <i class="fas fa-print"></i> Imprimir
+                                </a>
+                                {% if o.pdf_adjunto %}
+                                <a href="{{ url_for('pdf_combinado_orden_carga', id=o.id) }}" target="_blank" class="btn btn-secondary btn-sm" title="PDF con adjunto">
+                                    <i class="fas fa-file-pdf"></i> PDF+adj.
                                 </a>
                                 {% endif %}
                             </td>

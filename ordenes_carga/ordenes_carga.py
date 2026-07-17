@@ -268,8 +268,6 @@ def register_ordenes_carga_routes(app):
         orden = db.session.query(OrdenCargaInternacional).filter_by(id=id).first()
         if not orden:
             return redirect(url_for("lista_ordenes_carga"))
-        if _adjunto_path(orden):
-            return redirect(url_for("pdf_combinado_orden_carga", id=id))
         return render_template(
             "orden_carga_imprimir.html",
             orden=orden,
