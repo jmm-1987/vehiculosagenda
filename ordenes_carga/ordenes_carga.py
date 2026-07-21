@@ -1,3 +1,4 @@
+import io
 import os
 import re
 from datetime import datetime, date
@@ -121,6 +122,29 @@ def _adjunto_path(orden):
         return None
     path = os.path.join(_upload_dir(), orden.pdf_adjunto)
     return path if os.path.isfile(path) else None
+
+
+def _html_impresion_orden(orden):
+    return render_template(
+        "orden_carga_imprimir.html",
+        orden=orden,
+        format_importe=_format_importe,
+    )
+
+
+def _generar_pdf_orden(orden, adjunto_path=None):
+    html = _html_impresion_orden(orden)
+    static_dir = os.path.join(current_app.root_path, "static")
+    return combinar_pdf_orden(html, adjunto_path, static_dir=static_dir)
+
+
+def _enviar_pdf_orden(orden, pdf_bytes):
+    return send_file(
+        io.BytesIO(pdf_bytes),
+        mimetype="application/pdf",
+        as_attachment=False,
+        download_name=f"orden_carga_{orden.numero_orden.replace('/', '-')}.pdf",
+    )
 
 
 def register_ordenes_carga_routes(app):
@@ -268,12 +292,11 @@ def register_ordenes_carga_routes(app):
         orden = db.session.query(OrdenCargaInternacional).filter_by(id=id).first()
         if not orden:
             return redirect(url_for("lista_ordenes_carga"))
-        return render_template(
-            "orden_carga_imprimir.html",
-            orden=orden,
-            format_importe=_format_importe,
-            tiene_adjunto=bool(_adjunto_path(orden)),
-        )
+        try:
+            pdf_bytes = _generar_pdf_orden(orden)
+        except Exception as e:
+            return f"Error generando PDF: {e}", 500
+        return _enviar_pdf_orden(orden, pdf_bytes)
 
     @app.route("/ordenes_carga_internacionales/<int:id>/pdf-combinado")
     @login_required
@@ -282,23 +305,10 @@ def register_ordenes_carga_routes(app):
         if not orden:
             return "Orden no encontrada", 404
         try:
-            with current_app.test_client() as client:
-                for name, value in request.cookies.items():
-                    client.set_cookie(name, value)
-                resp = client.get(url_for("imprimir_orden_carga", id=id))
-                if resp.status_code != 200:
-                    return "No se pudo generar la vista de impresión", 500
-                html = resp.get_data(as_text=True)
-            static_dir = os.path.join(current_app.root_path, "static")
-            pdf_bytes = combinar_pdf_orden(html, _adjunto_path(orden), static_dir=static_dir)
+            pdf_bytes = _generar_pdf_orden(orden, _adjunto_path(orden))
         except Exception as e:
             return f"Error generando PDF: {e}", 500
-        return send_file(
-            __import__("io").BytesIO(pdf_bytes),
-            mimetype="application/pdf",
-            as_attachment=False,
-            download_name=f"orden_carga_{orden.numero_orden.replace('/', '-')}.pdf",
-        )
+        return _enviar_pdf_orden(orden, pdf_bytes)
 
     @app.route("/api/ordenes_carga/siguiente_numero")
     @login_required
