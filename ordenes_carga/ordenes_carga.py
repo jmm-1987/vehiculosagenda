@@ -281,16 +281,16 @@ def register_ordenes_carga_routes(app):
         orden = db.session.query(OrdenCargaInternacional).filter_by(id=id).first()
         if not orden:
             return "Orden no encontrada", 404
-        html = render_template(
-            "orden_carga_imprimir.html",
-            orden=orden,
-            format_importe=_format_importe,
-            tiene_adjunto=False,
-            solo_pdf=True,
-        )
         try:
+            with current_app.test_client() as client:
+                for name, value in request.cookies.items():
+                    client.set_cookie(name, value)
+                resp = client.get(url_for("imprimir_orden_carga", id=id))
+                if resp.status_code != 200:
+                    return "No se pudo generar la vista de impresión", 500
+                html = resp.get_data(as_text=True)
             static_dir = os.path.join(current_app.root_path, "static")
-            pdf_bytes = combinar_pdf_orden(html, _adjunto_path(orden), archive=static_dir)
+            pdf_bytes = combinar_pdf_orden(html, _adjunto_path(orden), static_dir=static_dir)
         except Exception as e:
             return f"Error generando PDF: {e}", 500
         return send_file(
