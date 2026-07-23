@@ -12,7 +12,7 @@ import db
 from models import OrdenCargaInternacional, ClienteOrdenCarga
 from ordenes_carga.generar_pdf_orden import combinar_pdf_orden
 
-ORDEN_CARGA_START_NUM = 160
+ORDEN_CARGA_START_NUM = 171
 UPLOAD_SUBDIR = "ordenes_carga"
 
 
