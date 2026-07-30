@@ -671,6 +671,10 @@
                     onchange="observaciones = this.value; console.log('DEBUG: Observaciones actualizadas (onchange):', observaciones);"></textarea>
             </div>
             
+            <!-- Galería móvil (sin capture = abre fotos, no fuerza cámara) -->
+            <input type="file" id="inputGaleria" accept="image/*" multiple
+                   style="display:none" onchange="añadirFotosDesdeGaleria(this)">
+
             <div class="camera-container">
                 <video id="video" autoplay playsinline></video>
                 <canvas id="canvas"></canvas>
@@ -1283,16 +1287,7 @@
                     }
                 }
                 estadoActual = 'taking_photo';
-                
-            const botonesFoto = [
-                { texto: '📷', clase: 'btn-primary', funcion: 'capturarFoto()' },
-                { texto: '⤴', clase: 'btn-secondary', funcion: 'enviarFotosAcumuladas()' },
-                { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
-            ];
-            if (torchDisponible) {
-                botonesFoto.unshift({ texto: torchEncendido ? '💡' : '🔦', clase: 'btn-secondary', funcion: 'toggleTorch()' });
-            }
-            actualizarBotones(botonesFoto);
+                actualizarBotones(obtenerBotonesFotografia());
                 
             } catch (error) {
                 console.error('Error al acceder a la cámara:', error);
@@ -1310,8 +1305,80 @@
                     mensajeError += error.message;
                 }
                 
+                // En incidencias, permitir continuar solo con galería
+                if (tipoRegistro === 'INCIDENCIA') {
+                    mensajeError += ' Puedes cargar imágenes desde la galería.';
+                    estadoActual = 'taking_photo';
+                    document.getElementById('stepIndicator').textContent = '3️⃣ Fotografía (galería)';
+                    document.getElementById('video').style.display = 'none';
+                    actualizarBotones([
+                        { texto: '🖼️ Galería', clase: 'btn-primary', funcion: 'abrirGaleria()' },
+                        { texto: '⤴', clase: 'btn-secondary', funcion: 'enviarFotosAcumuladas()' },
+                        { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
+                    ]);
+                }
                 mostrarMensaje(mensajeError, 'error');
             }
+        }
+
+        function obtenerBotonesFotografia() {
+            const botones = [
+                { texto: '📷', clase: 'btn-primary', funcion: 'capturarFoto()' }
+            ];
+            if (tipoRegistro === 'INCIDENCIA') {
+                botones.push({ texto: '🖼️', clase: 'btn-secondary', funcion: 'abrirGaleria()' });
+            }
+            botones.push(
+                { texto: '⤴', clase: 'btn-secondary', funcion: 'enviarFotosAcumuladas()' },
+                { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
+            );
+            if (torchDisponible) {
+                botones.unshift({ texto: torchEncendido ? '💡' : '🔦', clase: 'btn-secondary', funcion: 'toggleTorch()' });
+            }
+            return botones;
+        }
+
+        function abrirGaleria() {
+            const input = document.getElementById('inputGaleria');
+            if (input) {
+                input.value = '';
+                input.click();
+            }
+        }
+
+        function añadirFotosDesdeGaleria(input) {
+            const files = Array.from(input.files || []).filter(f => f.type && f.type.startsWith('image/'));
+            if (!files.length) {
+                mostrarMensaje('No se seleccionó ninguna imagen.', 'error');
+                return;
+            }
+
+            let pendientes = files.length;
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagenesCapturadas.push(e.target.result);
+                    pendientes -= 1;
+                    if (pendientes === 0) {
+                        document.getElementById('stepIndicator').textContent =
+                            `3️⃣ Fotografía (${imagenesCapturadas.length} capturada(s))`;
+                        if (tipoRegistro === 'MEDIDAS') {
+                            mostrarFormularioMedidasPorFoto(imagenesCapturadas.length - 1);
+                        } else {
+                            mostrarMensajeEmergente();
+                        }
+                    }
+                };
+                reader.onerror = function() {
+                    pendientes -= 1;
+                    mostrarMensaje('Error al leer una imagen de la galería.', 'error');
+                    if (pendientes === 0 && imagenesCapturadas.length > 0) {
+                        mostrarMensajeEmergente();
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+            input.value = '';
         }
 
         async function toggleTorch() {
@@ -1613,7 +1680,7 @@
                 <h3 style="margin-bottom: 20px; color: #333;">📸 Foto capturada</h3>
                 <p style="margin-bottom: 25px; color: #666;">Tienes ${imagenesCapturadas.length} foto(s) capturada(s)</p>
                 <p style="margin-bottom: 25px; color: #666;">¿Qué deseas hacer?</p>
-                <div style="display: flex; gap: 15px; justify-content: center;">
+                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
                     <button id="btnEnviar" style="
                         padding: 12px 24px;
                         background: #28a745;
@@ -1634,6 +1701,16 @@
                         font-size: 16px;
                         font-weight: bold;
                     ">📷 Añadir otra foto</button>
+                    <button id="btnGaleria" style="
+                        padding: 12px 24px;
+                        background: #6f42c1;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 16px;
+                        font-weight: bold;
+                    ">🖼️ Galería</button>
                 </div>
             `;
             
@@ -1654,16 +1731,19 @@
                 
                 estadoActual = 'taking_photo';
                 document.getElementById('stepIndicator').textContent = `3️⃣ Fotografía (${imagenesCapturadas.length} capturada(s))`;
-                
-                const botones = [
-                    { texto: '📷', clase: 'btn-primary', funcion: 'capturarFoto()' },
-                    { texto: '⤴', clase: 'btn-success', funcion: 'enviarFotosAcumuladas()' },
-                    { texto: '✖', clase: 'btn-secondary', funcion: 'cerrarModal()' }
-                ];
-                if (torchDisponible) {
-                    botones.unshift({ texto: torchEncendido ? '💡' : '🔦', clase: 'btn-secondary', funcion: 'toggleTorch()' });
-                }
-                actualizarBotones(botones);
+                actualizarBotones(obtenerBotonesFotografia().map(b =>
+                    b.texto === '⤴' ? { ...b, clase: 'btn-success' } : b
+                ));
+            };
+
+            document.getElementById('btnGaleria').onclick = function() {
+                document.body.removeChild(modal);
+                estadoActual = 'taking_photo';
+                document.getElementById('stepIndicator').textContent = `3️⃣ Fotografía (${imagenesCapturadas.length} capturada(s))`;
+                actualizarBotones(obtenerBotonesFotografia().map(b =>
+                    b.texto === '⤴' ? { ...b, clase: 'btn-success' } : b
+                ));
+                abrirGaleria();
             };
         }
 
