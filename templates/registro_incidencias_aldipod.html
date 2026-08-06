@@ -463,7 +463,7 @@
                         </td>
                         <td>{{ 'Sí' if incidencia.comunicada else 'No' }}</td>
                         <td>
-                            <a href="/descargar_imagen/{{ incidencia.referencia}}" class="enlace-imagen" download onclick="mostrarURLDescarga('{{ incidencia.enlace_imagen }}');">
+                            <a href="/descargar_imagen/id/{{ incidencia.id }}" class="enlace-imagen" download onclick="mostrarURLDescarga('{{ incidencia.enlace_imagen }}');">
                                 <i class="fas fa-download"></i> Descargar
                             </a>
                         </td>

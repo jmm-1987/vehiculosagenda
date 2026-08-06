@@ -402,21 +402,42 @@ def register_scanner_ftp_routes(app):
         db.session.commit()
         return jsonify(ok=True, actualizados=len(incidencias))
     
+    @app.route('/descargar_imagen/id/<int:incidencia_id>')
+    @login_required
+    def descargar_imagen_por_id(incidencia_id):
+        """Descarga la imagen de UNA incidencia concreta (su enlace_imagen único)."""
+        import db
+        from models import IncidenciaAldipod
+
+        incidencia = db.session.query(IncidenciaAldipod).filter_by(id=incidencia_id).first()
+        if not incidencia:
+            return "Incidencia no encontrada", 404
+        return _enviar_archivo_incidencia(incidencia)
+
     @app.route('/descargar_imagen/<referencia>')
     @login_required
     def descargar_imagen_incidencia(referencia):
-        """Descarga una imagen de incidencia desde FTP usando la referencia"""
+        """Compatibilidad: descarga por referencia (la más reciente con ese código)."""
         import db
         from models import IncidenciaAldipod
+        
+        incidencia = (
+            db.session.query(IncidenciaAldipod)
+            .filter_by(referencia=referencia)
+            .order_by(IncidenciaAldipod.fecha.desc())
+            .first()
+        )
+        if not incidencia:
+            return "Incidencia no encontrada", 404
+        return _enviar_archivo_incidencia(incidencia)
+
+    def _enviar_archivo_incidencia(incidencia):
+        """Descarga el fichero apuntado por incidencia.enlace_imagen."""
         from flask import send_file
         import tempfile
         import os
         from ftplib import FTP
-        
-        incidencia = db.session.query(IncidenciaAldipod).filter_by(referencia=referencia).first()
-        if not incidencia:
-            return "Incidencia no encontrada", 404
-        
+
         try:
             # Parsear URL SFTP/FTP
             enlace = incidencia.enlace_imagen
@@ -808,12 +829,15 @@ def register_scanner_ftp_routes(app):
             if not ok:
                 return jsonify({'success': False, 'mensaje': f'Error creando PDF: {err}'})
 
-            # Subir PDF
-            success, mensaje, enlace_generado = subir_archivo_ftp(ruta_pdf, nombre_pdf, cliente_id, tipo_registro)
+            # Subir PDF: Nereid con nombre original; copia local con sufijo aleatorio
+            success, mensaje, enlace_generado, nombre_local = subir_archivo_ftp(
+                ruta_pdf, nombre_pdf, cliente_id, tipo_registro
+            )
             if success:
-                # Registrar incidencia en la base de datos
+                # Registrar incidencia en la base de datos (nombre único local)
+                nombre_registro = nombre_local or nombre_pdf
                 registro_ok, registro_msg, incidencia_id = registrar_incidencia(
-                    usuario, cliente_id, codigo_barras, nombre_pdf, tipo_registro, medidas_a_usar, observaciones, enlace_generado
+                    usuario, cliente_id, codigo_barras, nombre_registro, tipo_registro, medidas_a_usar, observaciones, enlace_generado
                 )
                 if not registro_ok:
                     # Si falla el registro, reportar el error

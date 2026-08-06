@@ -4,8 +4,10 @@ Funciones auxiliares para el scanner de códigos de barras y subida FTP
 import ftplib
 import json
 import os
+import random
 import shutil
 import socket
+import string
 import time
 from datetime import datetime, timezone, timedelta
 try:
@@ -163,12 +165,14 @@ def subir_archivo_ftp(archivo_local, nombre_remoto, cliente_id=None, tipo_docume
         tipo_documento: tipo de documento (INCIDENCIA, MEDIDAS, POD)
     
     Returns:
-        tuple: (success: bool, message: str, enlace_imagen: str)
+        tuple: (success: bool, message: str, enlace_imagen: str, nombre_local: str)
+              nombre_local incluye sufijo aleatorio para la copia en el VPS;
+              en Nereid se sube con nombre_remoto sin modificar.
     """
     config = cargar_configuracion_ftp()
     
     if not config:
-        return False, "No se pudo cargar la configuración FTP", None
+        return False, "No se pudo cargar la configuración FTP", None, None
     
     try:
         # Conectar al servidor FTP
@@ -294,18 +298,20 @@ def subir_archivo_ftp(archivo_local, nombre_remoto, cliente_id=None, tipo_docume
         # Cerrar conexión FTP principal
         ftp.quit()
         
-        # Copia de respaldo local en el VPS (sustituye backup remoto SFTP)
+        # Copia local con nombre único (FTP de Nereid mantiene el nombre original)
+        nombre_local_unico = añadir_sufijo_aleatorio(nombre_remoto)
         ruta_local_relativa = None
         ok_local, ruta_local_relativa, local_err = guardar_copia_local_backup(
             archivo_local=archivo_local,
-            nombre_remoto=nombre_remoto,
+            nombre_remoto=nombre_local_unico,
             tipo_documento=tipo_documento
         )
         if ok_local:
             backup_local_ok = True
-            print(f"DEBUG BACKUP LOCAL: Copia guardada en static/{ruta_local_relativa}")
+            print(f"DEBUG BACKUP LOCAL: Copia guardada como {ruta_local_relativa} (FTP: {nombre_remoto})")
         else:
             print(f"WARNING: Error al guardar copia local en VPS: {local_err}")
+            nombre_local_unico = nombre_remoto
 
         # Construir enlace final según dónde esté disponible realmente el archivo.
         if backup_local_ok and ruta_local_relativa:
@@ -313,12 +319,12 @@ def subir_archivo_ftp(archivo_local, nombre_remoto, cliente_id=None, tipo_docume
         else:
             enlace_imagen = f"ftp://{config.get('host', 'localhost')}/{ftp_remote_path or nombre_remoto}"
 
-        return True, f"Archivo {nombre_remoto} subido correctamente", enlace_imagen
+        return True, f"Archivo {nombre_remoto} subido correctamente", enlace_imagen, nombre_local_unico
         
     except ftplib.all_errors as e:
-        return False, f"Error FTP: {str(e)}", None
+        return False, f"Error FTP: {str(e)}", None, None
     except Exception as e:
-        return False, f"Error: {str(e)}", None
+        return False, f"Error: {str(e)}", None, None
 
 def validar_codigo_barras(codigo):
     """
@@ -366,6 +372,13 @@ def generar_nombre_pdf(codigo_barras: str) -> str:
     for char in caracteres_invalidos:
         nombre_limpio = nombre_limpio.replace(char, '_')
     return f"{nombre_limpio}.pdf"
+
+
+def añadir_sufijo_aleatorio(nombre_archivo: str, digitos: int = 6) -> str:
+    """Añade dígitos aleatorios antes de la extensión para evitar sobrescrituras locales."""
+    base, ext = os.path.splitext(nombre_archivo)
+    sufijo = ''.join(random.choices(string.digits, k=digitos))
+    return f"{base}_{sufijo}{ext}"
 
 def guardar_imagen_temporal(imagen_data, nombre_archivo):
     """
