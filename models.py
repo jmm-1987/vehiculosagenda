@@ -560,3 +560,28 @@ class OrdenCargaInternacional(db.Base):
     activo = Column(Boolean, default=True)
     fecha_creacion = Column(DateTime, nullable=False)
     usuario_creacion = Column(String(100), default='')
+
+
+class VacacionesEmpleado(db.Base):
+    """Empleado del control de vacaciones (aislado por sede)."""
+    __tablename__ = "vacaciones_empleado"
+    id = Column(Integer, primary_key=True)
+    sede = Column(String(50), nullable=False)
+    nombre = Column(String(200), nullable=False)
+    departamento = Column(String(100), default='')
+    puesto = Column(String(100), default='')
+    vac_asignadas = Column(Integer, default=30)
+    activo = Column(Boolean, default=True)
+
+
+class VacacionesAusencia(db.Base):
+    """Ausencia de un día concreta, ligada al empleado, con adjunto opcional."""
+    __tablename__ = "vacaciones_ausencia"
+    id = Column(Integer, primary_key=True)
+    empleado_id = Column(Integer, ForeignKey('vacaciones_empleado.id'), nullable=False)
+    fecha = Column(Date, nullable=False)
+    codigo = Column(String(10), nullable=False)
+    adjunto = Column(String(300), default='')
+    adjunto_nombre = Column(String(300), default='')
+    usuario = Column(String(100), default='')
+    fecha_registro = Column(DateTime)

@@ -38,6 +38,7 @@ from caja.caja import register_caja_routes
 from presupuestos.presupuestos import register_presupuestos_routes
 from presupuestos.edicion import register_presupuestoedit_routes
 from ordenes_carga.ordenes_carga import register_ordenes_carga_routes
+from vacaciones.vacaciones import register_vacaciones_routes
 from sqlalchemy import func
 
 # Asegurar columnas nuevas en SQLite al arranque (sin migraciones)
@@ -120,6 +121,7 @@ register_caja_routes(app)
 register_presupuestos_routes(app)
 register_presupuestoedit_routes(app)
 register_ordenes_carga_routes(app)
+register_vacaciones_routes(app)
 
 with app.app_context():
     db.Base.metadata.create_all(db.engine)

@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control de Vacaciones y Ausencias 2026 — Alditraex</title>
+<style>
+  :root{
+    --navy:#12233F;
+    --navy-2:#1a3159;
+    --gold:#C8A24A;
+    --border:#B7B7B7;
+    --textgray:#6b6b6b;
+    --metabg:#F7F7F9;
+    --boxbg:#FBECEC;
+    --boxborder:#8A2A22;
+    --boxtext:#8A2A22;
+    --amberbg:#FFF6E5;
+    --amberborder:#B9770E;
+    --redbg:#FBEAEA;
+    --redborder:#B02A24;
+    --weekend:#F1F2F5;
+    --black:#1a1a1a;
+    --code-v:#2E7D32;
+    --code-bm:#8E24AA;
+    --code-pr:#1565C0;
+    --code-aj:#C68A0E;
+    --code-anj:#C62828;
+    --code-dl:#00897B;
+    --code-ot:#616161;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; padding:0; background:#eef0f3;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    color:var(--black);
+  }
+  /* ---------- Cabecera Alditraex ---------- */
+  header.top{
+    background:var(--navy); color:#fff; padding:22px 28px 16px;
+    border-bottom:3px solid var(--gold);
+  }
+  .top-inner{
+    max-width:1280px; margin:0 auto; display:flex; justify-content:space-between;
+    align-items:flex-end; flex-wrap:wrap; gap:10px;
+  }
+  .brand h1{ font-size:26px; margin:0; letter-spacing:0.5px; font-weight:800;}
+  .brand .dept{ color:var(--gold); font-weight:700; font-size:13px; letter-spacing:1.5px; margin-top:2px;}
+  .doc-meta{ text-align:right; }
+  .doc-meta .doc-title{ font-weight:700; font-size:15px; }
+  .doc-meta .doc-sub{ font-style:italic; font-size:11.5px; color:#cfd6e4; line-height:1.4; margin-top:2px;}
+
+  main{ max-width:1280px; margin:0 auto; padding:26px 28px 60px;}
+
+  .page-title-row{ display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:16px; }
+  .page-title h2{ font-size:23px; margin:0 0 4px; font-weight:800; }
+  .page-title p{ margin:0; color:var(--textgray); font-size:14px; max-width:760px;}
+  .gold-rule{ height:2px; background:var(--gold); border:none; margin:14px 0 22px; }
+
+  /* ---------- Site selector ---------- */
+  .site-select{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+  .site-select .label{ font-size:11px; text-transform:uppercase; letter-spacing:0.6px; color:var(--textgray); font-weight:700;}
+  .site-toggle{ display:flex; border:1px solid var(--navy); border-radius:20px; overflow:hidden; }
+  .site-toggle button{
+    border:none; background:#fff; color:var(--navy); font-family:inherit; font-weight:700;
+    font-size:13px; padding:9px 18px; cursor:pointer;
+  }
+  .site-toggle button.active{ background:var(--navy); color:#fff; }
+  .site-toggle button + button{ border-left:1px solid var(--navy); }
+
+  /* ---------- Stat tiles ---------- */
+  .stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin-bottom:26px;}
+  .stat-tile{ background:#fff; border:1px solid var(--border); border-radius:6px; padding:14px 16px; }
+  .stat-tile .label{ font-size:11px; text-transform:uppercase; letter-spacing:0.6px; color:var(--textgray); font-weight:700;}
+  .stat-tile .value{ font-size:22px; font-weight:800; color:var(--navy); margin-top:4px;}
+  .stat-tile .sub{ font-size:11.5px; color:var(--textgray); margin-top:2px;}
+
+  /* ---------- Tabs ---------- */
+  nav.tabs{ display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:22px; flex-wrap:wrap; }
+  nav.tabs button{
+    background:none; border:none; padding:11px 16px; font-size:13.5px; font-weight:700;
+    color:var(--textgray); cursor:pointer; border-bottom:3px solid transparent; font-family:inherit;
+  }
+  nav.tabs button:hover{ color:var(--navy); }
+  nav.tabs button.active{ color:var(--navy); border-bottom:3px solid var(--gold); }
+
+  section.tab{ display:none; }
+  section.tab.active{ display:block; }
+
+  h3.section-h{ color:var(--navy); font-size:16px; font-weight:800; margin:0 0 4px;}
+  p.section-p{ color:var(--textgray); font-size:13px; margin:0 0 16px; max-width:900px; line-height:1.5;}
+
+  /* ---------- Tables generic ---------- */
+  table{ border-collapse:collapse; width:100%; background:#fff; }
+  .table-wrap{ overflow-x:auto; border:1px solid var(--border); border-radius:6px; }
+  th,td{ padding:8px 10px; font-size:12.5px; text-align:left; border-bottom:1px solid #ececec; white-space:nowrap;}
+  thead th{
+    background:var(--metabg); color:var(--textgray); font-size:10.5px; text-transform:uppercase;
+    letter-spacing:0.4px; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:2;
+  }
+  tbody tr:hover{ background:#fafbfd; }
+  td.sticky-col, th.sticky-col{
+    position:sticky; left:0; background:#fff; z-index:1; border-right:1px solid var(--border);
+    white-space:normal; min-width:210px; max-width:210px; font-weight:600;
+  }
+  thead th.sticky-col{ background:var(--metabg); z-index:3; }
+
+  /* ---------- Resumen tab ---------- */
+  .saldo-ok{ color:var(--code-v); font-weight:700; }
+  .saldo-low{ color:var(--code-anj); font-weight:700; }
+  select.filter-select{
+    border:1px solid var(--border); border-radius:4px; padding:6px 10px; font-size:12.5px;
+    font-family:inherit; color:var(--black); background:#fff;
+  }
+  .toolbar{ display:flex; gap:12px; align-items:center; margin-bottom:14px; flex-wrap:wrap;}
+  .toolbar label{ font-size:12px; font-weight:700; color:var(--textgray); }
+
+  /* ---------- Legend ---------- */
+  .legend{ display:flex; flex-wrap:wrap; gap:8px 16px; margin-bottom:16px; }
+  .legend .chip{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--black);}
+  .legend .swatch{ width:13px; height:13px; border-radius:3px; display:inline-block; }
+
+  /* ---------- Month grid ---------- */
+  td.day-cell{ padding:2px; text-align:center; }
+  td.day-cell.weekend{ background:var(--weekend); }
+  th.daynum{ text-align:center; }
+  th.daynum.weekend-hdr{ background:#e9ebef; }
+  select.code-select{
+    width:52px; border:1px solid #d8d8d8; border-radius:4px; padding:3px 2px; font-size:11px;
+    text-align:center; font-family:inherit; font-weight:700; color:#333; background:#fff; cursor:pointer;
+  }
+  select.code-select.code-V{ background:#e7f3e8; color:var(--code-v); border-color:var(--code-v); }
+  select.code-select.code-BM{ background:#f3e6f8; color:var(--code-bm); border-color:var(--code-bm); }
+  select.code-select.code-PR{ background:#e5eef9; color:var(--code-pr); border-color:var(--code-pr); }
+  select.code-select.code-AJ{ background:#fdf3dd; color:var(--code-aj); border-color:var(--code-aj); }
+  select.code-select.code-ANJ{ background:#fbe4e4; color:var(--code-anj); border-color:var(--code-anj); }
+  select.code-select.code-DL{ background:#e0f2f0; color:var(--code-dl); border-color:var(--code-dl); }
+  select.code-select.code-OT{ background:#ececec; color:var(--code-ot); border-color:var(--code-ot); }
+
+  .month-tabs{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; }
+  .month-tabs button{
+    border:1px solid var(--border); background:#fff; border-radius:16px; padding:6px 14px;
+    font-size:12px; font-weight:700; color:var(--textgray); cursor:pointer; font-family:inherit;
+  }
+  .month-tabs button.active{ background:var(--navy); color:#fff; border-color:var(--navy); }
+
+  /* ---------- Alerts grid ---------- */
+  td.alert-cell{ text-align:center; font-weight:700; }
+  td.alert-0{ color:#c6c6c6; }
+  td.alert-1{ color:var(--textgray); }
+  td.alert-2{ background:var(--amberbg); color:var(--amberborder); }
+  td.alert-3{ background:var(--redbg); color:var(--redborder); }
+  tr.total-row td{ background:var(--metabg); font-weight:800; }
+  tr.total-row td.alert-hit{ background:var(--redbg); color:var(--redborder); }
+
+  .callout{
+    background:var(--boxbg); border:1px solid var(--boxborder); color:var(--boxtext);
+    border-radius:6px; padding:12px 16px; font-size:12.5px; font-weight:700; margin:14px 0 18px;
+    line-height:1.5;
+  }
+  .callout.info{ background:var(--metabg); border-color:var(--border); color:var(--black); font-weight:500; }
+
+  /* ---------- Cobertura / Convenio ---------- */
+  .cards{ display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:14px; }
+  .card{ background:#fff; border:1px solid var(--border); border-radius:6px; padding:16px 18px;}
+  .card h4{ margin:0 0 4px; color:var(--navy); font-size:14.5px; }
+  .card .plantilla{ font-size:22px; font-weight:800; color:var(--navy); }
+  .card .plantilla span{ font-size:12px; font-weight:600; color:var(--textgray);}
+  .card .empleados{ font-size:12px; color:var(--textgray); margin:8px 0; line-height:1.5;}
+  .card .criterio{ font-size:11.5px; background:var(--metabg); border-radius:4px; padding:6px 8px; color:var(--black);}
+
+  .kv-table td{ white-space:normal; }
+  .kv-table td:first-child{ color:var(--textgray); font-weight:700; width:220px; }
+
+  /* ---------- Gestión de plantilla ---------- */
+  .add-emp-form{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; align-items:end;
+    background:#fff; border:1px solid var(--border); border-radius:6px; padding:18px; margin-bottom:24px;
+  }
+  .add-emp-form label{ display:block; font-size:11px; font-weight:700; color:var(--textgray); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:5px;}
+  .add-emp-form input, .add-emp-form select{
+    width:100%; border:1px solid var(--border); border-radius:4px; padding:8px 10px; font-size:13px;
+    font-family:inherit; color:var(--black); background:#fff; height:38px;
+  }
+  .add-emp-form button{
+    background:var(--navy); color:#fff; border:none; border-radius:4px; padding:10px 18px; font-size:13px;
+    font-weight:700; cursor:pointer; font-family:inherit; height:38px;
+  }
+  .add-emp-form button:hover{ background:var(--navy-2); }
+  .estado-activo{ color:var(--code-v); font-weight:700; }
+  .estado-excluido{ color:var(--textgray); font-weight:700; }
+  .btn-toggle-emp, .btn-remove-emp{
+    border:1px solid var(--border); background:#fff; border-radius:4px; padding:5px 10px; font-size:11.5px;
+    font-weight:700; cursor:pointer; font-family:inherit; margin-right:6px; white-space:nowrap;
+  }
+  .btn-toggle-emp{ color:var(--navy); border-color:var(--navy); }
+  .btn-toggle-emp:hover{ background:var(--navy); color:#fff; }
+  .btn-remove-emp{ color:var(--boxborder); border-color:var(--boxborder); }
+  .btn-remove-emp:hover{ background:var(--boxborder); color:#fff; }
+
+  footer.bottom{
+    max-width:1280px; margin:30px auto 0; padding:16px 28px 30px; border-top:1px solid var(--border);
+    color:var(--textgray); font-size:11.5px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px;
+  }
+
+  @media print{
+    body{ background:#fff; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <h1>ALDITRAEX</h1>
+      <div class="dept">DEPARTAMENTO DE RRHH</div>
+    </div>
+    <div class="doc-meta">
+      <div class="doc-title">Control de Vacaciones y Ausencias</div>
+      <div class="doc-sub">Control de personal y cobertura por departamento<br><span id="headerCentro">Centro de Mérida</span> — Ejercicio 2026</div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="page-title-row">
+    <div class="page-title">
+      <h2 id="pageTitleH2">Control de Vacaciones, Ausencias y Personal — Mérida 2026</h2>
+      <p id="pageTitleP">Panel de control interactivo elaborado a partir del Excel oficial de RRHH, respetando su misma formulación, códigos y criterios de alerta por departamento.</p>
+    </div>
+    <div class="site-select">
+      <span class="label">Sede</span>
+      <div class="site-toggle" id="siteToggle">
+        <button data-site="merida" class="active">Mérida</button>
+        <button data-site="navalmoral">Navalmoral de la Mata</button>
+      </div>
+    </div>
+  </div>
+  <hr class="gold-rule">
+
+  <div class="stats" id="statsRow"></div>
+
+  <div class="callout info">
+    Los datos que introduzcas en la pestaña «Control mensual» se calculan en tiempo real en este navegador, pero
+    <strong>no se guardan de forma permanente</strong> (no se envían a ningún servidor ni quedan almacenados al
+    cerrar o recargar la página). Cada sede tiene sus propios datos independientes mientras la página esté
+    abierta: cambiar de sede no borra lo introducido en la otra. Utiliza este panel para consultar criterios,
+    simular coberturas y revisar alertas; el Excel oficial de RRHH de cada centro sigue siendo el registro válido
+    para la gestión y el archivo definitivo de vacaciones y ausencias.
+  </div>
+
+  <nav class="tabs" id="tabNav">
+    <button data-tab="resumen" class="active">Resumen anual</button>
+    <button data-tab="mensual">Control mensual</button>
+    <button data-tab="alertas">Alertas por departamento</button>
+    <button data-tab="cobertura">Cobertura por departamento</button>
+    <button data-tab="convenio">Convenio y criterios</button>
+    <button data-tab="plantilla">Gestión de plantilla</button>
+  </nav>
+
+  <!-- ===================== RESUMEN ===================== -->
+  <section class="tab active" id="tab-resumen">
+    <h3 class="section-h">Resumen anual por empleado</h3>
+    <p class="section-p">Equivalente a la pestaña RESUMEN del Excel: vacaciones asignadas y usadas, saldo, y
+      recuento de cada tipo de ausencia a lo largo de los 12 meses. Se recalcula automáticamente a partir de lo
+      introducido en «Control mensual» para la sede seleccionada.</p>
+    <div class="toolbar">
+      <label for="deptFilter">Departamento:</label>
+      <select id="deptFilter" class="filter-select"></select>
+    </div>
+    <div class="table-wrap">
+      <table id="resumenTable">
+        <thead>
+          <tr>
+            <th class="sticky-col">Empleado</th>
+            <th>Departamento</th>
+            <th>Puesto</th>
+            <th>Vac. asignadas</th>
+            <th>Vac. usadas</th>
+            <th>Saldo</th>
+            <th>Baja médica</th>
+            <th>Permiso retrib.</th>
+            <th>Aus. justif.</th>
+            <th>Día libre</th>
+            <th>Otras (ANJ+OT)</th>
+          </tr>
+        </thead>
+        <tbody id="resumenBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== CONTROL MENSUAL ===================== -->
+  <section class="tab" id="tab-mensual">
+    <h3 class="section-h">Control mensual de vacaciones y ausencias</h3>
+    <p class="section-p">Igual que las pestañas de cada mes del Excel (ENERO…DICIEMBRE): una fila por empleado y
+      una columna por día. Selecciona un código en cada celda para registrar una incidencia; los fines de semana
+      aparecen sombreados.</p>
+
+    <div class="legend" id="legendMensual"></div>
+    <div class="month-tabs" id="monthTabs"></div>
+
+    <div class="table-wrap">
+      <table id="monthTable">
+        <thead id="monthThead"></thead>
+        <tbody id="monthBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== ALERTAS ===================== -->
+  <section class="tab" id="tab-alertas">
+    <h3 class="section-h">Alertas diarias por departamento</h3>
+    <p class="section-p">Réplica de la pestaña ALERTAS DEPARTAMENTO: para cada día del mes se cuentan los
+      empleados de cada departamento con alguna incidencia (cualquier código). Criterio:
+      <strong>2 personas ausentes del mismo departamento = REVISAR</strong> ·
+      <strong>3 o más = ALERTA</strong>.</p>
+
+    <div class="legend">
+      <span class="chip"><span class="swatch" style="background:#c6c6c6"></span>0 ausentes</span>
+      <span class="chip"><span class="swatch" style="background:#9a9a9a"></span>1 ausente</span>
+      <span class="chip"><span class="swatch" style="background:var(--amberborder)"></span>2 ausentes — REVISAR</span>
+      <span class="chip"><span class="swatch" style="background:var(--redborder)"></span>3 o más — ALERTA</span>
+    </div>
+
+    <div class="month-tabs" id="monthTabsAlertas"></div>
+    <div id="alertaCallout"></div>
+
+    <div class="table-wrap">
+      <table id="alertTable">
+        <thead id="alertThead"></thead>
+        <tbody id="alertBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== COBERTURA ===================== -->
+  <section class="tab" id="tab-cobertura">
+    <h3 class="section-h">Cobertura por departamento</h3>
+    <p class="section-p">Plantilla y criterio de alerta de cada departamento, igual que la pestaña CONTROL
+      DEPARTAMENTOS del Excel.</p>
+    <div class="cards" id="coberturaCards"></div>
+  </section>
+
+  <!-- ===================== CONVENIO ===================== -->
+  <section class="tab" id="tab-convenio">
+    <h3 class="section-h">Convenio y criterios aplicados</h3>
+    <p class="section-p">Referencia normativa y criterio interno de control de vacaciones, igual que la pestaña
+      CONVENIO Y CRITERIOS del Excel de cada sede.</p>
+    <div class="table-wrap" style="max-width:760px;">
+      <table class="kv-table" id="convenioTable"></table>
+    </div>
+
+    <h3 class="section-h" style="margin-top:26px;">Códigos de ausencia</h3>
+    <p class="section-p">Códigos utilizados en el control mensual, igual que la tabla de tipos de la pestaña
+      CONFIGURACION.</p>
+    <div class="table-wrap" style="max-width:520px;">
+      <table id="codesTable">
+        <thead><tr><th>Código</th><th>Significado</th></tr></thead>
+        <tbody id="codesBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== PLANTILLA ===================== -->
+  <section class="tab" id="tab-plantilla">
+    <h3 class="section-h">Gestión de plantilla</h3>
+    <p class="section-p">Da de alta nuevas incorporaciones o excluye temporalmente a un trabajador de la plantilla
+      activa de la sede seleccionada (por ejemplo, baja definitiva, excedencia o traslado). Excluir a alguien no
+      borra su histórico de datos introducido en «Control mensual»: puedes volver a incluirlo cuando quieras y
+      reaparecerá con todo lo ya registrado. Igual que el resto del panel, estos cambios sólo existen mientras la
+      página esté abierta y no se guardan de forma permanente.</p>
+
+    <h4 style="color:var(--navy); font-size:13.5px; font-weight:800; margin:0 0 12px;">Añadir nuevo trabajador</h4>
+    <form class="add-emp-form" id="addEmployeeForm">
+      <div>
+        <label for="newEmpName">Nombre y apellidos</label>
+        <input type="text" id="newEmpName" placeholder="Ej. JUAN PÉREZ GARCÍA" required>
+      </div>
+      <div>
+        <label for="newEmpDept">Departamento</label>
+        <select id="newEmpDept"></select>
+      </div>
+      <div id="newDeptWrap" style="display:none;">
+        <label for="newDeptName">Nombre del nuevo departamento</label>
+        <input type="text" id="newDeptName" placeholder="Ej. MANTENIMIENTO">
+      </div>
+      <div>
+        <label for="newEmpPuesto">Puesto</label>
+        <input type="text" id="newEmpPuesto" placeholder="Ej. MOZO">
+      </div>
+      <div>
+        <label for="newEmpVac">Vac. asignadas (días)</label>
+        <input type="number" id="newEmpVac" value="22" min="0" max="30">
+      </div>
+      <button type="submit">+ Añadir a la plantilla</button>
+    </form>
+
+    <h4 style="color:var(--navy); font-size:13.5px; font-weight:800; margin:0 0 12px;">Plantilla de <span id="plantillaSiteLabel">Mérida</span></h4>
+    <div class="table-wrap">
+      <table id="plantillaTable">
+        <thead>
+          <tr>
+            <th class="sticky-col">Empleado</th>
+            <th>Departamento</th>
+            <th>Puesto</th>
+            <th>Vac. asignadas</th>
+            <th>Estado</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody id="plantillaBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<footer class="bottom">
+  <span>Alditraex · Departamento de RRHH — Uso interno</span>
+  <span id="footerSite">Control de Vacaciones y Ausencias 2026 — Mérida</span>
+</footer>
+
+<script>
+/* ======================================================================
+   DATOS POR SEDE (extraídos de los Excel oficiales de cada centro)
+   ====================================================================== */
+const SITES = {
+  merida: {
+    label: 'Mérida',
+    centro: 'Centro de Mérida',
+    employees: [{"name": "ALEJANDRO ESPINO JIMENEZ", "vac": 22, "dept": "FACTURACION", "puesto": "ADMTVO"}, {"name": "ALFREDO ISMAEL CENTENO RICO", "vac": 22, "dept": "TRAFICO", "puesto": "ADMTVO"}, {"name": "ALONSO MORENO GOMEZ", "vac": 22, "dept": "ATC CLIENTES", "puesto": "ADMTVO"}, {"name": "BLANCA GARCIA RUBIO", "vac": 22, "dept": "LLEGADAS", "puesto": "ADMTVO"}, {"name": "CARMEN MARIA TRINIDAD RAMOS", "vac": 22, "dept": "FACTURACION", "puesto": "ADMTVO"}, {"name": "DAVID JIMENEZ CALERO", "vac": 22, "dept": "ATC CLIENTES", "puesto": "ADMTVO"}, {"name": "DAVID SANCHEZ SANCHEZ", "vac": 22, "dept": "ALMACEN", "puesto": "MOZO"}, {"name": "DIEGO JOSE DELGADO ALVAREZ", "vac": 22, "dept": "CONDUCTOR", "puesto": "—"}, {"name": "FATIMA BONILLA GONZALEZ", "vac": 22, "dept": "LLEGADAS", "puesto": "ADMTVO"}, {"name": "GABRIEL BONILLA BENITEZ", "vac": 22, "dept": "ALMACEN", "puesto": "NOCHE"}, {"name": "IVAN CASTRO MERINO", "vac": 22, "dept": "TRAFICO", "puesto": "RESPONSABLE"}, {"name": "JESUS MIGUEL OTERO MAYORAL", "vac": 22, "dept": "ALMACEN", "puesto": "MOZO"}, {"name": "JOAQUIN ROMERO CARROZA", "vac": 22, "dept": "ALMACEN", "puesto": "MOZO"}, {"name": "JUAN ANTONIO DIAZ GONZALEZ", "vac": 22, "dept": "LLEGADAS", "puesto": "RESPONSABLE"}, {"name": "JUAN JOSE MANCERA SANTOS", "vac": 22, "dept": "CONDUCTOR", "puesto": "—"}, {"name": "JUAN LUIS HERNANDEZ CASTILLO", "vac": 22, "dept": "ALMACEN", "puesto": "MOZO"}, {"name": "JUAN RAMON ALVAREZ ROBLES", "vac": 22, "dept": "ALMACEN", "puesto": "MOZO"}, {"name": "LUCAS HEREDIA SILVA", "vac": 22, "dept": "ALMACEN", "puesto": "NOCHE"}, {"name": "MARTA GALLEGO GUERRERO", "vac": 22, "dept": "LLEGADAS", "puesto": "ADMVO"}, {"name": "PEDRO ANTONIO DIAZ MUÑOZ", "vac": 22, "dept": "XPO", "puesto": "—"}, {"name": "PEDRO ANTONIO SERRANO MATILLA", "vac": 22, "dept": "COMERCIAL", "puesto": "—"}, {"name": "PEDRO CARROZA FLORES", "vac": 22, "dept": "ALMACEN", "puesto": "RESPONSABLE"}, {"name": "RAMON ALVAREZ RAMOS", "vac": 22, "dept": "ALMACEN", "puesto": "MOZO"}, {"name": "ROCIO RODRIGUEZ RIVAS", "vac": 22, "dept": "ADMON", "puesto": "RESPONSABLE"}, {"name": "SERGIO DURAN PACHON", "vac": 22, "dept": "ALMACEN", "puesto": "MOZO"}, {"name": "VICTOR BEJARANO OSORIO", "vac": 22, "dept": "XPO", "puesto": "—"}],
+    codes: [{"tipo": "Vacaciones", "codigo": "V"}, {"tipo": "Baja médica", "codigo": "BM"}, {"tipo": "Permiso retribuido", "codigo": "PR"}, {"tipo": "Ausencia justificada", "codigo": "AJ"}, {"tipo": "Ausencia no justificada", "codigo": "ANJ"}, {"tipo": "Día libre", "codigo": "DL"}, {"tipo": "Otros", "codigo": "OT"}],
+    depts: [{"dept": "ADMON", "plantilla": 1, "empleados": ["ROCIO RODRIGUEZ RIVAS"], "criterio": "2 ausentes = REVISAR / 3 o más = ALERTA", "observacion": "Revisar antes de aprobar nuevas vacaciones o permisos."}, {"dept": "ALMACEN", "plantilla": 10, "empleados": ["DAVID SANCHEZ SANCHEZ", "GABRIEL BONILLA BENITEZ", "JESUS MIGUEL OTERO MAYORAL", "JOAQUIN ROMERO CARROZA", "JUAN LUIS HERNANDEZ CASTILLO", "JUAN RAMON ALVAREZ ROBLES", "LUCAS HEREDIA SILVA", "PEDRO CARROZA FLORES", "RAMON ALVAREZ RAMOS", "SERGIO DURAN PACHON"], "criterio": "2 ausentes = REVISAR / 3 o más = ALERTA", "observacion": "Revisar antes de aprobar nuevas vacaciones o permisos."}, {"dept": "ATC CLIENTES", "plantilla": 2, "empleados": ["ALONSO MORENO GOMEZ", "DAVID JIMENEZ CALERO"], "criterio": "2 ausentes = REVISAR / 3 o más = ALERTA", "observacion": "Revisar antes de aprobar nuevas vacaciones o permisos."}, {"dept": "COMERCIAL", "plantilla": 1, "empleados": ["PEDRO ANTONIO SERRANO MATILLA"], "criterio": "2 ausentes = REVISAR / 3 o más = ALERTA", "observacion": "Revisar antes de aprobar nuevas vacaciones o permisos."}, {"dept": "CONDUCTOR", "plantilla": 2, "empleados": ["DIEGO JOSE DELGADO ALVAREZ", "JUAN JOSE MANCERA SANTOS"], "criterio": "2 ausentes = REVISAR / 3 o más = ALERTA", "observacion": "Revisar antes de aprobar nuevas vacaciones o permisos."}, {"dept": "FACTURACION", "plantilla": 2, "empleados": ["ALEJANDRO ESPINO JIMENEZ", "CARMEN MARIA TRINIDAD RAMOS"], "criterio": "2 ausentes = REVISAR / 3 o más = ALERTA", "observacion": "Revisar antes de aprobar nuevas vacaciones o permisos."}, {"dept": "LLEGADAS", "plantilla": 4, "empleados": ["BLANCA GARCIA RUBIO", "FATIMA BONILLA GONZALEZ", "JUAN ANTONIO DIAZ GONZALEZ", "MARTA GALLEGO GUERRERO"], "criterio": "2 ausentes = REVISAR / 3 o más = ALERTA", "observacion": "Revisar antes de aprobar nuevas vacaciones o permisos."}, {"dept": "TRAFICO", "plantilla": 2, "empleados": ["ALFREDO ISMAEL CENTENO RICO", "IVAN CASTRO MERINO"], "criterio": "2 ausentes = REVISAR / 3 o más = ALERTA", "observacion": "Revisar antes de aprobar nuevas vacaciones o permisos."}, {"dept": "XPO", "plantilla": 2, "empleados": ["PEDRO ANTONIO DIAZ MUÑOZ", "VICTOR BEJARANO OSORIO"], "criterio": "2 ausentes = REVISAR / 3 o más = ALERTA", "observacion": "Revisar antes de aprobar nuevas vacaciones o permisos."}],
+    convenioRows: [["Convenio", "Transporte de Mercancías por Carretera de Badajoz y su provincia 2026"], ["Código", "06000525011981"], ["Publicación", "DOE nº 119, 23/06/2026"], ["Vacaciones según convenio", "30 días naturales"], ["Control solicitado", "22 días laborables"], ["Criterio", "El Excel controla 22 días laborables por empleado como criterio interno solicitado; el convenio publicado fija 30 días naturales."]],
+    vacTileSub: 'días naturales — convenio 06000525011981',
+  },
+  navalmoral: {
+    label: 'Navalmoral de la Mata',
+    centro: 'Centro de Navalmoral de la Mata',
+    employees: [{"name": "ALVARO MESONERO DIAZ", "vac": 22, "dept": "FACTURACION", "puesto": "ADMTVO"}, {"name": "EMILIO ANSELMO PLAZA CUESTA", "vac": 22, "dept": "REPARTIDOR", "puesto": "—"}, {"name": "GUSTAVO PANIAGUA ROMERO", "vac": 22, "dept": "REPARTIDOR", "puesto": "—"}, {"name": "JESUS BERDUGO HERNANDEZ", "vac": 22, "dept": "ALMACEN", "puesto": "NOCHE"}, {"name": "JOSE MANUEL LORO PUERTO", "vac": 22, "dept": "CONDUCTOR", "puesto": "—"}, {"name": "JOSE MARIA LECHIGUERO MADRID", "vac": 22, "dept": "TRAFICO", "puesto": "RESPONSABLE"}, {"name": "JUAN CARLOS DEL MONTE MARTINEZ", "vac": 22, "dept": "REPARTIDOR", "puesto": "—"}, {"name": "JUAN PEDRO ACACIO RONCERO", "vac": 22, "dept": "REPARTIDOR", "puesto": "—"}, {"name": "LUIS MIGUEL GUTIERREZ CEREZO", "vac": 22, "dept": "REPARTIDOR", "puesto": "—"}, {"name": "MARIA JOSE BEJARANO PANIAGUA", "vac": 22, "dept": "ATC CLIENTES", "puesto": "ADMVO"}, {"name": "RUBEN GONZALEZ GARCIA", "vac": 22, "dept": "REPARTIDOR", "puesto": "—"}],
+    codes: [{"tipo": "Vacaciones", "codigo": "V"}, {"tipo": "Baja médica", "codigo": "BM"}, {"tipo": "Permiso retribuido", "codigo": "PR"}, {"tipo": "Ausencia justificada", "codigo": "AJ"}, {"tipo": "Ausencia no justificada", "codigo": "ANJ"}, {"tipo": "Día libre", "codigo": "DL"}, {"tipo": "Otros", "codigo": "OT"}],
+    depts: [{"dept": "ALMACEN", "plantilla": 1, "empleados": ["JESUS BERDUGO HERNANDEZ"], "criterio": "2 ausentes = REVISAR / 3+ = ALERTA", "observacion": "Comprobar antes de aprobar vacaciones o permisos."}, {"dept": "ATC CLIENTES", "plantilla": 1, "empleados": ["MARIA JOSE BEJARANO PANIAGUA"], "criterio": "2 ausentes = REVISAR / 3+ = ALERTA", "observacion": "Comprobar antes de aprobar vacaciones o permisos."}, {"dept": "CONDUCTOR", "plantilla": 1, "empleados": ["JOSE MANUEL LORO PUERTO"], "criterio": "2 ausentes = REVISAR / 3+ = ALERTA", "observacion": "Comprobar antes de aprobar vacaciones o permisos."}, {"dept": "FACTURACION", "plantilla": 1, "empleados": ["ALVARO MESONERO DIAZ"], "criterio": "2 ausentes = REVISAR / 3+ = ALERTA", "observacion": "Comprobar antes de aprobar vacaciones o permisos."}, {"dept": "REPARTIDOR", "plantilla": 6, "empleados": ["EMILIO ANSELMO PLAZA CUESTA", "GUSTAVO PANIAGUA ROMERO", "JUAN CARLOS DEL MONTE MARTINEZ", "JUAN PEDRO ACACIO RONCERO", "LUIS MIGUEL GUTIERREZ CEREZO", "RUBEN GONZALEZ GARCIA"], "criterio": "2 ausentes = REVISAR / 3+ = ALERTA", "observacion": "Comprobar antes de aprobar vacaciones o permisos."}, {"dept": "TRAFICO", "plantilla": 1, "empleados": ["JOSE MARIA LECHIGUERO MADRID"], "criterio": "2 ausentes = REVISAR / 3+ = ALERTA", "observacion": "Comprobar antes de aprobar vacaciones o permisos."}],
+    convenioRows: [["Convenio", "Convenio Colectivo de Transporte de Mercancías por Carretera de la provincia de Cáceres"], ["Código", "10000425011990"], ["Ámbito", "Centros de trabajo del sector emplazados en la provincia de Cáceres"], ["Vigencia", "El texto 2024-2025 mantiene su vigencia íntegra hasta la publicación del nuevo convenio."], ["Vacaciones según convenio", "30 días de vacaciones retribuidas; parte proporcional si no se lleva un año de servicio."], ["Periodo estival", "Al menos 15 días entre el 15 de junio y el 15 de septiembre, condicionado a necesidades de campañas estacionales."], ["Control solicitado", "22 días laborables como criterio interno de seguimiento."], ["Importante", "Los 22 días del Excel son un control interno y no sustituyen el derecho de 30 días previsto en el convenio."]],
+    vacTileSub: 'días retribuidos — convenio Cáceres 10000425011990',
+  },
+};
+
+let currentSiteKey = 'merida';
+function site(){ return SITES[currentSiteKey]; }
+
+const MONTHS = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO',
+                'SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+const YEAR = 2026;
+const WEEKDAY_LETTERS = ['D','L','M','X','J','V','S']; // getDay(): 0=domingo
+
+const CODE_COLOR = { V:'var(--code-v)', BM:'var(--code-bm)', PR:'var(--code-pr)',
+                     AJ:'var(--code-aj)', ANJ:'var(--code-anj)', DL:'var(--code-dl)', OT:'var(--code-ot)' };
+
+/* dataBySite[site][monthIndex][employeeName][day] = 'V' | 'BM' | ... */
+const dataBySite = {};
+Object.keys(SITES).forEach(k => {
+  dataBySite[k] = {};
+  MONTHS.forEach((_, mi) => dataBySite[k][mi] = {});
+});
+function siteData(){ return dataBySite[currentSiteKey]; }
+
+function daysInMonth(mi){ return new Date(YEAR, mi + 1, 0).getDate(); }
+function weekdayLetter(mi, day){ return WEEKDAY_LETTERS[new Date(YEAR, mi, day).getDay()]; }
+function isWeekend(letter){ return letter === 'S' || letter === 'D'; }
+
+/* ---------------------------------------------------------------------
+   SITE TOGGLE
+   --------------------------------------------------------------------- */
+document.getElementById('siteToggle').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-site]');
+  if(!btn || btn.classList.contains('active')) return;
+  currentSiteKey = btn.dataset.site;
+  document.querySelectorAll('#siteToggle button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAllForSite();
+});
+
+function renderAllForSite(){
+  const s = site();
+  document.getElementById('headerCentro').textContent = s.centro;
+  document.getElementById('pageTitleH2').textContent = `Control de Vacaciones, Ausencias y Personal — ${s.label} 2026`;
+  document.getElementById('pageTitleP').textContent = `Panel de control interactivo elaborado a partir del Excel oficial «Control Vacaciones/Ausencias 2026 ${s.label}», respetando su misma formulación, códigos y criterios de alerta por departamento.`;
+  document.getElementById('footerSite').textContent = `Control de Vacaciones y Ausencias 2026 — ${s.label}`;
+
+  renderStats();
+  populateDeptFilter();
+  renderResumen();
+  renderLegend('legendMensual');
+  renderMonthTabs();
+  renderMonthGrid(currentMonth);
+  renderMonthTabsAlertas();
+  renderAlertas(currentAlertMonth);
+  renderCobertura();
+  renderConvenio();
+  renderPlantilla();
+}
+
+/* Empleados activos = plantilla actual en simulación (excluye a quien se haya marcado como excluido) */
+function activeEmployees(){
+  return site().employees.filter(e => e.active !== false);
+}
+function deptActiveEmployees(deptName){
+  return activeEmployees().filter(e => e.dept === deptName);
+}
+
+/* ---------------------------------------------------------------------
+   STAT TILES
+   --------------------------------------------------------------------- */
+function renderStats(){
+  const s = site();
+  const el = document.getElementById('statsRow');
+  el.innerHTML = `
+    <div class="stat-tile"><div class="label">Empleados</div><div class="value">${activeEmployees().length}</div><div class="sub">${s.centro}</div></div>
+    <div class="stat-tile"><div class="label">Departamentos</div><div class="value">${s.depts.length}</div><div class="sub">con criterio de alerta propio</div></div>
+    <div class="stat-tile"><div class="label">Vacaciones (criterio interno)</div><div class="value">22</div><div class="sub">días laborables / empleado</div></div>
+    <div class="stat-tile"><div class="label">Vacaciones (convenio)</div><div class="value">30</div><div class="sub">${s.vacTileSub}</div></div>
+  `;
+}
+
+/* ---------------------------------------------------------------------
+   TABS
+   --------------------------------------------------------------------- */
+document.getElementById('tabNav').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-tab]');
+  if(!btn) return;
+  document.querySelectorAll('nav.tabs button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('section.tab').forEach(sec => sec.classList.remove('active'));
+  document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  if(btn.dataset.tab === 'resumen') renderResumen();
+  if(btn.dataset.tab === 'alertas') renderAlertas(currentAlertMonth);
+});
+
+/* ---------------------------------------------------------------------
+   RESUMEN
+   --------------------------------------------------------------------- */
+function computeEmployeeSummary(emp){
+  let vacUsadas = 0, baja = 0, permiso = 0, ausJust = 0, diaLibre = 0, otras = 0;
+  const d = siteData();
+  MONTHS.forEach((_, mi) => {
+    const codes = d[mi][emp.name];
+    if(!codes) return;
+    Object.values(codes).forEach(code => {
+      if(code === 'V') vacUsadas++;
+      else if(code === 'BM') baja++;
+      else if(code === 'PR') permiso++;
+      else if(code === 'AJ') ausJust++;
+      else if(code === 'DL') diaLibre++;
+      else if(code === 'ANJ' || code === 'OT') otras++;
+    });
+  });
+  return { vacUsadas, baja, permiso, ausJust, diaLibre, otras, saldo: emp.vac - vacUsadas };
+}
+
+function populateDeptFilter(){
+  const sel = document.getElementById('deptFilter');
+  const s = site();
+  sel.innerHTML = '<option value="__all">Todos los departamentos</option>' +
+    s.depts.map(d => `<option value="${d.dept}">${d.dept}</option>`).join('');
+  sel.onchange = renderResumen;
+}
+
+function renderResumen(){
+  const filter = document.getElementById('deptFilter').value || '__all';
+  const body = document.getElementById('resumenBody');
+  const rows = activeEmployees().filter(e => filter === '__all' || e.dept === filter).map(emp => {
+    const sm = computeEmployeeSummary(emp);
+    const saldoClass = sm.saldo <= 5 ? 'saldo-low' : 'saldo-ok';
+    return `<tr>
+      <td class="sticky-col">${emp.name}</td>
+      <td>${emp.dept}</td>
+      <td>${emp.puesto}</td>
+      <td>${emp.vac}</td>
+      <td>${sm.vacUsadas}</td>
+      <td class="${saldoClass}">${sm.saldo}</td>
+      <td>${sm.baja}</td>
+      <td>${sm.permiso}</td>
+      <td>${sm.ausJust}</td>
+      <td>${sm.diaLibre}</td>
+      <td>${sm.otras}</td>
+    </tr>`;
+  }).join('');
+  body.innerHTML = rows || `<tr><td colspan="11" style="text-align:center;color:var(--textgray);">Sin empleados en este departamento.</td></tr>`;
+}
+
+/* ---------------------------------------------------------------------
+   CONTROL MENSUAL
+   --------------------------------------------------------------------- */
+let currentMonth = 0;
+
+function renderLegend(targetId){
+  const el = document.getElementById(targetId);
+  el.innerHTML = site().codes.map(c => `
+    <span class="chip"><span class="swatch" style="background:${CODE_COLOR[c.codigo]}"></span>${c.codigo} — ${c.tipo}</span>
+  `).join('');
+}
+
+function renderMonthTabs(){
+  const el = document.getElementById('monthTabs');
+  el.innerHTML = MONTHS.map((m, i) => `<button data-mi="${i}" class="${i===currentMonth?'active':''}">${m.charAt(0)+m.slice(1).toLowerCase()}</button>`).join('');
+  el.querySelectorAll('button').forEach(btn => {
+    btn.onclick = () => {
+      currentMonth = parseInt(btn.dataset.mi, 10);
+      renderMonthTabs();
+      renderMonthGrid(currentMonth);
+    };
+  });
+}
+
+function codeOptionsHtml(selected){
+  let html = `<option value=""></option>`;
+  site().codes.forEach(c => {
+    html += `<option value="${c.codigo}" ${selected===c.codigo?'selected':''}>${c.codigo}</option>`;
+  });
+  return html;
+}
+
+function renderMonthGrid(mi){
+  const nd = daysInMonth(mi);
+  const thead = document.getElementById('monthThead');
+  const tbody = document.getElementById('monthBody');
+  const d = siteData();
+
+  let hdrDays = `<th class="sticky-col">Empleado</th>`;
+  let hdrWk = `<th class="sticky-col" style="top:auto;">Departamento</th>`;
+  for(let dd=1; dd<=nd; dd++){
+    const wl = weekdayLetter(mi, dd);
+    const wknd = isWeekend(wl);
+    hdrDays += `<th class="daynum${wknd?' weekend-hdr':''}">${dd}</th>`;
+    hdrWk += `<th class="daynum${wknd?' weekend-hdr':''}">${wl}</th>`;
+  }
+  thead.innerHTML = `<tr>${hdrDays}</tr><tr>${hdrWk}</tr>`;
+
+  tbody.innerHTML = activeEmployees().map(emp => {
+    if(!d[mi][emp.name]) d[mi][emp.name] = {};
+    let cells = `<td class="sticky-col">${emp.name}</td>`;
+    for(let dd=1; dd<=nd; dd++){
+      const wl = weekdayLetter(mi, dd);
+      const wknd = isWeekend(wl);
+      const val = d[mi][emp.name][dd] || '';
+      cells += `<td class="day-cell${wknd?' weekend':''}">
+        <select class="code-select ${val?'code-'+val:''}" data-emp="${emp.name}" data-day="${dd}">
+          ${codeOptionsHtml(val)}
+        </select>
+      </td>`;
+    }
+    return `<tr>${cells}</tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('select.code-select').forEach(sel => {
+    sel.addEventListener('change', () => {
+      const emp = sel.dataset.emp, day = sel.dataset.day, val = sel.value;
+      if(val) d[mi][emp][day] = val; else delete d[mi][emp][day];
+      sel.className = 'code-select' + (val ? ' code-' + val : '');
+    });
+  });
+}
+
+/* ---------------------------------------------------------------------
+   ALERTAS POR DEPARTAMENTO
+   --------------------------------------------------------------------- */
+let currentAlertMonth = 0;
+
+function renderMonthTabsAlertas(){
+  const el = document.getElementById('monthTabsAlertas');
+  el.innerHTML = MONTHS.map((m, i) => `<button data-mi="${i}" class="${i===currentAlertMonth?'active':''}">${m.charAt(0)+m.slice(1).toLowerCase()}</button>`).join('');
+  el.querySelectorAll('button').forEach(btn => {
+    btn.onclick = () => {
+      currentAlertMonth = parseInt(btn.dataset.mi, 10);
+      renderMonthTabsAlertas();
+      renderAlertas(currentAlertMonth);
+    };
+  });
+}
+
+function deptDailyCount(dept, mi, day){
+  let count = 0;
+  const d = siteData();
+  deptActiveEmployees(dept.dept).forEach(emp => {
+    const codes = d[mi][emp.name];
+    if(codes && codes[day]) count++;
+  });
+  return count;
+}
+
+function alertClass(n){
+  if(n >= 3) return 'alert-3';
+  if(n === 2) return 'alert-2';
+  if(n === 1) return 'alert-1';
+  return 'alert-0';
+}
+
+function renderAlertas(mi){
+  const s = site();
+  const nd = daysInMonth(mi);
+  const thead = document.getElementById('alertThead');
+  const tbody = document.getElementById('alertBody');
+
+  let hdr = `<th class="sticky-col">Departamento</th>`;
+  for(let d=1; d<=nd; d++){
+    const wknd = isWeekend(weekdayLetter(mi, d));
+    hdr += `<th class="daynum${wknd?' weekend-hdr':''}">${d}</th>`;
+  }
+  thead.innerHTML = `<tr>${hdr}</tr>`;
+
+  let totalAlertDays = 0;
+  const totalsPerDay = new Array(nd + 1).fill(0);
+
+  const rows = s.depts.map(dept => {
+    let cells = `<td class="sticky-col">${dept.dept}</td>`;
+    for(let d=1; d<=nd; d++){
+      const n = deptDailyCount(dept, mi, d);
+      if(n >= 2) totalsPerDay[d]++;
+      cells += `<td class="alert-cell ${alertClass(n)}">${n || ''}</td>`;
+    }
+    return `<tr>${cells}</tr>`;
+  }).join('');
+
+  let totalCells = `<td class="sticky-col">Nº deptos. ≥ 2 ausentes</td>`;
+  for(let d=1; d<=nd; d++){
+    const hit = totalsPerDay[d] > 0;
+    if(hit) totalAlertDays++;
+    totalCells += `<td class="${hit ? 'alert-hit' : ''}">${totalsPerDay[d] || ''}</td>`;
+  }
+
+  tbody.innerHTML = rows + `<tr class="total-row">${totalCells}</tr>`;
+
+  const callout = document.getElementById('alertaCallout');
+  if(totalAlertDays > 0){
+    callout.innerHTML = `<div class="callout">⚠ ${totalAlertDays} día(s) de ${MONTHS[mi].toLowerCase()} con algún departamento en REVISAR/ALERTA (2 o más ausencias simultáneas) en ${s.label}. Revisa antes de aprobar nuevas vacaciones o permisos en esas fechas.</div>`;
+  } else {
+    callout.innerHTML = `<div class="callout info">Sin alertas de cobertura en ${MONTHS[mi].toLowerCase()} para ${s.label} con los datos introducidos actualmente.</div>`;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   COBERTURA POR DEPARTAMENTO
+   --------------------------------------------------------------------- */
+function renderCobertura(){
+  const el = document.getElementById('coberturaCards');
+  el.innerHTML = site().depts.map(d => {
+    const list = deptActiveEmployees(d.dept);
+    return `
+    <div class="card">
+      <h4>${d.dept}</h4>
+      <div class="plantilla">${list.length} <span>empleado${list.length===1?'':'s'}</span></div>
+      <div class="empleados">${list.length ? list.map(e=>e.name).join(', ') : '— sin empleados activos asignados —'}</div>
+      <div class="criterio">${d.criterio}<br>${d.observacion}</div>
+    </div>
+  `;
+  }).join('');
+}
+
+/* ---------------------------------------------------------------------
+   CONVENIO
+   --------------------------------------------------------------------- */
+function renderConvenio(){
+  const s = site();
+  document.getElementById('convenioTable').innerHTML = s.convenioRows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
+  document.getElementById('codesBody').innerHTML = s.codes.map(c => `
+    <tr><td><span class="chip"><span class="swatch" style="background:${CODE_COLOR[c.codigo]}"></span><strong>${c.codigo}</strong></span></td><td>${c.tipo}</td></tr>
+  `).join('');
+}
+
+/* ---------------------------------------------------------------------
+   GESTIÓN DE PLANTILLA (alta / baja-exclusión de trabajadores)
+   --------------------------------------------------------------------- */
+function populateNewEmpDeptSelect(){
+  const s = site();
+  const sel = document.getElementById('newEmpDept');
+  sel.innerHTML = s.depts.map(d => `<option value="${d.dept}">${d.dept}</option>`).join('') +
+    `<option value="__new">+ Nuevo departamento…</option>`;
+  document.getElementById('newDeptWrap').style.display = 'none';
+}
+
+function renderPlantilla(){
+  const s = site();
+  document.getElementById('plantillaSiteLabel').textContent = s.label;
+  populateNewEmpDeptSelect();
+
+  const body = document.getElementById('plantillaBody');
+  if(!s.employees.length){
+    body.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--textgray);">Todavía no hay trabajadores dados de alta en esta sede.</td></tr>`;
+    return;
+  }
+  body.innerHTML = s.employees.map((emp, idx) => {
+    const active = emp.active !== false;
+    return `<tr>
+      <td class="sticky-col">${emp.name}</td>
+      <td>${emp.dept}</td>
+      <td>${emp.puesto}</td>
+      <td>${emp.vac}</td>
+      <td class="${active ? 'estado-activo' : 'estado-excluido'}">${active ? 'Activo' : 'Excluido'}</td>
+      <td>
+        <button type="button" class="btn-toggle-emp" data-idx="${idx}">${active ? 'Excluir' : 'Incluir'}</button>
+        <button type="button" class="btn-remove-emp" data-idx="${idx}">Eliminar</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+document.getElementById('newEmpDept').addEventListener('change', function(){
+  document.getElementById('newDeptWrap').style.display = this.value === '__new' ? 'block' : 'none';
+});
+
+document.getElementById('addEmployeeForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const s = site();
+  const nameInput = document.getElementById('newEmpName');
+  const name = nameInput.value.trim().toUpperCase();
+  if(!name) return;
+
+  if(s.employees.some(emp => emp.name === name)){
+    alert(`Ya existe un/a trabajador/a llamado/a "${name}" en la plantilla de ${s.label}.`);
+    return;
+  }
+
+  const deptSel = document.getElementById('newEmpDept').value;
+  let deptName;
+  if(deptSel === '__new'){
+    deptName = document.getElementById('newDeptName').value.trim().toUpperCase();
+    if(!deptName){
+      alert('Indica el nombre del nuevo departamento.');
+      return;
+    }
+    if(!s.depts.some(d => d.dept === deptName)){
+      s.depts.push({
+        dept: deptName, plantilla: 0, empleados: [],
+        criterio: '2 ausentes = REVISAR / 3 o más = ALERTA',
+        observacion: 'Revisar antes de aprobar nuevas vacaciones o permisos.',
+      });
+    }
+  } else {
+    deptName = deptSel;
+  }
+
+  const puesto = document.getElementById('newEmpPuesto').value.trim().toUpperCase() || '—';
+  const vacRaw = parseInt(document.getElementById('newEmpVac').value, 10);
+  const vac = Number.isFinite(vacRaw) ? vacRaw : 22;
+
+  s.employees.push({ name, dept: deptName, puesto, vac, active: true });
+
+  document.getElementById('addEmployeeForm').reset();
+  document.getElementById('newEmpVac').value = 22;
+  document.getElementById('newDeptWrap').style.display = 'none';
+
+  renderAllForSite();
+});
+
+document.getElementById('plantillaBody').addEventListener('click', (e) => {
+  const s = site();
+  const toggleBtn = e.target.closest('.btn-toggle-emp');
+  const removeBtn = e.target.closest('.btn-remove-emp');
+
+  if(toggleBtn){
+    const idx = parseInt(toggleBtn.dataset.idx, 10);
+    const emp = s.employees[idx];
+    if(!emp) return;
+    emp.active = emp.active === false ? true : false;
+    renderAllForSite();
+  } else if(removeBtn){
+    const idx = parseInt(removeBtn.dataset.idx, 10);
+    const emp = s.employees[idx];
+    if(!emp) return;
+    if(confirm(`¿Eliminar definitivamente a ${emp.name} de la plantilla de ${s.label}? Esta acción no se puede deshacer.`)){
+      s.employees.splice(idx, 1);
+      renderAllForSite();
+    }
+  }
+});
+
+/* ---------------------------------------------------------------------
+   INIT
+   --------------------------------------------------------------------- */
+renderAllForSite();
+</script>
+</body>
+</html>

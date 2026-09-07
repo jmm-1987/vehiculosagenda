@@ -337,6 +337,13 @@
                 <h2>Órdenes de Carga Internacionales</h2>
                 <p>Gestión de órdenes de carga y transporte</p>
             </a>
+            {% if current_user.username|lower in ['jmurillo', 'javimurillo', 'jamurillo', 'rocio', 'pserrano'] %}
+            <a href="/vacaciones" class="portada-card" style="border-top: 5px solid #C8A24A;">
+                <i class="fas fa-umbrella-beach"></i>
+                <h2>Vacaciones</h2>
+                <p>Control de vacaciones y ausencias 2026</p>
+            </a>
+            {% endif %}
             {% endif %}
 
             <!-- Segunda fila - Bloqueadas para todos excepto rocio y jmurillo -->
