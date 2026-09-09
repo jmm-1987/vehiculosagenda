@@ -67,60 +67,106 @@
   }
   .top-button:hover{ opacity:.9; color:#fff; }
 
-  main{ max-width:1280px; margin:0 auto; padding:26px 28px 60px;}
+  main{ max-width:100%; margin:0 auto; padding:6px 12px 16px;}
 
-  .page-title-row{ display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:16px; }
-  .page-title h2{ font-size:23px; margin:0 0 4px; font-weight:800; }
-  .page-title p{ margin:0; color:var(--textgray); font-size:14px; max-width:760px;}
-  .gold-rule{ height:2px; background:var(--gold); border:none; margin:14px 0 22px; }
+  .vac-toolbar{
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:4px 10px;
+    margin-bottom:4px;
+  }
+  .vac-toolbar h2{
+    margin:0; font-size:13px; font-weight:700; color:var(--navy);
+  }
+  .vac-toolbar .meta{ font-size:11px; color:var(--textgray); margin-left:6px; font-weight:500; }
 
-  /* ---------- Site selector ---------- */
-  .site-select{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
-  .site-select .label{ font-size:11px; text-transform:uppercase; letter-spacing:0.6px; color:var(--textgray); font-weight:700;}
-  .site-toggle{ display:flex; border:1px solid var(--navy); border-radius:20px; overflow:hidden; }
+  .site-select{ display:flex; align-items:center; gap:6px; }
+  .site-select .label{ font-size:9px; text-transform:uppercase; letter-spacing:0.4px; color:var(--textgray); font-weight:700;}
+  .site-toggle{ display:flex; border:1px solid var(--navy); border-radius:12px; overflow:hidden; }
   .site-toggle button{
     border:none; background:#fff; color:var(--navy); font-family:inherit; font-weight:700;
-    font-size:13px; padding:9px 18px; cursor:pointer;
+    font-size:11px; padding:3px 9px; cursor:pointer;
   }
   .site-toggle button.active{ background:var(--navy); color:#fff; }
   .site-toggle button + button{ border-left:1px solid var(--navy); }
 
-  /* ---------- Stat tiles ---------- */
-  .stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin-bottom:26px;}
-  .stat-tile{ background:#fff; border:1px solid var(--border); border-radius:6px; padding:14px 16px; }
-  .stat-tile .label{ font-size:11px; text-transform:uppercase; letter-spacing:0.6px; color:var(--textgray); font-weight:700;}
-  .stat-tile .value{ font-size:22px; font-weight:800; color:var(--navy); margin-top:4px;}
-  .stat-tile .sub{ font-size:11.5px; color:var(--textgray); margin-top:2px;}
+  /* ---------- Stat tiles (ocultos) ---------- */
+  .stats{ display:none; }
 
   /* ---------- Tabs ---------- */
-  nav.tabs{ display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:22px; flex-wrap:wrap; }
+  nav.tabs{ display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:6px; flex-wrap:wrap; }
   nav.tabs button{
-    background:none; border:none; padding:11px 16px; font-size:13.5px; font-weight:700;
-    color:var(--textgray); cursor:pointer; border-bottom:3px solid transparent; font-family:inherit;
+    background:none; border:none; padding:5px 8px; font-size:12px; font-weight:700;
+    color:var(--textgray); cursor:pointer; border-bottom:2px solid transparent; font-family:inherit;
   }
   nav.tabs button:hover{ color:var(--navy); }
-  nav.tabs button.active{ color:var(--navy); border-bottom:3px solid var(--gold); }
+  nav.tabs button.active{ color:var(--navy); border-bottom:2px solid var(--gold); }
 
   section.tab{ display:none; }
   section.tab.active{ display:block; }
 
-  h3.section-h{ color:var(--navy); font-size:16px; font-weight:800; margin:0 0 4px;}
-  p.section-p{ color:var(--textgray); font-size:13px; margin:0 0 16px; max-width:900px; line-height:1.5;}
+  /* títulos de sección ocultos: las pestañas ya nombran la vista */
+  h3.section-h{ display:none; }
+  p.section-p{ display:none; }
 
   /* ---------- Tables generic ---------- */
-  table{ border-collapse:collapse; width:100%; background:#fff; }
+  table{ border-collapse:separate; border-spacing:0; width:100%; background:#fff; }
   .table-wrap{ overflow-x:auto; border:1px solid var(--border); border-radius:6px; }
+  /* Scroll propio: permite fijar cabecera (top) y columna (left) a la vez */
+  .table-wrap.freeze{
+    max-height:calc(100vh - 125px);
+    overflow:auto;
+  }
   th,td{ padding:8px 10px; font-size:12.5px; text-align:left; border-bottom:1px solid #ececec; white-space:nowrap;}
   thead th{
     background:var(--metabg); color:var(--textgray); font-size:10.5px; text-transform:uppercase;
     letter-spacing:0.4px; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:2;
   }
   tbody tr:hover{ background:#fafbfd; }
+  tbody tr:hover td.sticky-col{ background:#fafbfd; }
   td.sticky-col, th.sticky-col{
     position:sticky; left:0; background:#fff; z-index:1; border-right:1px solid var(--border);
-    white-space:normal; min-width:210px; max-width:210px; font-weight:600;
+    white-space:normal; min-width:180px; max-width:180px; font-weight:600;
+    box-shadow:2px 0 4px rgba(0,0,0,.06);
   }
-  thead th.sticky-col{ background:var(--metabg); z-index:3; }
+  thead th.sticky-col{ background:var(--metabg); z-index:4; }
+
+  /* Mensual: 2 filas de cabecera fijas + todos los días visibles (sin scroll lateral) */
+  #monthTable{
+    table-layout:fixed;
+    width:100%;
+  }
+  #monthTable thead tr:nth-child(1) th{ top:0; z-index:2; }
+  #monthTable thead tr:nth-child(2) th{ top:26px; z-index:2; }
+  #monthTable thead tr:nth-child(1) th.sticky-col{ z-index:5; }
+  #monthTable thead tr:nth-child(2) th.sticky-col{ top:26px; z-index:5; }
+  #monthTable thead th{
+    height:26px; padding:2px 0; box-sizing:border-box; font-size:10px;
+  }
+  #monthTable thead th.weekend-hdr{ background:#e9ebef; }
+  #monthTable td.sticky-col, #monthTable th.sticky-col{
+    min-width:100px; max-width:100px; width:100px;
+    font-size:11px; padding:4px 6px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  #monthTable th.daynum,
+  #monthTable td.day-cell{
+    padding:1px 0; overflow:hidden; vertical-align:middle;
+  }
+  #monthTable select.code-select{
+    width:100%; max-width:100%; min-width:0;
+    padding:1px 0; font-size:9px; border-radius:2px;
+    appearance:none; -webkit-appearance:none; -moz-appearance:none;
+  }
+  #monthTable .cell-wrap{
+    position:relative; gap:0; min-height:22px; justify-content:center;
+  }
+  #monthTable .btn-adjunto{
+    position:absolute; top:-1px; right:0; font-size:8px; line-height:1; padding:0;
+    opacity:.85;
+  }
+  .table-wrap.freeze.month-freeze{
+    overflow-x:hidden;
+    overflow-y:auto;
+  }
 
   /* ---------- Resumen tab ---------- */
   .saldo-ok{ color:var(--code-v); font-weight:700; }
@@ -129,13 +175,13 @@
     border:1px solid var(--border); border-radius:4px; padding:6px 10px; font-size:12.5px;
     font-family:inherit; color:var(--black); background:#fff;
   }
-  .toolbar{ display:flex; gap:12px; align-items:center; margin-bottom:14px; flex-wrap:wrap;}
-  .toolbar label{ font-size:12px; font-weight:700; color:var(--textgray); }
+  .toolbar{ display:flex; gap:8px; align-items:center; margin-bottom:6px; flex-wrap:wrap;}
+  .toolbar label{ font-size:11px; font-weight:700; color:var(--textgray); }
 
   /* ---------- Legend ---------- */
-  .legend{ display:flex; flex-wrap:wrap; gap:8px 16px; margin-bottom:16px; }
-  .legend .chip{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--black);}
-  .legend .swatch{ width:13px; height:13px; border-radius:3px; display:inline-block; }
+  .legend{ display:flex; flex-wrap:wrap; gap:4px 10px; margin-bottom:6px; }
+  .legend .chip{ display:flex; align-items:center; gap:4px; font-size:11px; color:var(--black);}
+  .legend .swatch{ width:11px; height:11px; border-radius:2px; display:inline-block; }
 
   /* ---------- Month grid ---------- */
   td.day-cell{ padding:2px; text-align:center; }
@@ -154,10 +200,10 @@
   select.code-select.code-DL{ background:#e0f2f0; color:var(--code-dl); border-color:var(--code-dl); }
   select.code-select.code-OT{ background:#ececec; color:var(--code-ot); border-color:var(--code-ot); }
 
-  .month-tabs{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; }
+  .month-tabs{ display:flex; flex-wrap:wrap; gap:3px; margin-bottom:6px; }
   .month-tabs button{
-    border:1px solid var(--border); background:#fff; border-radius:16px; padding:6px 14px;
-    font-size:12px; font-weight:700; color:var(--textgray); cursor:pointer; font-family:inherit;
+    border:1px solid var(--border); background:#fff; border-radius:10px; padding:3px 8px;
+    font-size:11px; font-weight:700; color:var(--textgray); cursor:pointer; font-family:inherit;
   }
   .month-tabs button.active{ background:var(--navy); color:#fff; border-color:var(--navy); }
 
@@ -172,8 +218,8 @@
 
   .callout{
     background:var(--boxbg); border:1px solid var(--boxborder); color:var(--boxtext);
-    border-radius:6px; padding:12px 16px; font-size:12.5px; font-weight:700; margin:14px 0 18px;
-    line-height:1.5;
+    border-radius:4px; padding:6px 10px; font-size:11.5px; font-weight:700; margin:6px 0 8px;
+    line-height:1.35;
   }
   .callout.info{ background:var(--metabg); border-color:var(--border); color:var(--black); font-weight:500; }
 
@@ -215,10 +261,7 @@
   .btn-remove-emp{ color:var(--boxborder); border-color:var(--boxborder); }
   .btn-remove-emp:hover{ background:var(--boxborder); color:#fff; }
 
-  footer.bottom{
-    max-width:1280px; margin:30px auto 0; padding:16px 28px 30px; border-top:1px solid var(--border);
-    color:var(--textgray); font-size:11.5px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px;
-  }
+  footer.bottom{ display:none; }
 
   @media print{
     body{ background:#fff; }
@@ -268,51 +311,35 @@
 </div>
 
 <main>
-  <div class="page-title-row">
-    <div class="page-title">
-      <h2 id="pageTitleH2">Control de Vacaciones, Ausencias y Personal — Mérida 2026</h2>
-      <p id="pageTitleP">Panel de control interactivo · <span id="headerCentro">Centro de Mérida</span> — Ejercicio 2026</p>
-    </div>
+  <div class="vac-toolbar">
+    <h2 id="pageTitleH2">Vacaciones 2026 — <span id="headerCentro">Mérida</span></h2>
     <div class="site-select">
       <span class="label">Sede</span>
       <div class="site-toggle" id="siteToggle">
         <button data-site="merida" class="active">Mérida</button>
-        <button data-site="navalmoral">Navalmoral de la Mata</button>
+        <button data-site="navalmoral">Navalmoral</button>
       </div>
     </div>
   </div>
-  <hr class="gold-rule">
-
-  <div class="stats" id="statsRow"></div>
-
-  <div class="callout info">
-    Cada ausencia que registres en «Control mensual» <strong>se guarda en la base de datos</strong> asociada al
-    empleado. Puedes subir un <strong>PDF o imagen</strong> como justificante de cada día. Los cambios de plantilla
-    de esta sesión se sincronizan al abrir la sede; el Excel de RRHH sigue siendo la referencia documental de
-    convenio si lo necesitáis aparte.
-  </div>
 
   <nav class="tabs" id="tabNav">
-    <button data-tab="resumen" class="active">Resumen anual</button>
-    <button data-tab="mensual">Control mensual</button>
-    <button data-tab="alertas">Alertas por departamento</button>
-    <button data-tab="cobertura">Cobertura por departamento</button>
-    <button data-tab="convenio">Convenio y criterios</button>
-    <button data-tab="plantilla">Gestión de plantilla</button>
+    <button data-tab="resumen" class="active">Resumen</button>
+    <button data-tab="mensual">Mensual</button>
+    <button data-tab="alertas">Alertas</button>
+    <button data-tab="cobertura">Cobertura</button>
+    <button data-tab="convenio">Convenio</button>
+    <button data-tab="plantilla">Empleados</button>
   </nav>
 
   <!-- ===================== RESUMEN ===================== -->
   <section class="tab active" id="tab-resumen">
-    <h3 class="section-h">Resumen anual por empleado</h3>
-    <p class="section-p">Equivalente a la pestaña RESUMEN del Excel: vacaciones según convenio (30 días), usadas,
-      saldo y recuento de cada tipo de ausencia a lo largo de los 12 meses. Los códigos <strong>V</strong> (vacaciones)
-      y <strong>DL</strong> (día libre) restan del saldo. Se recalcula automáticamente a partir de lo introducido
-      en «Control mensual» para la sede seleccionada.</p>
+    <h3 class="section-h">Resumen anual</h3>
+    <p class="section-p">Vacaciones convenio (30). V y DL restan del saldo.</p>
     <div class="toolbar">
       <label for="deptFilter">Departamento:</label>
       <select id="deptFilter" class="filter-select"></select>
     </div>
-    <div class="table-wrap">
+    <div class="table-wrap freeze">
       <table id="resumenTable">
         <thead>
           <tr>
@@ -336,15 +363,13 @@
 
   <!-- ===================== CONTROL MENSUAL ===================== -->
   <section class="tab" id="tab-mensual">
-    <h3 class="section-h">Control mensual de vacaciones y ausencias</h3>
-    <p class="section-p">Igual que las pestañas de cada mes del Excel (ENERO…DICIEMBRE): una fila por empleado y
-      una columna por día. Selecciona un código en cada celda para registrar una incidencia; los fines de semana
-      aparecen sombreados.</p>
+    <h3 class="section-h">Control mensual</h3>
+    <p class="section-p">Código por día; fines de semana sombreados.</p>
 
     <div class="legend" id="legendMensual"></div>
     <div class="month-tabs" id="monthTabs"></div>
 
-    <div class="table-wrap">
+    <div class="table-wrap freeze month-freeze">
       <table id="monthTable">
         <thead id="monthThead"></thead>
         <tbody id="monthBody"></tbody>
@@ -354,17 +379,14 @@
 
   <!-- ===================== ALERTAS ===================== -->
   <section class="tab" id="tab-alertas">
-    <h3 class="section-h">Alertas diarias por departamento</h3>
-    <p class="section-p">Réplica de la pestaña ALERTAS DEPARTAMENTO: para cada día del mes se cuentan los
-      empleados de cada departamento con alguna incidencia (cualquier código). Criterio:
-      <strong>2 personas ausentes del mismo departamento = REVISAR</strong> ·
-      <strong>3 o más = ALERTA</strong>.</p>
+    <h3 class="section-h">Alertas · 2=REVISAR · 3+=ALERTA</h3>
+    <p class="section-p">Ausencias por departamento y día.</p>
 
     <div class="legend">
-      <span class="chip"><span class="swatch" style="background:#c6c6c6"></span>0 ausentes</span>
-      <span class="chip"><span class="swatch" style="background:#9a9a9a"></span>1 ausente</span>
-      <span class="chip"><span class="swatch" style="background:var(--amberborder)"></span>2 ausentes — REVISAR</span>
-      <span class="chip"><span class="swatch" style="background:var(--redborder)"></span>3 o más — ALERTA</span>
+      <span class="chip"><span class="swatch" style="background:#c6c6c6"></span>0</span>
+      <span class="chip"><span class="swatch" style="background:#9a9a9a"></span>1</span>
+      <span class="chip"><span class="swatch" style="background:var(--amberborder)"></span>2 REVISAR</span>
+      <span class="chip"><span class="swatch" style="background:var(--redborder)"></span>3+ ALERTA</span>
     </div>
 
     <div class="month-tabs" id="monthTabsAlertas"></div>
@@ -381,16 +403,14 @@
   <!-- ===================== COBERTURA ===================== -->
   <section class="tab" id="tab-cobertura">
     <h3 class="section-h">Cobertura por departamento</h3>
-    <p class="section-p">Plantilla y criterio de alerta de cada departamento, igual que la pestaña CONTROL
-      DEPARTAMENTOS del Excel.</p>
+    <p class="section-p">Plantilla y criterio de alerta.</p>
     <div class="cards" id="coberturaCards"></div>
   </section>
 
   <!-- ===================== CONVENIO ===================== -->
   <section class="tab" id="tab-convenio">
-    <h3 class="section-h">Convenio y criterios aplicados</h3>
-    <p class="section-p">Referencia normativa del convenio aplicable. El control de vacaciones se basa siempre en
-      los días de convenio (30), sin criterio interno alternativo.</p>
+    <h3 class="section-h">Convenio</h3>
+    <p class="section-p">Referencia normativa (30 días).</p>
     <div class="table-wrap" style="max-width:760px;">
       <table class="kv-table" id="convenioTable"></table>
     </div>
@@ -408,10 +428,8 @@
 
   <!-- ===================== PLANTILLA ===================== -->
   <section class="tab" id="tab-plantilla">
-    <h3 class="section-h">Gestión de plantilla</h3>
-    <p class="section-p">Alta, edición y desactivación de trabajadores. Los cambios se guardan en la base de datos.
-      Desactivar a alguien no borra su histórico de ausencias: puedes volver a activarlo y verá todo lo registrado.
-      Pulsa «Ausencias» para ver el detalle día a día de cada empleado.</p>
+    <h3 class="section-h">Empleados</h3>
+    <p class="section-p">Alta, edición y desactivación. «Ausencias» muestra el detalle por empleado.</p>
 
     <h4 style="color:var(--navy); font-size:13.5px; font-weight:800; margin:0 0 12px;">Añadir nuevo trabajador</h4>
     <form class="add-emp-form" id="addEmployeeForm">
@@ -435,10 +453,10 @@
         <label for="newEmpVac">Vac. asignadas (días)</label>
         <input type="number" id="newEmpVac" value="30" min="0" max="30">
       </div>
-      <button type="submit">+ Añadir a la plantilla</button>
+      <button type="submit">+ Añadir empleado</button>
     </form>
 
-    <h4 style="color:var(--navy); font-size:13.5px; font-weight:800; margin:0 0 12px;">Plantilla de <span id="plantillaSiteLabel">Mérida</span></h4>
+    <h4 style="color:var(--navy); font-size:13.5px; font-weight:800; margin:0 0 12px;">Empleados de <span id="plantillaSiteLabel">Mérida</span></h4>
     <div class="table-wrap">
       <table id="plantillaTable">
         <thead>
@@ -501,7 +519,7 @@
         <input type="number" id="editEmpVac" min="0" max="30" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:4px;">
       </div>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
-        <input type="checkbox" id="editEmpActivo"> Activo en plantilla
+        <input type="checkbox" id="editEmpActivo"> Activo
       </label>
     </div>
     <div class="actions">
@@ -766,9 +784,8 @@ document.getElementById('adjuntoSubir').onclick = async function(){
 
 async function renderAllForSite(){
   const s = site();
-  document.getElementById('headerCentro').textContent = s.centro;
-  document.getElementById('pageTitleH2').textContent = `Control de Vacaciones, Ausencias y Personal — ${s.label} 2026`;
-  document.getElementById('pageTitleP').innerHTML = `Panel de control interactivo · <span id="headerCentro">${s.centro}</span> — Ejercicio 2026`;
+  document.getElementById('headerCentro').textContent = s.label;
+  document.getElementById('pageTitleH2').innerHTML = `Vacaciones 2026 — <span id="headerCentro">${s.label}</span>`;
   document.getElementById('footerSite').textContent = `Control de Vacaciones y Ausencias 2026 — ${s.label}`;
 
   try {
@@ -779,7 +796,6 @@ async function renderAllForSite(){
     toast('Error al cargar datos guardados');
   }
 
-  renderStats();
   populateDeptFilter();
   renderResumen();
   renderLegend('legendMensual');
@@ -803,16 +819,7 @@ function deptActiveEmployees(deptName){
 /* ---------------------------------------------------------------------
    STAT TILES
    --------------------------------------------------------------------- */
-function renderStats(){
-  const s = site();
-  const el = document.getElementById('statsRow');
-  el.innerHTML = `
-    <div class="stat-tile"><div class="label">Empleados</div><div class="value">${activeEmployees().length}</div><div class="sub">${s.centro}</div></div>
-    <div class="stat-tile"><div class="label">Departamentos</div><div class="value">${s.depts.length}</div><div class="sub">con criterio de alerta propio</div></div>
-    <div class="stat-tile"><div class="label">Vacaciones (convenio)</div><div class="value">30</div><div class="sub">${s.vacTileSub}</div></div>
-    <div class="stat-tile"><div class="label">Descuento de saldo</div><div class="value">V + DL</div><div class="sub">vacaciones y días libres</div></div>
-  `;
-}
+function renderStats(){ /* cabecera compacta: sin tiles */ }
 
 /* ---------------------------------------------------------------------
    TABS
@@ -825,7 +832,12 @@ document.getElementById('tabNav').addEventListener('click', (e) => {
   document.querySelectorAll('section.tab').forEach(sec => sec.classList.remove('active'));
   document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
   if(btn.dataset.tab === 'resumen') renderResumen();
+  if(btn.dataset.tab === 'mensual'){
+    renderMonthTabs();
+    renderMonthGrid(currentMonth);
+  }
   if(btn.dataset.tab === 'alertas') renderAlertas(currentAlertMonth);
+  if(btn.dataset.tab === 'plantilla') renderPlantilla();
 });
 
 /* ---------------------------------------------------------------------
@@ -885,7 +897,7 @@ function renderResumen(){
 /* ---------------------------------------------------------------------
    CONTROL MENSUAL
    --------------------------------------------------------------------- */
-let currentMonth = 0;
+let currentMonth = new Date().getMonth();
 
 function renderLegend(targetId){
   const el = document.getElementById(targetId);
@@ -922,7 +934,7 @@ function renderMonthGrid(mi){
   const meta = siteMeta();
 
   let hdrDays = `<th class="sticky-col">Empleado</th>`;
-  let hdrWk = `<th class="sticky-col" style="top:auto;">Departamento</th>`;
+  let hdrWk = `<th class="sticky-col"></th>`;
   for(let dd=1; dd<=nd; dd++){
     const wl = weekdayLetter(mi, dd);
     const wknd = isWeekend(wl);
@@ -934,7 +946,7 @@ function renderMonthGrid(mi){
   tbody.innerHTML = activeEmployees().map(emp => {
     if(!d[mi][emp.name]) d[mi][emp.name] = {};
     if(!meta[mi][emp.name]) meta[mi][emp.name] = {};
-    let cells = `<td class="sticky-col">${emp.name}</td>`;
+    let cells = `<td class="sticky-col" title="${emp.name.replace(/"/g,'&quot;')}">${emp.name}</td>`;
     for(let dd=1; dd<=nd; dd++){
       const wl = weekdayLetter(mi, dd);
       const wknd = isWeekend(wl);
