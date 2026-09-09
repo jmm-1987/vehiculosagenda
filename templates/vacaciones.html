@@ -147,6 +147,17 @@
     font-size:11px; padding:4px 6px;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
+  #monthTable td.sticky-col{ cursor:pointer; }
+  #monthTable tbody tr.row-selected td{
+    background:#e8eef8 !important;
+  }
+  #monthTable tbody tr.row-selected td.weekend{
+    background:#dde5f2 !important;
+  }
+  #monthTable tbody tr.row-selected td.sticky-col{
+    background:#d4deef !important;
+    box-shadow:inset 3px 0 0 var(--gold), 2px 0 4px rgba(0,0,0,.06);
+  }
   #monthTable th.daynum,
   #monthTable td.day-cell{
     padding:1px 0; overflow:hidden; vertical-align:middle;
@@ -898,6 +909,7 @@ function renderResumen(){
    CONTROL MENSUAL
    --------------------------------------------------------------------- */
 let currentMonth = new Date().getMonth();
+let selectedMonthEmp = null;
 
 function renderLegend(targetId){
   const el = document.getElementById(targetId);
@@ -984,6 +996,23 @@ function renderMonthGrid(mi){
     btn.addEventListener('click', () => {
       const emp = btn.dataset.emp, day = parseInt(btn.dataset.day, 10);
       abrirModalAdjunto(emp, mi, day);
+    });
+  });
+
+  tbody.querySelectorAll('td.sticky-col').forEach(td => {
+    const name = td.getAttribute('title') || td.textContent;
+    if(selectedMonthEmp && name === selectedMonthEmp){
+      td.closest('tr').classList.add('row-selected');
+    }
+    td.addEventListener('click', () => {
+      if(selectedMonthEmp === name){
+        selectedMonthEmp = null;
+        td.closest('tr').classList.remove('row-selected');
+      } else {
+        selectedMonthEmp = name;
+        tbody.querySelectorAll('tr.row-selected').forEach(tr => tr.classList.remove('row-selected'));
+        td.closest('tr').classList.add('row-selected');
+      }
     });
   });
 }
