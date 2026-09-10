@@ -74,6 +74,7 @@ def _ausencia_dict(a: VacacionesAusencia, emp: VacacionesEmpleado):
         "sede": emp.sede,
         "fecha": a.fecha.isoformat(),
         "codigo": a.codigo,
+        "nota": a.nota or "",
         "tiene_adjunto": bool(a.adjunto),
         "adjunto_nombre": a.adjunto_nombre or "",
         "usuario": a.usuario or "",
@@ -233,6 +234,7 @@ def register_vacaciones_routes(app):
         nombre = (data.get("empleado") or "").strip().upper()
         codigo = (data.get("codigo") or "").strip().upper()
         fecha = _parse_fecha(data.get("fecha"))
+        nota = (data.get("nota") or "")[:1000]
 
         if sede not in ("merida", "navalmoral") or not nombre or not fecha:
             return jsonify({"ok": False, "error": "Datos incompletos"}), 400
@@ -278,12 +280,15 @@ def register_vacaciones_routes(app):
                 empleado_id=emp.id,
                 fecha=fecha,
                 codigo=codigo,
+                nota=nota,
                 usuario=current_user.username if current_user.is_authenticated else "",
                 fecha_registro=datetime.now(),
             )
             db.session.add(ausencia)
         else:
             ausencia.codigo = codigo
+            if "nota" in data:
+                ausencia.nota = nota
             ausencia.usuario = current_user.username if current_user.is_authenticated else ""
             ausencia.fecha_registro = datetime.now()
         db.session.commit()

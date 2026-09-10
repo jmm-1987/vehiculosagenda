@@ -581,6 +581,7 @@ class VacacionesAusencia(db.Base):
     empleado_id = Column(Integer, ForeignKey('vacaciones_empleado.id'), nullable=False)
     fecha = Column(Date, nullable=False)
     codigo = Column(String(10), nullable=False)
+    nota = Column(String(1000), default='')
     adjunto = Column(String(300), default='')
     adjunto_nombre = Column(String(300), default='')
     usuario = Column(String(100), default='')

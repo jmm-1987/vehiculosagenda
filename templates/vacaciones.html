@@ -285,6 +285,7 @@
     color:var(--textgray);
   }
   .btn-adjunto.has-file{ color:var(--navy); font-weight:700; }
+  .btn-adjunto.has-nota{ color:var(--amberborder); font-weight:700; }
   .btn-adjunto:hover{ color:var(--gold); }
 
   .vac-modal-bg{
@@ -494,14 +495,17 @@
 
 <div class="vac-modal-bg" id="adjuntoModal">
   <div class="vac-modal">
-    <h3>Justificante de ausencia</h3>
+    <h3>Detalle del día</h3>
     <p id="adjuntoModalInfo">Adjunta un PDF o imagen para este día.</p>
+    <label for="adjuntoNota" style="display:block;font-size:11px;font-weight:700;color:var(--textgray);margin-bottom:4px;">Nota</label>
+    <textarea id="adjuntoNota" rows="3" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:4px;font-family:inherit;font-size:13px;resize:vertical;margin-bottom:10px;"></textarea>
     <div id="adjuntoActual" style="font-size:12.5px;color:var(--navy);margin-bottom:10px;"></div>
     <label class="file-btn">Elegir PDF / imagen
       <input type="file" id="adjuntoInput" accept=".pdf,image/*,.png,.jpg,.jpeg,.webp,.gif">
     </label>
     <div class="actions">
       <button type="button" class="ghost" id="adjuntoOmitir">Cerrar</button>
+      <button type="button" class="ghost" id="adjuntoGuardarNota">Guardar nota</button>
       <a id="adjuntoDescargar" href="#" target="_blank" class="ghost" style="display:none;text-decoration:none;padding:9px 14px;border:1px solid var(--navy);border-radius:5px;font-weight:700;font-size:13px;color:var(--navy);">Descargar</a>
       <button type="button" class="primary" id="adjuntoSubir" disabled>Subir</button>
     </div>
@@ -551,6 +555,7 @@
             <th>Fecha</th>
             <th>Código</th>
             <th>Tipo</th>
+            <th>Nota</th>
             <th>Justificante</th>
             <th>Registró</th>
           </tr>
@@ -698,24 +703,29 @@ async function cargarAusenciasSede(){
     m[mi][a.empleado][dd] = {
       id: a.id,
       tiene_adjunto: !!a.tiene_adjunto,
-      adjunto_nombre: a.adjunto_nombre || ''
+      adjunto_nombre: a.adjunto_nombre || '',
+      nota: a.nota || ''
     };
   });
 }
 
-async function guardarAusencia(empleado, mi, day, codigo){
+async function guardarAusencia(empleado, mi, day, codigo, nota){
   const empObj = site().employees.find(e => e.name === empleado);
-  const res = await fetch('/api/vacaciones/ausencia', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
+  const prev = ((siteMeta()[mi] || {})[empleado] || {})[day] || {};
+  const payload = {
       sede: currentSiteKey,
       empleado,
       fecha: fechaISO(mi, day),
       codigo: codigo || '',
       departamento: empObj ? empObj.dept : '',
       puesto: empObj ? empObj.puesto : ''
-    })
+  };
+  if(nota !== undefined) payload.nota = nota;
+  else if(prev.nota) payload.nota = prev.nota;
+  const res = await fetch('/api/vacaciones/ausencia', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
   });
   const data = await res.json();
   if(!data.ok){
@@ -731,7 +741,8 @@ async function guardarAusencia(empleado, mi, day, codigo){
   m[mi][empleado][day] = {
     id: data.ausencia.id,
     tiene_adjunto: !!data.ausencia.tiene_adjunto,
-    adjunto_nombre: data.ausencia.adjunto_nombre || ''
+    adjunto_nombre: data.ausencia.adjunto_nombre || '',
+    nota: data.ausencia.nota || ''
   };
   return data.ausencia;
 }
@@ -740,8 +751,10 @@ let adjuntoCtx = null;
 function abrirModalAdjunto(empleado, mi, day){
   adjuntoCtx = {empleado, mi, day};
   const meta = (siteMeta()[mi][empleado] || {})[day] || {};
+  const codigo = ((siteData()[mi][empleado] || {})[day]) || '';
   document.getElementById('adjuntoModalInfo').textContent =
-    `${empleado} — ${day}/${mi+1}/${YEAR}`;
+    `${empleado} — ${day}/${mi+1}/${YEAR}` + (codigo ? ` · ${codigo}` : '');
+  document.getElementById('adjuntoNota').value = meta.nota || '';
   const actual = document.getElementById('adjuntoActual');
   const link = document.getElementById('adjuntoDescargar');
   if(meta.tiene_adjunto && meta.id){
@@ -762,6 +775,21 @@ function cerrarModalAdjunto(){
 }
 
 document.getElementById('adjuntoOmitir').onclick = cerrarModalAdjunto;
+document.getElementById('adjuntoGuardarNota').onclick = async function(){
+  if(!adjuntoCtx) return;
+  const {empleado, mi, day} = adjuntoCtx;
+  const codigo = ((siteData()[mi][empleado] || {})[day]) || '';
+  if(!codigo){
+    toast('Marca primero un código de ausencia');
+    return;
+  }
+  const nota = document.getElementById('adjuntoNota').value || '';
+  const ausencia = await guardarAusencia(empleado, mi, day, codigo, nota);
+  if(ausencia){
+    toast('Nota guardada');
+    renderMonthGrid(currentMonth);
+  }
+};
 document.getElementById('adjuntoInput').onchange = function(){
   document.getElementById('adjuntoSubir').disabled = !this.files || !this.files.length;
 };
@@ -786,7 +814,8 @@ document.getElementById('adjuntoSubir').onclick = async function(){
   m[mi][empleado][day] = {
     id: data.ausencia.id,
     tiene_adjunto: true,
-    adjunto_nombre: data.ausencia.adjunto_nombre || ''
+    adjunto_nombre: data.ausencia.adjunto_nombre || '',
+    nota: data.ausencia.nota || ((m[mi][empleado] || {})[day] || {}).nota || ''
   };
   toast('Justificante guardado');
   cerrarModalAdjunto();
@@ -965,12 +994,14 @@ function renderMonthGrid(mi){
       const val = d[mi][emp.name][dd] || '';
       const info = meta[mi][emp.name][dd] || {};
       const hasFile = !!info.tiene_adjunto;
-      cells += `<td class="day-cell${wknd?' weekend':''}">
+      const nota = info.nota || '';
+      const tip = [val && tipoCodigo(val), nota].filter(Boolean).join(' — ').replace(/"/g,'&quot;');
+      cells += `<td class="day-cell${wknd?' weekend':''}"${tip ? ` title="${tip}"` : ''}>
         <div class="cell-wrap">
           <select class="code-select ${val?'code-'+val:''}" data-emp="${emp.name}" data-day="${dd}">
             ${codeOptionsHtml(val)}
           </select>
-          ${val ? `<button type="button" class="btn-adjunto ${hasFile?'has-file':''}" title="${hasFile ? 'Ver/cambiar justificante' : 'Subir justificante'}" data-emp="${emp.name}" data-day="${dd}">${hasFile ? '📎' : '＋'}</button>` : ''}
+          ${val ? `<button type="button" class="btn-adjunto ${hasFile?'has-file':''}${nota?' has-nota':''}" title="${hasFile ? 'Ver/cambiar justificante' : (nota ? nota.replace(/"/g,'&quot;') : 'Nota / justificante')}" data-emp="${emp.name}" data-day="${dd}">${hasFile ? '📎' : (nota ? '📝' : '＋')}</button>` : ''}
         </div>
       </td>`;
     }
@@ -1243,16 +1274,18 @@ async function abrirDetalleAusencias(idx){
   const body = document.getElementById('detalleAusenciasBody');
   const aus = data.ausencias || [];
   if(!aus.length){
-    body.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--textgray);">Sin ausencias registradas.</td></tr>`;
+    body.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--textgray);">Sin ausencias registradas.</td></tr>`;
   } else {
     body.innerHTML = aus.map(a => {
       const adj = a.tiene_adjunto
         ? `<a href="/api/vacaciones/adjunto/${a.id}" target="_blank">📎 ${a.adjunto_nombre || 'Ver'}</a>`
         : '<span style="color:#999;">—</span>';
+      const nota = (a.nota || '').replace(/</g,'&lt;');
       return `<tr>
         <td>${a.fecha}</td>
         <td><strong>${a.codigo}</strong></td>
         <td>${tipoCodigo(a.codigo)}</td>
+        <td style="white-space:normal;max-width:260px;">${nota || '—'}</td>
         <td>${adj}</td>
         <td>${a.usuario || '—'}</td>
       </tr>`;
