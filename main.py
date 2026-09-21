@@ -73,11 +73,41 @@ except Exception as e:
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '78587fgrtyth'
 
+USUARIOS_SOLO_ALDIPOD_REEMBOLSOS = frozenset({'mgallego', 'bgarcia'})
+
+def _ruta_permitida_restringidos(path: str) -> bool:
+    """Rutas permitidas para mgallego / bgarcia."""
+    if path in ('/portada', '/logout', '/login', '/'):
+        return True
+    permitidos = (
+        '/registro_incidencias_aldipod',
+        '/incidencia_aldipod/',
+        '/aldipod/',
+        '/descargar_imagen/',
+        '/caja-reembolsos',
+        '/llegadas-camiones',
+        '/api/llegadas-camiones',
+        '/static/',
+    )
+    return any(path == p or path.startswith(p) for p in permitidos)
+
 # Configurar cierre automático de sesión de BD al final de cada request
 @app.teardown_appcontext
 def close_db(error):
     """Cierra la sesión de BD al final de cada request con commit automático"""
     db.close_session(error)
+
+@app.before_request
+def restringir_mgallego_bgarcia():
+    if not current_user.is_authenticated:
+        return None
+    user = (current_user.username or '').strip().lower()
+    if user not in USUARIOS_SOLO_ALDIPOD_REEMBOLSOS:
+        return None
+    path = request.path or '/'
+    if _ruta_permitida_restringidos(path):
+        return None
+    return redirect(url_for('portada'))
 
 #instancia del logi
 login_manager = LoginManager(app)

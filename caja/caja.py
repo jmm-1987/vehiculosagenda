@@ -16,11 +16,12 @@ def register_caja_routes(app):
     """Registra las rutas del módulo de Caja"""
     
     def solo_reembolsos_required(f):
-        """Decorador para restringir acceso: usuario 'caja' solo puede acceder a reembolsos"""
+        """Decorador: usuario 'caja' y restringidos solo pueden acceder a reembolsos (no Contados)."""
         @wraps(f)
         @login_required
         def decorated_function(*args, **kwargs):
-            if current_user.username == 'caja':
+            user = (current_user.username or '').strip().lower()
+            if user in ('caja', 'mgallego', 'bgarcia'):
                 flash('No tienes acceso a esta sección. Solo puedes acceder a Caja Reembolsos.', 'error')
                 return redirect(url_for('caja_reembolsos_index'))
             return f(*args, **kwargs)
