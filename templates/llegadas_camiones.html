@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control horario llegada de camiones — Alditraex</title>
+<style>
+  :root{
+    --navy:#12233F;
+    --navy-2:#1a3159;
+    --gold:#C8A24A;
+    --border:#B7B7B7;
+    --textgray:#6b6b6b;
+    --zebra:#E8EEF6;
+    --black:#1a1a1a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; padding:0; background:#eef0f3;
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+    color:var(--black);
+  }
+  .top-bar{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:2px 30px; background:linear-gradient(to right,#ffffff,#343a40);
+    color:white; height:50px; box-sizing:border-box;
+  }
+  .top-bar img{ width:200px; height:45px; object-fit:contain; }
+  .top-user{ font-weight:bold; font-size:14px; margin-left:auto; margin-right:20px; }
+  .top-button{
+    padding:2px 8px; background-color:#c51500; color:white; text-decoration:none;
+    border-radius:3px; font-size:12px; margin-left:8px;
+  }
+  .top-button:hover{ opacity:.9; color:#fff; }
+
+  main{ max-width:100%; margin:0 auto; padding:8px 14px 24px; }
+
+  .page-head{
+    background:var(--navy); color:#fff; border-radius:6px; padding:12px 16px;
+    display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;
+    margin-bottom:10px;
+  }
+  .page-head h1{
+    margin:0; font-size:15px; font-weight:800; color:var(--gold); letter-spacing:.3px;
+  }
+  .page-head .sub{ margin:4px 0 0; font-size:12px; color:#d7dde8; font-weight:500; }
+  .page-head .meta{ font-size:11px; color:#c8d0de; text-align:right; }
+
+  nav.tabs{ display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:10px; }
+  nav.tabs button{
+    background:none; border:none; padding:7px 12px; font-size:13px; font-weight:700;
+    color:var(--textgray); cursor:pointer; border-bottom:2px solid transparent; font-family:inherit;
+  }
+  nav.tabs button.active{ color:var(--navy); border-bottom-color:var(--gold); }
+
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+
+  .toolbar{
+    display:flex; flex-wrap:wrap; gap:10px 16px; align-items:end; margin-bottom:10px;
+    background:#fff; border:1px solid var(--border); border-radius:6px; padding:10px 12px;
+  }
+  .toolbar label{ display:block; font-size:10px; font-weight:700; color:var(--textgray); text-transform:uppercase; margin-bottom:3px; }
+  .toolbar input, .toolbar select{
+    border:1px solid var(--border); border-radius:4px; padding:6px 8px; font-size:13px;
+    font-family:inherit; min-width:140px;
+  }
+  .toolbar .btn{
+    border:none; border-radius:4px; padding:7px 12px; font-size:12.5px; font-weight:700;
+    cursor:pointer; font-family:inherit;
+  }
+  .btn-primary{ background:var(--navy); color:#fff; }
+  .btn-primary:hover{ background:var(--navy-2); }
+  .btn-ghost{ background:#fff; color:var(--navy); border:1px solid var(--navy) !important; }
+  .btn-danger{ background:#fff; color:#8A2A22; border:1px solid #8A2A22 !important; padding:3px 8px; font-size:11px; }
+
+  .table-wrap{
+    overflow:auto; border:1px solid var(--border); border-radius:6px; background:#fff;
+    max-height:calc(100vh - 210px);
+  }
+  table{ border-collapse:collapse; width:100%; min-width:980px; }
+  thead th{
+    position:sticky; top:0; z-index:2;
+    background:var(--navy); color:#fff; font-size:11px; text-transform:uppercase;
+    letter-spacing:.4px; padding:8px 6px; text-align:left; border-bottom:2px solid var(--gold);
+    white-space:nowrap;
+  }
+  tbody td{
+    padding:3px 4px; border-bottom:1px solid #e4e7ec; font-size:12.5px; vertical-align:middle;
+  }
+  tbody tr:nth-child(even){ background:var(--zebra); }
+  tbody tr:nth-child(odd){ background:#fff; }
+  tbody tr.manual-row td:first-child{ box-shadow:inset 3px 0 0 var(--gold); }
+
+  .cell-agencia{ font-weight:700; color:var(--navy); min-width:120px; white-space:nowrap; }
+  .cell-ruta{ font-weight:600; min-width:160px; }
+  td input{
+    width:100%; border:1px solid transparent; background:transparent; border-radius:3px;
+    padding:4px 5px; font-size:12.5px; font-family:inherit; color:var(--black);
+  }
+  td input:focus{ outline:none; border-color:var(--navy); background:#fff; }
+  td input.dirty{ border-color:var(--gold); background:#fffaf0; }
+  .col-mat{ min-width:100px; }
+  .col-hora{ min-width:78px; max-width:90px; }
+  .col-pal{ min-width:70px; max-width:90px; }
+  .col-pers{ min-width:140px; }
+  .col-acc{ width:56px; text-align:center; }
+
+  .stats{
+    display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;
+  }
+  .stat{
+    background:#fff; border:1px solid var(--border); border-radius:6px; padding:8px 12px; min-width:120px;
+  }
+  .stat .label{ font-size:10px; font-weight:700; color:var(--textgray); text-transform:uppercase; }
+  .stat .value{ font-size:18px; font-weight:800; color:var(--navy); }
+
+  .toast{
+    position:fixed; bottom:16px; right:16px; background:var(--navy); color:#fff;
+    padding:9px 13px; border-radius:6px; font-size:13px; z-index:10001; display:none; max-width:300px;
+  }
+  .toast.show{ display:block; }
+  .save-hint{ font-size:12px; color:var(--textgray); margin-left:auto; align-self:center; }
+  .save-hint.ok{ color:#2E7D32; }
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <a href="{{ url_for('portada') }}"><img src="{{ url_for('static', filename='logo.png') }}" alt="Logo"></a>
+  <span class="top-user">{{ current_user.username }}</span>
+  <a href="{{ url_for('portada') }}" class="top-button" style="background-color:#343a40;">Portada</a>
+  <a href="{{ url_for('logout') }}" class="top-button">Cerrar sesión</a>
+</div>
+
+<main>
+  <div class="page-head">
+    <div>
+      <h1>DEPARTAMENTO DE TRÁFICO — CONTROL DE LLEGADAS DE CAMIONES</h1>
+      <p class="sub">REGISTRO DIARIO · Control manual de descargas · Uso interno</p>
+    </div>
+    <div class="meta">Alditraex</div>
+  </div>
+
+  <nav class="tabs" id="tabNav">
+    <button type="button" data-tab="registro" class="active">Registro</button>
+    <button type="button" data-tab="analisis">Análisis</button>
+  </nav>
+
+  <!-- REGISTRO -->
+  <section class="panel active" id="panel-registro">
+    <div class="toolbar">
+      <div>
+        <label for="fechaDia">Fecha</label>
+        <input type="date" id="fechaDia">
+      </div>
+      <div>
+        <label for="turnoDia">Turno / Nave</label>
+        <input type="text" id="turnoDia" value="MÉRIDA LLEGADAS" style="min-width:180px;">
+      </div>
+      <button type="button" class="btn btn-primary" id="btnCargar">Cargar día</button>
+      <button type="button" class="btn btn-ghost" id="btnAddRuta">+ Añadir ruta</button>
+      <span class="save-hint" id="saveHint">Los cambios se guardan al salir de cada celda</span>
+    </div>
+
+    <div class="table-wrap">
+      <table id="tablaDia">
+        <thead>
+          <tr>
+            <th>Agencia</th>
+            <th>Ruta</th>
+            <th>Matrícula</th>
+            <th>Hora llegada</th>
+            <th>Fin descarga</th>
+            <th>% o pallets</th>
+            <th>Persona/s que descargan</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbodyDia"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ANÁLISIS -->
+  <section class="panel" id="panel-analisis">
+    <div class="toolbar">
+      <div>
+        <label for="filtroDesde">Desde</label>
+        <input type="date" id="filtroDesde">
+      </div>
+      <div>
+        <label for="filtroHasta">Hasta</label>
+        <input type="date" id="filtroHasta">
+      </div>
+      <div>
+        <label for="filtroAgencia">Agencia</label>
+        <input type="text" id="filtroAgencia" placeholder="ej. XPO">
+      </div>
+      <div>
+        <label for="filtroRuta">Ruta</label>
+        <input type="text" id="filtroRuta" placeholder="ej. VALENCIA">
+      </div>
+      <div>
+        <label for="filtroMatricula">Matrícula</label>
+        <input type="text" id="filtroMatricula" placeholder="ABC1234">
+      </div>
+      <button type="button" class="btn btn-primary" id="btnAnalizar">Filtrar</button>
+    </div>
+
+    <div class="stats" id="statsAnalisis"></div>
+
+    <div class="table-wrap">
+      <table id="tablaAnalisis">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Agencia</th>
+            <th>Ruta</th>
+            <th>Matrícula</th>
+            <th>Hora llegada</th>
+            <th>Fin descarga</th>
+            <th>% o pallets</th>
+            <th>Personas</th>
+            <th>Manual</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyAnalisis"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const toastEl = document.getElementById('toast');
+let toastTimer = null;
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200);
+}
+
+function hoyISO(){
+  const d = new Date();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+function esc(s){
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+}
+
+/* Tabs */
+document.getElementById('tabNav').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-tab]');
+  if(!btn) return;
+  document.querySelectorAll('#tabNav button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+  if(btn.dataset.tab === 'analisis') cargarAnalisis();
+});
+
+/* ---------- REGISTRO ---------- */
+const fechaDia = document.getElementById('fechaDia');
+const turnoDia = document.getElementById('turnoDia');
+const tbodyDia = document.getElementById('tbodyDia');
+const saveHint = document.getElementById('saveHint');
+fechaDia.value = hoyISO();
+
+async function cargarDia(){
+  const fecha = fechaDia.value;
+  if(!fecha){ toast('Indica una fecha'); return; }
+  const res = await fetch(`/api/llegadas-camiones/dia?fecha=${encodeURIComponent(fecha)}`);
+  const data = await res.json();
+  if(!data.ok){ toast(data.error || 'Error al cargar'); return; }
+  turnoDia.value = data.dia.turno || 'MÉRIDA LLEGADAS';
+  renderLineas(data.dia.lineas || []);
+  saveHint.textContent = 'Día cargado · autosave activo';
+  saveHint.classList.add('ok');
+}
+
+function renderLineas(lineas){
+  tbodyDia.innerHTML = lineas.map(lin => {
+    const agenciaCell = lin.es_manual
+      ? `<input data-field="agencia" value="${esc(lin.agencia)}" placeholder="Agencia">`
+      : `<span class="cell-agencia">${esc(lin.agencia)}</span>`;
+    const rutaCell = lin.es_manual
+      ? `<input data-field="ruta" value="${esc(lin.ruta)}" placeholder="Ruta">`
+      : `<span class="cell-ruta">${esc(lin.ruta)}</span>`;
+    const delBtn = lin.es_manual
+      ? `<button type="button" class="btn btn-danger" data-del="${lin.id}">✕</button>`
+      : '';
+    return `<tr class="${lin.es_manual ? 'manual-row' : ''}" data-id="${lin.id}">
+      <td>${agenciaCell}</td>
+      <td>${rutaCell}</td>
+      <td class="col-mat"><input data-field="matricula" value="${esc(lin.matricula)}" placeholder="—"></td>
+      <td class="col-hora"><input data-field="hora_llegada" value="${esc(lin.hora_llegada)}" placeholder="HH:MM"></td>
+      <td class="col-hora"><input data-field="fin_descarga" value="${esc(lin.fin_descarga)}" placeholder="HH:MM"></td>
+      <td class="col-pal"><input data-field="pallets" value="${esc(lin.pallets)}" placeholder="—"></td>
+      <td class="col-pers"><input data-field="personas" value="${esc(lin.personas)}" placeholder="—"></td>
+      <td class="col-acc">${delBtn}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function guardarLineaDesdeInput(input){
+  const tr = input.closest('tr');
+  if(!tr) return;
+  const id = parseInt(tr.dataset.id, 10);
+  const payload = { id };
+  tr.querySelectorAll('input[data-field]').forEach(inp => {
+    payload[inp.dataset.field] = inp.value;
+  });
+  input.classList.add('dirty');
+  saveHint.textContent = 'Guardando…';
+  saveHint.classList.remove('ok');
+  try{
+    const res = await fetch('/api/llegadas-camiones/linea', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if(!data.ok){
+      toast(data.error || 'No se pudo guardar');
+      saveHint.textContent = 'Error al guardar';
+      return;
+    }
+    input.classList.remove('dirty');
+    saveHint.textContent = 'Guardado';
+    saveHint.classList.add('ok');
+  }catch(e){
+    toast('Error de red al guardar');
+    saveHint.textContent = 'Error de red';
+  }
+}
+
+tbodyDia.addEventListener('change', (e) => {
+  if(e.target.matches('input[data-field]')) guardarLineaDesdeInput(e.target);
+});
+tbodyDia.addEventListener('focusout', (e) => {
+  if(e.target.matches('input[data-field].dirty')) guardarLineaDesdeInput(e.target);
+});
+tbodyDia.addEventListener('input', (e) => {
+  if(e.target.matches('input[data-field]')) e.target.classList.add('dirty');
+});
+tbodyDia.addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-del]');
+  if(!btn) return;
+  if(!confirm('¿Borrar esta ruta manual?')) return;
+  const id = btn.dataset.del;
+  const res = await fetch(`/api/llegadas-camiones/linea/${id}`, { method:'DELETE' });
+  const data = await res.json();
+  if(!data.ok){ toast(data.error || 'No se pudo borrar'); return; }
+  toast('Ruta eliminada');
+  cargarDia();
+});
+
+document.getElementById('btnCargar').onclick = cargarDia;
+fechaDia.addEventListener('change', cargarDia);
+
+turnoDia.addEventListener('change', async () => {
+  const fecha = fechaDia.value;
+  if(!fecha) return;
+  await fetch('/api/llegadas-camiones/dia/turno', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ fecha, turno: turnoDia.value })
+  });
+  toast('Turno actualizado');
+});
+
+document.getElementById('btnAddRuta').onclick = async () => {
+  const fecha = fechaDia.value;
+  if(!fecha){ toast('Indica una fecha'); return; }
+  const res = await fetch('/api/llegadas-camiones/linea/manual', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ fecha, agencia:'', ruta:'' })
+  });
+  const data = await res.json();
+  if(!data.ok){ toast(data.error || 'No se pudo añadir'); return; }
+  await cargarDia();
+  const last = tbodyDia.querySelector('tr:last-child input[data-field="agencia"]');
+  if(last) last.focus();
+};
+
+/* ---------- ANÁLISIS ---------- */
+const filtroDesde = document.getElementById('filtroDesde');
+const filtroHasta = document.getElementById('filtroHasta');
+filtroDesde.value = hoyISO().slice(0,8) + '01';
+filtroHasta.value = hoyISO();
+
+async function cargarAnalisis(){
+  const params = new URLSearchParams();
+  if(filtroDesde.value) params.set('desde', filtroDesde.value);
+  if(filtroHasta.value) params.set('hasta', filtroHasta.value);
+  const ag = document.getElementById('filtroAgencia').value.trim();
+  const ru = document.getElementById('filtroRuta').value.trim();
+  const ma = document.getElementById('filtroMatricula').value.trim();
+  if(ag) params.set('agencia', ag);
+  if(ru) params.set('ruta', ru);
+  if(ma) params.set('matricula', ma);
+
+  const res = await fetch('/api/llegadas-camiones/analisis?' + params.toString());
+  const data = await res.json();
+  if(!data.ok){ toast(data.error || 'Error en análisis'); return; }
+
+  const stats = document.getElementById('statsAnalisis');
+  const porAg = (data.por_agencia || []).slice(0,6).map(x =>
+    `<div class="stat"><div class="label">${esc(x.agencia)}</div><div class="value">${x.count}</div></div>`
+  ).join('');
+  stats.innerHTML = `
+    <div class="stat"><div class="label">Filas</div><div class="value">${data.total}</div></div>
+    <div class="stat"><div class="label">Con datos</div><div class="value">${data.rellenadas}</div></div>
+    ${porAg}
+  `;
+
+  const body = document.getElementById('tbodyAnalisis');
+  const items = data.items || [];
+  if(!items.length){
+    body.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--textgray);padding:16px;">Sin resultados</td></tr>`;
+    return;
+  }
+  body.innerHTML = items.map(it => `<tr>
+    <td>${esc(it.fecha)}</td>
+    <td class="cell-agencia">${esc(it.agencia)}</td>
+    <td>${esc(it.ruta)}</td>
+    <td>${esc(it.matricula)}</td>
+    <td>${esc(it.hora_llegada)}</td>
+    <td>${esc(it.fin_descarga)}</td>
+    <td>${esc(it.pallets)}</td>
+    <td>${esc(it.personas)}</td>
+    <td>${it.es_manual ? 'Sí' : ''}</td>
+  </tr>`).join('');
+}
+
+document.getElementById('btnAnalizar').onclick = cargarAnalisis;
+
+cargarDia();
+</script>
+</body>
+</html>

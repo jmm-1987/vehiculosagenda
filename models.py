@@ -586,3 +586,31 @@ class VacacionesAusencia(db.Base):
     adjunto_nombre = Column(String(300), default='')
     usuario = Column(String(100), default='')
     fecha_registro = Column(DateTime)
+
+
+class LlegadaCamionDia(db.Base):
+    """Cabecera del registro diario de llegadas de camiones."""
+    __tablename__ = "llegada_camion_dia"
+    id = Column(Integer, primary_key=True)
+    fecha = Column(Date, nullable=False, unique=True)
+    turno = Column(String(100), default='MÉRIDA LLEGADAS')
+    usuario = Column(String(100), default='')
+    fecha_registro = Column(DateTime)
+
+
+class LlegadaCamionLinea(db.Base):
+    """Línea (ruta) del registro diario de llegadas."""
+    __tablename__ = "llegada_camion_linea"
+    id = Column(Integer, primary_key=True)
+    dia_id = Column(Integer, ForeignKey('llegada_camion_dia.id'), nullable=False)
+    orden = Column(Integer, default=0)
+    agencia = Column(String(120), default='')
+    ruta = Column(String(200), default='')
+    matricula = Column(String(50), default='')
+    hora_llegada = Column(String(10), default='')
+    fin_descarga = Column(String(10), default='')
+    pallets = Column(String(50), default='')
+    personas = Column(String(200), default='')
+    es_manual = Column(Boolean, default=False)
+    usuario_mod = Column(String(100), default='')
+    fecha_mod = Column(DateTime)
