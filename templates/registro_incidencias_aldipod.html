@@ -371,8 +371,8 @@
 
         <div class="filter-section">
             <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
-                <input type="date" id="filtroDesde" onchange="filtrarTablaAvanzado()">
-                <input type="date" id="filtroHasta" onchange="filtrarTablaAvanzado()">
+                <input type="date" id="filtroDesde" value="{{ filtro_desde }}" onchange="recargarPorFechas()">
+                <input type="date" id="filtroHasta" value="{{ filtro_hasta }}" onchange="recargarPorFechas()">
                 <input type="text" id="filtroCliente" placeholder="Cliente" onkeyup="filtrarTablaAvanzado()">
                 <input type="text" id="filtroUsuario" placeholder="Usuario" onkeyup="filtrarTablaAvanzado()">
                 <input type="text" id="filtroTipo" placeholder="Tipo" onkeyup="filtrarTablaAvanzado()">
@@ -490,10 +490,19 @@
                 // Silenciar errores de UI para no bloquear la descarga
             }
         }
-        function filtrarTablaAvanzado() {
-            const texto = (document.getElementById('searchInput').value || '').toLowerCase();
+        function recargarPorFechas() {
             const desde = document.getElementById('filtroDesde').value;
             const hasta = document.getElementById('filtroHasta').value;
+            const url = new URL(window.location.href);
+            if (desde) url.searchParams.set('desde', desde);
+            else url.searchParams.delete('desde');
+            if (hasta) url.searchParams.set('hasta', hasta);
+            else url.searchParams.delete('hasta');
+            window.location.href = url.pathname + '?' + url.searchParams.toString();
+        }
+
+        function filtrarTablaAvanzado() {
+            const texto = (document.getElementById('searchInput').value || '').toLowerCase();
             const cliente = (document.getElementById('filtroCliente').value || '').toLowerCase();
             const usuario = (document.getElementById('filtroUsuario').value || '').toLowerCase();
             const tipo = (document.getElementById('filtroTipo').value || '').toLowerCase();
@@ -501,11 +510,11 @@
 
             const mostrarComunicadas = document.getElementById('filtroMostrarComunicadas').checked;
             const table = document.getElementById('incidenciasTable');
+            if (!table) return;
             const tr = table.getElementsByTagName('tr');
 
             for (let i = 1; i < tr.length; i++) {
                 const row = tr[i];
-                const dataFecha = row.getAttribute('data-fecha');
                 const dataCliente = (row.getAttribute('data-cliente') || '').toLowerCase();
                 const dataUsuario = (row.getAttribute('data-usuario') || '').toLowerCase();
                 const dataTipo = (row.getAttribute('data-tipo') || '').toLowerCase();
@@ -513,8 +522,6 @@
 
                 let visible = true;
 
-                if (desde && dataFecha < desde) visible = false;
-                if (hasta && dataFecha > hasta) visible = false;
                 if (cliente && !dataCliente.includes(cliente)) visible = false;
                 if (usuario && !dataUsuario.includes(usuario)) visible = false;
                 if (tipo && !dataTipo.includes(tipo)) visible = false;
@@ -545,6 +552,7 @@
                 row.style.display = visible ? '' : 'none';
             }
             actualizarContadorSeleccionadas();
+            actualizarContadoresVisibles();
         }
 
 
@@ -721,44 +729,27 @@
         }
 
         function actualizarContadores() {
+            actualizarContadoresVisibles();
+        }
+
+        function actualizarContadoresVisibles() {
             const table = document.getElementById('incidenciasTable');
-            const rows = table.querySelectorAll('tbody tr');
-            
-            // Total de incidencias
-            const totalIncidencias = rows.length;
-            document.getElementById('totalIncidencias').textContent = totalIncidencias;
-            
-            // Incidencias de hoy
-            const hoy = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-            const incidenciasHoy = Array.from(rows).filter(row => {
-                const fechaFila = row.getAttribute('data-fecha');
-                return fechaFila === hoy;
-            }).length;
+            if (!table) {
+                document.getElementById('totalIncidencias').textContent = '0';
+                document.getElementById('incidenciasHoy').textContent = '0';
+                return;
+            }
+            const rows = Array.from(table.querySelectorAll('tbody tr')).filter(r => r.style.display !== 'none');
+            document.getElementById('totalIncidencias').textContent = rows.length;
+            const hoy = new Date().toISOString().split('T')[0];
+            const incidenciasHoy = rows.filter(row => row.getAttribute('data-fecha') === hoy).length;
             document.getElementById('incidenciasHoy').textContent = incidenciasHoy;
         }
 
         // Inicializar contadores al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
-            // Establecer fechas por defecto: últimos 3 días
-            const hoy = new Date();
-            const hace3Dias = new Date();
-            hace3Dias.setDate(hoy.getDate() - 3);
-            
-            // Formatear fechas como YYYY-MM-DD para los inputs de tipo date
-            const formatoFecha = (fecha) => {
-                const año = fecha.getFullYear();
-                const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-                const dia = String(fecha.getDate()).padStart(2, '0');
-                return `${año}-${mes}-${dia}`;
-            };
-            
-            // Establecer valores por defecto en los campos de fecha
-            document.getElementById('filtroDesde').value = formatoFecha(hace3Dias);
-            document.getElementById('filtroHasta').value = formatoFecha(hoy);
-            
             actualizarContadorSeleccionadas();
-            actualizarContadores();
-            // Aplicar filtro por defecto (con fechas y solo mostrar no comunicadas)
+            // Fechas ya vienen del servidor (últimos 3 días). Solo ocultar comunicadas en cliente.
             filtrarTablaAvanzado();
         });
 

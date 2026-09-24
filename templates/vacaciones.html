@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Control de Vacaciones y Ausencias 2026 — Alditraex</title>
+<title>Control de Vacaciones y Ausencias — Alditraex</title>
 <style>
   :root{
     --navy:#12233F;
@@ -87,6 +87,11 @@
   }
   .site-toggle button.active{ background:var(--navy); color:#fff; }
   .site-toggle button + button{ border-left:1px solid var(--navy); }
+  .vac-toolbar-controls{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .year-select select{
+    font-family:inherit; font-size:12px; font-weight:700; padding:3px 8px;
+    border:1px solid var(--navy); border-radius:8px; background:#fff; color:var(--navy); cursor:pointer;
+  }
 
   /* ---------- Stat tiles (ocultos) ---------- */
   .stats{ display:none; }
@@ -324,12 +329,18 @@
 
 <main>
   <div class="vac-toolbar">
-    <h2 id="pageTitleH2">Vacaciones 2026 — <span id="headerCentro">Mérida</span></h2>
-    <div class="site-select">
-      <span class="label">Sede</span>
-      <div class="site-toggle" id="siteToggle">
-        <button data-site="merida" class="active">Mérida</button>
-        <button data-site="navalmoral">Navalmoral</button>
+    <h2 id="pageTitleH2">Vacaciones — <span id="headerCentro">Mérida</span></h2>
+    <div class="vac-toolbar-controls">
+      <div class="site-select year-select">
+        <span class="label">Año</span>
+        <select id="yearSelect" aria-label="Año de vacaciones"></select>
+      </div>
+      <div class="site-select">
+        <span class="label">Sede</span>
+        <div class="site-toggle" id="siteToggle">
+          <button data-site="merida" class="active">Mérida</button>
+          <button data-site="navalmoral">Navalmoral</button>
+        </div>
       </div>
     </div>
   </div>
@@ -490,7 +501,7 @@
 
 <footer class="bottom">
   <span>Alditraex · Departamento de RRHH — Uso interno</span>
-  <span id="footerSite">Control de Vacaciones y Ausencias 2026 — Mérida</span>
+  <span id="footerSite">Control de Vacaciones y Ausencias — Mérida</span>
 </footer>
 
 <div class="vac-modal-bg" id="adjuntoModal">
@@ -602,7 +613,9 @@ function site(){ return SITES[currentSiteKey]; }
 
 const MONTHS = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO',
                 'SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
-const YEAR = 2026;
+let YEAR = new Date().getFullYear();
+const YEAR_MIN = 2025;
+const YEAR_MAX = new Date().getFullYear() + 5;
 const WEEKDAY_LETTERS = ['D','L','M','X','J','V','S']; // getDay(): 0=domingo
 
 const CODE_COLOR = { V:'var(--code-v)', BM:'var(--code-bm)', PR:'var(--code-pr)',
@@ -627,12 +640,44 @@ function daysInMonth(mi){ return new Date(YEAR, mi + 1, 0).getDate(); }
 function weekdayLetter(mi, day){ return WEEKDAY_LETTERS[new Date(YEAR, mi, day).getDay()]; }
 function isWeekend(letter){ return letter === 'S' || letter === 'D'; }
 
+function resetGridData(){
+  Object.keys(SITES).forEach(k => {
+    dataBySite[k] = {};
+    metaAdjunto[k] = {};
+    MONTHS.forEach((_, mi) => {
+      dataBySite[k][mi] = {};
+      metaAdjunto[k][mi] = {};
+    });
+  });
+}
+
+function populateYearSelect(){
+  const sel = document.getElementById('yearSelect');
+  if(!sel) return;
+  sel.innerHTML = '';
+  for(let y = YEAR_MIN; y <= YEAR_MAX; y++){
+    const opt = document.createElement('option');
+    opt.value = String(y);
+    opt.textContent = String(y);
+    if(y === YEAR) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+
 document.getElementById('siteToggle').addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-site]');
   if(!btn || btn.classList.contains('active')) return;
   currentSiteKey = btn.dataset.site;
   document.querySelectorAll('#siteToggle button').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  renderAllForSite();
+});
+
+document.getElementById('yearSelect').addEventListener('change', () => {
+  const y = parseInt(document.getElementById('yearSelect').value, 10);
+  if(!y || y === YEAR) return;
+  YEAR = y;
+  resetGridData();
   renderAllForSite();
 });
 
@@ -825,8 +870,9 @@ document.getElementById('adjuntoSubir').onclick = async function(){
 async function renderAllForSite(){
   const s = site();
   document.getElementById('headerCentro').textContent = s.label;
-  document.getElementById('pageTitleH2').innerHTML = `Vacaciones 2026 — <span id="headerCentro">${s.label}</span>`;
-  document.getElementById('footerSite').textContent = `Control de Vacaciones y Ausencias 2026 — ${s.label}`;
+  document.getElementById('pageTitleH2').innerHTML = `Vacaciones ${YEAR} — <span id="headerCentro">${s.label}</span>`;
+  document.getElementById('footerSite').textContent = `Control de Vacaciones y Ausencias ${YEAR} — ${s.label}`;
+  document.title = `Vacaciones ${YEAR} — Alditraex`;
 
   try {
     await syncEmpleadosSede();
@@ -1385,6 +1431,7 @@ document.getElementById('plantillaBody').addEventListener('click', async (e) => 
 /* ---------------------------------------------------------------------
    INIT
    --------------------------------------------------------------------- */
+populateYearSelect();
 renderAllForSite();
 </script>
 </body>

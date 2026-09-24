@@ -33,50 +33,50 @@ def register_scanner_ftp_routes(app):
     @app.route('/registro_incidencias_aldipod')
     @login_required
     def registro_incidencias_aldipod():
-        """Muestra el registro de incidencias ALDIPOD"""
+        """Muestra el registro de incidencias ALDIPOD (por defecto últimos 3 días)."""
         import db
+        from datetime import datetime, timedelta, time
         from models import IncidenciaAldipod
-        
-        # Obtener el usuario actual
+
         usuario_actual = current_user.username if current_user.is_authenticated else ""
-        
-        # Actualizar incidencias existentes que no tengan ubicación
-        incidencias_sin_ubicacion = db.session.query(IncidenciaAldipod).filter(
-            (IncidenciaAldipod.ubicacion == None) | (IncidenciaAldipod.ubicacion == '')
-        ).all()
-        
-        for incidencia in incidencias_sin_ubicacion:
-            # Mapeo de usuarios a ubicaciones (mismo que en funciones_scanner.py)
-            usuarios_merida = ['jmurillo', 'rocio', 'rep', 'oficina', 'almacen', 'fbonilla', 'jmgarcia']
-            usuarios_navalmoral = ['repnav', 'yramos']
-            
-            if incidencia.usuario in usuarios_navalmoral:
-                incidencia.ubicacion = 'Navalmoral'
-            elif incidencia.usuario in usuarios_merida:
-                incidencia.ubicacion = 'Mérida'
-            else:
-                incidencia.ubicacion = 'Mérida'  # Por defecto
-        
-        if incidencias_sin_ubicacion:
-            db.session.commit()
-            print(f"DEBUG: Actualizadas {len(incidencias_sin_ubicacion)} incidencias sin ubicación")
-        
-        # Filtrar incidencias según el usuario
+
+        hoy = datetime.now().date()
+        hace_3 = hoy - timedelta(days=3)
+
+        def _parse_fecha(val, default):
+            if not val:
+                return default
+            try:
+                return datetime.strptime(val, '%Y-%m-%d').date()
+            except ValueError:
+                return default
+
+        filtro_desde = _parse_fecha(request.args.get('desde'), hace_3)
+        filtro_hasta = _parse_fecha(request.args.get('hasta'), hoy)
+        if filtro_desde > filtro_hasta:
+            filtro_desde, filtro_hasta = filtro_hasta, filtro_desde
+
+        inicio = datetime.combine(filtro_desde, time.min)
+        fin = datetime.combine(filtro_hasta, time.max)
+
+        q = db.session.query(IncidenciaAldipod).filter(
+            IncidenciaAldipod.fecha >= inicio,
+            IncidenciaAldipod.fecha <= fin,
+        )
+
         if usuario_actual in ['fbonilla', 'jmgarcia']:
-            # Solo mostrar incidencias de Mérida
-            incidencias = db.session.query(IncidenciaAldipod).filter(
-                IncidenciaAldipod.ubicacion == 'Mérida'
-            ).order_by(IncidenciaAldipod.fecha.desc()).all()
+            q = q.filter(IncidenciaAldipod.ubicacion == 'Mérida')
         elif usuario_actual == 'yramos':
-            # Solo mostrar incidencias de Navalmoral
-            incidencias = db.session.query(IncidenciaAldipod).filter(
-                IncidenciaAldipod.ubicacion == 'Navalmoral'
-            ).order_by(IncidenciaAldipod.fecha.desc()).all()
-        else:
-            # Para otros usuarios, mostrar todas las incidencias
-            incidencias = db.session.query(IncidenciaAldipod).order_by(IncidenciaAldipod.fecha.desc()).all()
-        
-        return render_template('registro_incidencias_aldipod.html', incidencias=incidencias)
+            q = q.filter(IncidenciaAldipod.ubicacion == 'Navalmoral')
+
+        incidencias = q.order_by(IncidenciaAldipod.fecha.desc()).all()
+
+        return render_template(
+            'registro_incidencias_aldipod.html',
+            incidencias=incidencias,
+            filtro_desde=filtro_desde.strftime('%Y-%m-%d'),
+            filtro_hasta=filtro_hasta.strftime('%Y-%m-%d'),
+        )
     
     @app.route('/incidencia_aldipod/comunicada', methods=['POST'])
     @login_required

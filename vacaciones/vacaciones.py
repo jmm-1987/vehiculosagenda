@@ -198,7 +198,12 @@ def register_vacaciones_routes(app):
     def api_vacaciones_ausencias():
         _require_vacaciones()
         sede = (request.args.get("sede") or "").strip()
-        anio = int(request.args.get("anio") or 2026)
+        try:
+            anio = int(request.args.get("anio") or date.today().year)
+        except (TypeError, ValueError):
+            anio = date.today().year
+        if anio < 2020 or anio > date.today().year + 10:
+            return jsonify({"ok": False, "error": "Año no válido"}), 400
         if sede not in ("merida", "navalmoral"):
             return jsonify({"ok": False, "error": "Sede no válida"}), 400
 

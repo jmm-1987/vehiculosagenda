@@ -96,9 +96,7 @@ def aplicar_permisos_usuario():
 
 #instancia del logi
 login_manager = LoginManager(app)
-
-#Esto es de login
-#login_manager = LoginManager(app)
+login_manager.login_view = 'login'
 
 #Configuracion del sitio de las imagenes
 app.config['UPLOAD_FOLDER'] = 'static/subidas'
@@ -187,21 +185,26 @@ def portada():
         return render_template('portada.html', permisos=None)
     if username and username.username == 'caja':
         return redirect(url_for('caja_reembolsos_index'))
-    
-    # Redirección por rol
-    try:
-        with open('static/roles_config.json', 'r') as f:
-            roles = json.load(f)
-        username_str = username.username if username else None
-        rol = roles.get('roles', {}).get(username_str)
-        if rol in ['rep', 'almacen']:
-            return redirect(url_for('scanner_clientes'))
-        if rol == 'oficina':
-            return redirect(url_for('scanner_clientes'))
-        if rol == 'incidencias' and (not username_str or username_str.strip().lower() != 'yramos'):
-            return redirect(url_for('registro_incidencias_aldipod'))
-    except Exception:
-        pass
+
+    username_str = username.username if username else None
+    user_l = (username_str or '').strip().lower()
+
+    # Si el usuario está en permisos.py (ACL), la portada manda: no forzar roles_config
+    # (evita que fbonilla/jmgarcia con rol "incidencias" salten a Aldipod)
+    if not tiene_restriccion(user_l) and not acceso_total(user_l):
+        try:
+            with open('static/roles_config.json', 'r') as f:
+                roles = json.load(f)
+            rol = roles.get('roles', {}).get(username_str)
+            if rol in ['rep', 'almacen']:
+                return redirect(url_for('scanner_clientes'))
+            if rol == 'oficina':
+                return redirect(url_for('scanner_clientes'))
+            if rol == 'incidencias' and user_l != 'yramos':
+                return redirect(url_for('registro_incidencias_aldipod'))
+        except Exception:
+            pass
+
     perms = permisos_usuario(current_user.username if current_user.is_authenticated else None)
     return render_template('portada.html', permisos=perms)
 
@@ -216,21 +219,23 @@ def home():
         return redirect(url_for('caja_reembolsos_index'))
     if current_user.username and current_user.username.strip().lower() == 'yramos':
         return redirect(url_for('portada'))
-    
-    # Redirección por rol
-    try:
-        with open('static/roles_config.json', 'r') as f:
-            roles = json.load(f)
-        username = request.args.get('user') or (session.get('_user_id') and db.session.query(Usuario).filter_by(id=session.get('_user_id')).first().username)
-        rol = roles.get('roles', {}).get(username)
-        if rol in ['rep', 'almacen']:
-            return redirect(url_for('scanner_clientes'))
-        if rol == 'oficina':
-            return redirect(url_for('scanner_clientes'))
-        if rol == 'incidencias' and (not username or username.strip().lower() != 'yramos'):
-            return redirect(url_for('registro_incidencias_aldipod'))
-    except Exception:
-        pass
+
+    # Redirección por rol (solo usuarios legacy sin ACL en permisos.py)
+    user_l = (current_user.username or '').strip().lower()
+    if not tiene_restriccion(user_l) and not acceso_total(user_l):
+        try:
+            with open('static/roles_config.json', 'r') as f:
+                roles = json.load(f)
+            username = request.args.get('user') or (session.get('_user_id') and db.session.query(Usuario).filter_by(id=session.get('_user_id')).first().username)
+            rol = roles.get('roles', {}).get(username)
+            if rol in ['rep', 'almacen']:
+                return redirect(url_for('scanner_clientes'))
+            if rol == 'oficina':
+                return redirect(url_for('scanner_clientes'))
+            if rol == 'incidencias' and (not username or username.strip().lower() != 'yramos'):
+                return redirect(url_for('registro_incidencias_aldipod'))
+        except Exception:
+            pass
     avisos = []
     ahora = datetime.now().date()
     todas_itv = db.session.query(Itv).all()
