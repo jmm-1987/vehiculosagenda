@@ -12,7 +12,9 @@ from werkzeug.utils import secure_filename
 import db
 from models import VacacionesEmpleado, VacacionesAusencia
 
-USUARIOS_VACACIONES = frozenset({"jmurillo", "javimurillo", "jamurillo", "rocio", "pserrano"})
+USUARIOS_VACACIONES = frozenset({
+    "jmurillo", "javimurillo", "jamurillo", "rocio", "pserrano", "icastro",
+})
 UPLOAD_SUBDIR = "vacaciones"
 ALLOWED_EXT = {".pdf", ".png", ".jpg", ".jpeg", ".webp", ".gif"}
 

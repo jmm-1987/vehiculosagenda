@@ -24,6 +24,11 @@ def register_caja_routes(app):
             if user in ('caja', 'mgallego', 'bgarcia'):
                 flash('No tienes acceso a esta sección. Solo puedes acceder a Caja Reembolsos.', 'error')
                 return redirect(url_for('caja_reembolsos_index'))
+            # Usuarios con ACL: solo Contados si tienen módulo 'caja'
+            from permisos import tiene_restriccion, puede
+            if tiene_restriccion(user) and not puede(user, 'caja'):
+                flash('No tienes acceso a Contados.', 'error')
+                return redirect(url_for('portada'))
             return f(*args, **kwargs)
         return decorated_function
     

@@ -614,3 +614,23 @@ class LlegadaCamionLinea(db.Base):
     es_manual = Column(Boolean, default=False)
     usuario_mod = Column(String(100), default='')
     fecha_mod = Column(DateTime)
+
+
+class Rectificacion(db.Base):
+    """Rectificación de peso/volumen por expedición y agencia."""
+    __tablename__ = "rectificacion"
+    id = Column(Integer, primary_key=True)
+    fecha = Column(Date, nullable=True)
+    expedicion = Column(String(100), default='')
+    agencia = Column(String(80), default='')
+    peso_documentado = Column(Float, nullable=True)
+    peso_real = Column(Float, nullable=True)
+    diferencia_peso = Column(Float, nullable=True)
+    vol_documentado = Column(Float, nullable=True)
+    vol_real = Column(Float, nullable=True)
+    diferencia_vol = Column(Float, nullable=True)
+    pvkg_documentado = Column(Float, nullable=True)
+    pvkg_real = Column(Float, nullable=True)
+    estado = Column(String(20), default='Pendiente')
+    usuario = Column(String(100), default='')
+    fecha_registro = Column(DateTime)

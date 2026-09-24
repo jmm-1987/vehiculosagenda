@@ -1,6 +1,7 @@
 from flask import Flask, render_template, session, request, redirect, url_for, send_file
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import db
+import os
 from ftp_transfer.ftp_transfer import register_ftp_transfer_routes, iniciar_scheduler
 from models import Itv, Seguro, Tacografo, Rodaje, Extintor, Usuario, Vehiculo, Taller, IncidenciaAldipod, CajaCobro, CajaPago, CajaArqueo, Presupuesto, ClientePresupuesto, FacturaProforma
 from datetime import datetime, timedelta
@@ -40,6 +41,8 @@ from presupuestos.edicion import register_presupuestoedit_routes
 from ordenes_carga.ordenes_carga import register_ordenes_carga_routes
 from vacaciones.vacaciones import register_vacaciones_routes
 from llegadas_camiones.llegadas_camiones import register_llegadas_camiones_routes
+from rectificaciones.rectificaciones import register_rectificaciones_routes
+from permisos import permisos_usuario, ruta_permitida, tiene_restriccion, acceso_total
 from sqlalchemy import func
 
 # Asegurar columnas nuevas en SQLite al arranque (sin migraciones)
@@ -73,24 +76,6 @@ except Exception as e:
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '78587fgrtyth'
 
-USUARIOS_SOLO_ALDIPOD_REEMBOLSOS = frozenset({'mgallego', 'bgarcia'})
-
-def _ruta_permitida_restringidos(path: str) -> bool:
-    """Rutas permitidas para mgallego / bgarcia."""
-    if path in ('/portada', '/logout', '/login', '/'):
-        return True
-    permitidos = (
-        '/registro_incidencias_aldipod',
-        '/incidencia_aldipod/',
-        '/aldipod/',
-        '/descargar_imagen/',
-        '/caja-reembolsos',
-        '/llegadas-camiones',
-        '/api/llegadas-camiones',
-        '/static/',
-    )
-    return any(path == p or path.startswith(p) for p in permitidos)
-
 # Configurar cierre automático de sesión de BD al final de cada request
 @app.teardown_appcontext
 def close_db(error):
@@ -98,14 +83,14 @@ def close_db(error):
     db.close_session(error)
 
 @app.before_request
-def restringir_mgallego_bgarcia():
+def aplicar_permisos_usuario():
     if not current_user.is_authenticated:
         return None
     user = (current_user.username or '').strip().lower()
-    if user not in USUARIOS_SOLO_ALDIPOD_REEMBOLSOS:
+    if not tiene_restriccion(user):
         return None
     path = request.path or '/'
-    if _ruta_permitida_restringidos(path):
+    if ruta_permitida(user, path):
         return None
     return redirect(url_for('portada'))
 
@@ -155,6 +140,7 @@ register_presupuestoedit_routes(app)
 register_ordenes_carga_routes(app)
 register_vacaciones_routes(app)
 register_llegadas_camiones_routes(app)
+register_rectificaciones_routes(app)
 
 with app.app_context():
     db.Base.metadata.create_all(db.engine)
@@ -198,7 +184,7 @@ def portada():
     if username and username.username == 'email':
         return redirect(url_for('email_destinatarios'))
     if username and username.username == 'presupuestos':
-        return render_template('portada.html')
+        return render_template('portada.html', permisos=None)
     if username and username.username == 'caja':
         return redirect(url_for('caja_reembolsos_index'))
     
@@ -216,7 +202,8 @@ def portada():
             return redirect(url_for('registro_incidencias_aldipod'))
     except Exception:
         pass
-    return render_template('portada.html')
+    perms = permisos_usuario(current_user.username if current_user.is_authenticated else None)
+    return render_template('portada.html', permisos=perms)
 
 @app.route('/index')
 @login_required
@@ -416,18 +403,28 @@ def email_destinatarios():
 @app.route('/descargar_db')
 @login_required
 def descargar_db():
-    # Bloquear acceso al usuario 'presupuestos'
+    user = (current_user.username or '').strip().lower()
     if current_user.username == 'presupuestos':
         return redirect(url_for('lista_presupuestos'))
-    # Bloquear acceso al usuario 'caja'
     if current_user.username == 'caja':
         return redirect(url_for('caja_reembolsos_index'))
+    # Solo usuarios sin ACL limitada (o con acceso total *)
+    if tiene_restriccion(user) and not acceso_total(user):
+        return redirect(url_for('portada'))
+
     fecha = datetime.now().strftime('%d%m%Y')
     nombre = f'VEHICULOS_{fecha}.db'
+    # Ruta absoluta: con Gunicorn el cwd no es la carpeta del proyecto
+    db_path = getattr(db, 'DATABASE_PATH', None) or os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), 'database', 'VEHICULOS.db'
+    )
+    if not os.path.isfile(db_path):
+        return f'Base de datos no encontrada: {db_path}', 404
     return send_file(
-        'database/VEHICULOS.db',
+        db_path,
         as_attachment=True,
-        download_name=nombre
+        download_name=nombre,
+        mimetype='application/octet-stream',
     )
 
 
