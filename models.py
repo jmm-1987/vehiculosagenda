@@ -623,6 +623,7 @@ class Rectificacion(db.Base):
     fecha = Column(Date, nullable=True)
     expedicion = Column(String(100), default='')
     agencia = Column(String(80), default='')
+    cp_destino = Column(String(10), default='')
     peso_documentado = Column(Float, nullable=True)
     peso_real = Column(Float, nullable=True)
     diferencia_peso = Column(Float, nullable=True)

@@ -288,6 +288,7 @@
     line-height:1.25;
   }
   .field-hint{visibility:hidden;}
+  .field-mini-hint{font-size:11px;font-weight:700;color:var(--navy-700);min-height:14px;}
   label{font-size:12px;font-weight:600;color:var(--text-muted);}
   input[type="date"],input[type="number"],input[type="text"],select{
     font-family:inherit;
@@ -328,11 +329,14 @@
   input.input-locked[readonly]{
     opacity:0.75; background:#eef1f4; cursor:default;
   }
-  .badge-sobre{
-    display:inline-block; font-size:10px; font-weight:800; letter-spacing:0.02em;
-    padding:2px 6px; border-radius:4px; background:#fff3cd; color:#856404;
-    border:1px solid #ffc107; margin-left:4px; vertical-align:middle;
+  .btn-edit{
+    font-family:inherit; font-size:11px; font-weight:700;
+    padding:4px 8px; border-radius:5px; cursor:pointer;
+    border:1px solid var(--navy-700); background:#fff; color:var(--navy-700);
+    margin-right:4px;
   }
+  .btn-edit:hover{ background:var(--navy-700); color:#fff; }
+  tr.row-editing{ outline:2px solid var(--gold-500); background:rgba(201,163,91,.08); }
 
   .log-card{min-width:0;}
   .log-head{
@@ -555,8 +559,11 @@
   <div class="grid">
     <section class="card form-card" id="formCard">
       <div class="form-card-head">
-        <h2>Nueva rectificación</h2>
-        <button type="button" class="btn btn-navy btn-sm" id="toggleFormBtn" aria-expanded="false" aria-controls="formCardBody">+ Nueva rectificación</button>
+        <h2 id="formTitle">Nueva rectificación</h2>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button type="button" class="btn btn-ghost btn-sm" id="cancelEditBtn" hidden>Cancelar edición</button>
+          <button type="button" class="btn btn-navy btn-sm" id="toggleFormBtn" aria-expanded="false" aria-controls="formCardBody">+ Nueva rectificación</button>
+        </div>
       </div>
       <div class="form-card-body" id="formCardBody" hidden>
       <p class="form-note">Obligatorios: <strong>nº de expedición</strong> y <strong>agencia</strong>. El estado queda como <strong>Pendiente</strong> al guardar; se acepta o rechaza más tarde desde el registro.</p>
@@ -581,6 +588,11 @@
               <option>Luis Simoes</option>
               <option>Otros</option>
             </select>
+          </div>
+          <div class="field" id="cpDestinoWrap" hidden>
+            <label for="cpDestino">CP destino (TSB)</label>
+            <input type="text" id="cpDestino" inputmode="numeric" maxlength="5" placeholder="Ej. 06800" pattern="[0-9]{4,5}">
+            <span id="baremoTsbHint" class="field-mini-hint"></span>
           </div>
           <div class="field">
             <label for="pesoDoc">Peso Documentado (kg)</label>
@@ -696,6 +708,7 @@
                   </select>
                 </div>
               </th>
+              <th>CP</th>
               <th>Peso Doc.</th><th>Peso Real</th><th>Dif. Peso</th>
               <th>Vol Doc.</th><th>Vol Real</th><th>Dif. Vol</th><th>PVKG Doc.</th><th>PVKG Real</th>
               <th>Imp. Doc.</th><th>Imp. Real</th><th>A cobrar</th>
@@ -710,11 +723,11 @@
                   </select>
                 </div>
               </th>
-              <th>Eliminar</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody id="logBody">
-            <tr><td colspan="16" class="empty-row">Aún no hay rectificaciones registradas.</td></tr>
+            <tr><td colspan="17" class="empty-row">Aún no hay rectificaciones registradas.</td></tr>
           </tbody>
         </table>
       </div>
@@ -731,6 +744,7 @@
   const $ = (id) => document.getElementById(id);
   const fecha=$('fecha'), expedicion=$('expedicion'), agencia=$('agencia'), pesoDoc=$('pesoDoc'), pesoReal=$('pesoReal'),
         volDoc=$('volDoc'), volReal=$('volReal'),
+        cpDestino=$('cpDestino'), cpDestinoWrap=$('cpDestinoWrap'), baremoTsbHint=$('baremoTsbHint'),
         diffPesoOut=$('diffPeso'), diffVolOut=$('diffVol'), pvkgDocOut=$('pvkgDoc'), pvkgRealOut=$('pvkgReal'),
         factorConvOut=$('factorConv'), importeDoc=$('importeDoc'), importeReal=$('importeReal'),
         sobredimensionado=$('sobredimensionado'), preciosManuales=$('preciosManuales'),
@@ -744,10 +758,13 @@
         filterFrom=$('filterFrom'), filterTo=$('filterTo'),
         filterDateClear=$('filterDateClear'), filterDateApply=$('filterDateApply'),
         filterAgencia=$('filterAgencia'), filterEstado=$('filterEstado'),
-        searchExpedicion=$('searchExpedicion');
+        searchExpedicion=$('searchExpedicion'),
+        formTitle=$('formTitle'), cancelEditBtn=$('cancelEditBtn');
 
   let allRows = [];
   let activeFrom = '', activeTo = '';
+  let editingId = null;
+  let editingEstado = 'Pendiente';
   const ESTADOS = ['Pendiente', 'Aceptada', 'Rechazada'];
   const todayStr = new Date().toISOString().slice(0,10);
 
@@ -938,15 +955,43 @@
   syncSobredimensionado();
 
   let importeTimer = null;
+  function syncCpDestino(){
+    const esTsb = agencia.value === 'TSB';
+    cpDestinoWrap.hidden = !esTsb;
+    if (!esTsb){
+      cpDestino.value = '';
+      baremoTsbHint.textContent = '';
+    }
+  }
+
+  function baremoTsbLocal(cp){
+    const s = String(cp || '').replace(/\D/g, '').slice(0, 5);
+    if (!s) return null;
+    const n = parseInt(s, 10);
+    if (Number.isNaN(n)) return null;
+    const exactos = new Set([6200,6210,6220,6400,6470,6473,6700,6800,6840,10195]);
+    if (exactos.has(n)) return 'B';
+    if ((n >= 6000 && n <= 6080) || (n >= 10000 && n <= 10099)) return 'B';
+    return 'C';
+  }
+
   async function refreshImportes(pvD, pvR){
     if (preciosManuales.checked){
       updateImporteCobrarAuto();
       return;
     }
     const ag = agencia.value;
-    if (!ag || (ag !== 'NTL' && ag !== 'Surpaq')){
+    if (!ag || (ag !== 'NTL' && ag !== 'Surpaq' && ag !== 'TSB')){
       importeDoc.value = '';
       importeReal.value = '';
+      if (ag !== 'TSB') baremoTsbHint.textContent = '';
+      updateImporteCobrarAuto();
+      return;
+    }
+    if (ag === 'TSB' && !cpDestino.value.trim()){
+      importeDoc.value = '';
+      importeReal.value = '';
+      baremoTsbHint.textContent = 'Indica CP destino';
       updateImporteCobrarAuto();
       return;
     }
@@ -956,11 +1001,18 @@
         const params = new URLSearchParams({ agencia: ag });
         if (pvD != null) params.set('pvkgDoc', String(pvD));
         if (pvR != null) params.set('pvkgReal', String(pvR));
+        if (ag === 'TSB') params.set('cp', cpDestino.value.trim());
         const res = await fetch('/api/rectificaciones/calcular-importe?' + params.toString());
         const data = await res.json();
         if (!data.ok) throw new Error();
         importeDoc.value = data.importeDocumentado == null ? '' : Number(data.importeDocumentado).toFixed(2);
         importeReal.value = data.importeReal == null ? '' : Number(data.importeReal).toFixed(2);
+        if (ag === 'TSB'){
+          const b = data.baremo || baremoTsbLocal(cpDestino.value);
+          baremoTsbHint.textContent = b ? ('Baremo ' + b) : '';
+        } else {
+          baremoTsbHint.textContent = '';
+        }
         updateImporteCobrarAuto();
       } catch (err) {
         importeDoc.value = '';
@@ -982,7 +1034,16 @@
     refreshImportes(pvD, pvR);
   }
   [pesoDoc, pesoReal, volDoc, volReal].forEach(el => el.addEventListener('input', updatePvkg));
-  agencia.addEventListener('change', updatePvkg);
+  agencia.addEventListener('change', () => {
+    syncCpDestino();
+    updatePvkg();
+  });
+  cpDestino.addEventListener('input', () => {
+    const b = baremoTsbLocal(cpDestino.value);
+    baremoTsbHint.textContent = (agencia.value === 'TSB' && b) ? ('Baremo ' + b) : '';
+    updatePvkg();
+  });
+  syncCpDestino();
   updatePvkg();
 
   let toastTimer = null;
@@ -1001,7 +1062,7 @@
   function renderRows(rows, filtered){
     if (!rows || rows.length === 0){
       const msg = filtered ? 'Ningún registro coincide con los filtros aplicados.' : 'Aún no hay rectificaciones registradas.';
-      logBody.innerHTML = `<tr><td colspan="16" class="empty-row">${msg}</td></tr>`;
+      logBody.innerHTML = `<tr><td colspan="17" class="empty-row">${msg}</td></tr>`;
       return;
     }
     const frag = document.createDocumentFragment();
@@ -1018,6 +1079,7 @@
         <td>${fmtDate(r.fecha)}</td>
         <td>${escapeHtml(r.expedicion || '—')}${sobreBadge}${manualBadge}</td>
         <td>${escapeHtml(r.agencia || '—')}</td>
+        <td>${escapeHtml(r.cpDestino || '—')}</td>
         <td>${fmtNum(r.pesoDocumentado, 2)}</td>
         <td>${fmtNum(r.pesoReal, 2)}</td>
         <td class="${diffClass(dPeso)}">${dPeso===null?'—':((dPeso>0?'+':'')+fmtNum(dPeso,2))}</td>
@@ -1030,7 +1092,11 @@
         <td>${fmtNum(r.importeReal, 2)}</td>
         <td>${fmtNum(r.importeCobrar, 2)}</td>
         <td><select class="estado-select estado-${estado.toLowerCase()}" data-id="${r.id}">${estadoOptionsHtml(estado)}</select></td>
-        <td><button type="button" class="btn-delete" data-id="${r.id}">Eliminar</button></td>`;
+        <td style="white-space:nowrap">
+          <button type="button" class="btn-edit" data-id="${r.id}">Editar</button>
+          <button type="button" class="btn-delete" data-id="${r.id}">Eliminar</button>
+        </td>`;
+      if (editingId && String(editingId) === String(r.id)) tr.classList.add('row-editing');
       frag.appendChild(tr);
     });
     logBody.innerHTML = '';
@@ -1059,7 +1125,88 @@
     }
   });
 
+  function numOrEmpty(v){
+    return (typeof v === 'number' && !Number.isNaN(v)) ? String(v) : '';
+  }
+
+  function abrirFormulario(){
+    formCardBody.hidden = false;
+    toggleFormBtn.setAttribute('aria-expanded', 'true');
+    toggleFormBtn.textContent = '− Ocultar formulario';
+  }
+
+  function cargarEnFormulario(r){
+    editingId = r.id;
+    editingEstado = r.estado || 'Pendiente';
+    formTitle.textContent = 'Editar rectificación #' + r.id;
+    cancelEditBtn.hidden = false;
+    saveBtn.textContent = 'Guardar cambios';
+    abrirFormulario();
+
+    fecha.value = r.fecha || todayStr;
+    expedicion.value = r.expedicion || '';
+    agencia.value = r.agencia || '';
+    syncCpDestino();
+    cpDestino.value = r.cpDestino || '';
+    pesoDoc.value = numOrEmpty(r.pesoDocumentado);
+    pesoReal.value = numOrEmpty(r.pesoReal);
+    volDoc.value = numOrEmpty(r.volDocumentado);
+    volReal.value = numOrEmpty(r.volReal);
+    preciosManuales.checked = !!r.preciosManuales;
+    sobredimensionado.checked = !!r.sobredimensionado;
+    syncPreciosManuales();
+    syncSobredimensionado();
+
+    if (r.preciosManuales){
+      importeDoc.value = numOrEmpty(r.importeDocumentado);
+      importeReal.value = numOrEmpty(r.importeReal);
+    }
+    if (r.sobredimensionado){
+      importeCobrar.value = numOrEmpty(r.importeCobrar);
+    }
+    updateDiffs();
+    updatePvkg();
+    // Si precios manuales, updatePvkg no pisa importes; forzar cobrar si no sobredim
+    if (r.preciosManuales){
+      importeDoc.value = numOrEmpty(r.importeDocumentado);
+      importeReal.value = numOrEmpty(r.importeReal);
+      updateImporteCobrarAuto();
+    }
+    if (r.sobredimensionado){
+      importeCobrar.value = numOrEmpty(r.importeCobrar);
+    }
+    document.getElementById('formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    expedicion.focus();
+    applyAndRender();
+  }
+
+  function cancelarEdicion(){
+    editingId = null;
+    editingEstado = 'Pendiente';
+    formTitle.textContent = 'Nueva rectificación';
+    cancelEditBtn.hidden = true;
+    saveBtn.textContent = 'Guardar rectificación';
+    const keepFecha = fecha.value;
+    form.reset();
+    fecha.value = keepFecha || todayStr;
+    syncCpDestino();
+    syncPreciosManuales();
+    syncSobredimensionado();
+    updateDiffs();
+    updatePvkg();
+    applyAndRender();
+  }
+
+  cancelEditBtn.addEventListener('click', cancelarEdicion);
+
   logBody.addEventListener('click', async (e) => {
+    const editBtn = e.target.closest('.btn-edit');
+    if (editBtn){
+      const id = editBtn.dataset.id;
+      const row = allRows.find(r => String(r.id) === String(id));
+      if (row) cargarEnFormulario(row);
+      return;
+    }
     const btn = e.target.closest('.btn-delete');
     if (!btn) return;
     if (!confirm('¿Eliminar esta rectificación?')) return;
@@ -1068,6 +1215,7 @@
       const res = await fetch(`/api/rectificaciones/${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (!data.ok) throw new Error();
+      if (String(editingId) === String(id)) cancelarEdicion();
       allRows = allRows.filter(r => String(r.id) !== String(id));
       applyAndRender();
       showToast('Rectificación eliminada.');
@@ -1111,6 +1259,11 @@
       agencia.focus();
       return;
     }
+    if (ag === 'TSB' && !cpDestino.value.trim()){
+      showToast('Para TSB indica el código postal de destino.', true);
+      cpDestino.focus();
+      return;
+    }
     if (sobredimensionado.checked && (importeCobrar.value === '' || Number.isNaN(parseFloat(importeCobrar.value)))){
       showToast('Indica el importe a cobrar (sobredimensionado).', true);
       importeCobrar.focus();
@@ -1125,41 +1278,41 @@
       }
     }
     saveBtn.disabled = true;
-    saveBtn.textContent = 'Guardando…';
+    saveBtn.textContent = editingId ? 'Guardando cambios…' : 'Guardando…';
     try {
-      const res = await fetch('/api/rectificaciones', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-          fecha: fecha.value || null,
-          expedicion: exp,
-          agencia: ag,
-          pesoDocumentado: pesoDoc.value,
-          pesoReal: pesoReal.value,
-          volDocumentado: volDoc.value,
-          volReal: volReal.value,
-          sobredimensionado: sobredimensionado.checked,
-          preciosManuales: preciosManuales.checked,
-          importeDocumentado: preciosManuales.checked ? importeDoc.value : null,
-          importeReal: preciosManuales.checked ? importeReal.value : null,
-          importeCobrar: sobredimensionado.checked ? importeCobrar.value : null,
-          estado: 'Pendiente'
-        })
+      const payload = {
+        fecha: fecha.value || null,
+        expedicion: exp,
+        agencia: ag,
+        cpDestino: ag === 'TSB' ? cpDestino.value.trim() : '',
+        pesoDocumentado: pesoDoc.value,
+        pesoReal: pesoReal.value,
+        volDocumentado: volDoc.value,
+        volReal: volReal.value,
+        sobredimensionado: sobredimensionado.checked,
+        preciosManuales: preciosManuales.checked,
+        importeDocumentado: preciosManuales.checked ? importeDoc.value : null,
+        importeReal: preciosManuales.checked ? importeReal.value : null,
+        importeCobrar: sobredimensionado.checked ? importeCobrar.value : null,
+        estado: editingId ? editingEstado : 'Pendiente'
+      };
+      const url = editingId ? `/api/rectificaciones/${editingId}` : '/api/rectificaciones';
+      const method = editingId ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method, headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || 'Error');
-      showToast('Rectificación guardada correctamente.');
-      const keepFecha = fecha.value;
-      form.reset();
-      fecha.value = keepFecha;
-      syncPreciosManuales();
-      syncSobredimensionado();
-      updateDiffs(); updatePvkg();
+      showToast(editingId ? 'Rectificación actualizada (precios recalculados).' : 'Rectificación guardada correctamente.');
+      cancelarEdicion();
       await cargar();
     } catch (err) {
       showToast(err.message || 'No se pudo guardar. Inténtalo de nuevo.', true);
     } finally {
       saveBtn.disabled = false;
-      saveBtn.textContent = 'Guardar rectificación';
+      if (!editingId) saveBtn.textContent = 'Guardar rectificación';
+      else saveBtn.textContent = 'Guardar cambios';
     }
   });
 

@@ -72,6 +72,7 @@ try:
     ensure_column_exists('rectificacion', 'sobredimensionado', 'BOOLEAN', 0)
     ensure_column_exists('rectificacion', 'precios_manuales', 'BOOLEAN', 0)
     ensure_column_exists('rectificacion', 'importe_cobrar', 'FLOAT', None)
+    ensure_column_exists('rectificacion', 'cp_destino', 'VARCHAR(10)', '')
     # La tabla factura_proforma se creará automáticamente con SQLAlchemy
 except Exception as e:
     print(f"Error en migraciones: {e}")

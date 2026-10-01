@@ -1,6 +1,7 @@
 """Rutas del módulo Rectificaciones de Peso y Volumen."""
 from __future__ import annotations
 
+import re
 from datetime import datetime, date
 from io import BytesIO
 
@@ -85,6 +86,7 @@ def _calcular_campos(data: dict):
     from rectificaciones.tarifas_loader import calcular_importe
 
     agencia = (data.get("agencia") or "").strip()
+    cp_destino = re.sub(r"\D", "", str(data.get("cpDestino", data.get("cp_destino", "")) or ""))[:10]
     pd = _parse_float(data.get("pesoDocumentado", data.get("peso_documentado")))
     pr = _parse_float(data.get("pesoReal", data.get("peso_real")))
     vd = _parse_float(data.get("volDocumentado", data.get("vol_documentado")))
@@ -99,8 +101,8 @@ def _calcular_campos(data: dict):
         importe_doc = _parse_float(data.get("importeDocumentado", data.get("importe_documentado")))
         importe_real = _parse_float(data.get("importeReal", data.get("importe_real")))
     else:
-        importe_doc = calcular_importe(agencia, pvkg_doc)
-        importe_real = calcular_importe(agencia, pvkg_real)
+        importe_doc = calcular_importe(agencia, pvkg_doc, cp_destino)
+        importe_real = calcular_importe(agencia, pvkg_real, cp_destino)
 
     if sobredim:
         importe_cobrar = _parse_float(data.get("importeCobrar", data.get("importe_cobrar")))
@@ -113,6 +115,7 @@ def _calcular_campos(data: dict):
     return {
         "agencia": agencia[:80],
         "expedicion": (data.get("expedicion") or "").strip()[:100],
+        "cp_destino": cp_destino,
         "fecha": _parse_fecha(data.get("fecha")),
         "peso_documentado": pd,
         "peso_real": pr,
@@ -136,6 +139,7 @@ def _dict(r: Rectificacion):
         "fecha": r.fecha.isoformat() if r.fecha else None,
         "expedicion": r.expedicion or "",
         "agencia": r.agencia or "",
+        "cpDestino": getattr(r, "cp_destino", None) or "",
         "pesoDocumentado": r.peso_documentado,
         "pesoReal": r.peso_real,
         "diferenciaPeso": r.diferencia_peso,
@@ -153,6 +157,20 @@ def _dict(r: Rectificacion):
         "usuario": r.usuario or "",
         "createdAt": r.fecha_registro.isoformat() if r.fecha_registro else None,
     }
+
+
+def _validar_campos(campos: dict):
+    if not (campos.get("expedicion") or "").strip():
+        return "El nº de expedición es obligatorio."
+    if not (campos.get("agencia") or "").strip():
+        return "La agencia es obligatoria."
+    if campos["agencia"] not in AGENCIAS:
+        return "Agencia no válida."
+    if campos["agencia"] == "TSB" and not (campos.get("cp_destino") or "").strip():
+        return "Para TSB indica el código postal de destino."
+    if campos.get("sobredimensionado") and campos.get("importe_cobrar") is None:
+        return "Indica el importe a cobrar (sobredimensionado)."
+    return None
 
 
 def register_rectificaciones_routes(app):
@@ -194,14 +212,9 @@ def register_rectificaciones_routes(app):
     def api_rectificaciones_crear():
         data = request.get_json(silent=True) or {}
         campos = _calcular_campos(data)
-        if not (campos.get("expedicion") or "").strip():
-            return jsonify({"ok": False, "error": "El nº de expedición es obligatorio."}), 400
-        if not (campos.get("agencia") or "").strip():
-            return jsonify({"ok": False, "error": "La agencia es obligatoria."}), 400
-        if campos["agencia"] not in AGENCIAS:
-            return jsonify({"ok": False, "error": "Agencia no válida."}), 400
-        if campos.get("sobredimensionado") and campos.get("importe_cobrar") is None:
-            return jsonify({"ok": False, "error": "Indica el importe a cobrar (sobredimensionado)."}), 400
+        err = _validar_campos(campos)
+        if err:
+            return jsonify({"ok": False, "error": err}), 400
         estado = (data.get("estado") or "Pendiente").strip()
         if estado not in ESTADOS:
             estado = "Pendiente"
@@ -212,6 +225,33 @@ def register_rectificaciones_routes(app):
             fecha_registro=datetime.now(),
         )
         db.session.add(r)
+        db.session.commit()
+        return jsonify({"ok": True, "item": _dict(r)})
+
+    @app.route("/api/rectificaciones/<int:item_id>", methods=["PUT", "DELETE"])
+    @login_required
+    def api_rectificaciones_item(item_id):
+        r = db.session.query(Rectificacion).filter_by(id=item_id).first()
+        if not r:
+            return jsonify({"ok": False, "error": "No encontrada"}), 404
+
+        if request.method == "DELETE":
+            db.session.delete(r)
+            db.session.commit()
+            return jsonify({"ok": True})
+
+        # PUT: actualizar y recalcular
+        data = request.get_json(silent=True) or {}
+        campos = _calcular_campos(data)
+        err = _validar_campos(campos)
+        if err:
+            return jsonify({"ok": False, "error": err}), 400
+        for k, v in campos.items():
+            setattr(r, k, v)
+        if "estado" in data:
+            est = (data.get("estado") or "").strip()
+            if est in ESTADOS:
+                r.estado = est
         db.session.commit()
         return jsonify({"ok": True, "item": _dict(r)})
 
@@ -229,28 +269,21 @@ def register_rectificaciones_routes(app):
         db.session.commit()
         return jsonify({"ok": True, "item": _dict(r)})
 
-    @app.route("/api/rectificaciones/<int:item_id>", methods=["DELETE"])
-    @login_required
-    def api_rectificaciones_borrar(item_id):
-        r = db.session.query(Rectificacion).filter_by(id=item_id).first()
-        if not r:
-            return jsonify({"ok": False, "error": "No encontrada"}), 404
-        db.session.delete(r)
-        db.session.commit()
-        return jsonify({"ok": True})
-
     @app.route("/api/rectificaciones/calcular-importe")
     @login_required
     def api_rectificaciones_calcular_importe():
-        from rectificaciones.tarifas_loader import calcular_importe, agencia_con_tarifa
+        from rectificaciones.tarifas_loader import calcular_importe, agencia_con_tarifa, baremo_tsb_por_cp
         agencia = (request.args.get("agencia") or "").strip()
+        cp = (request.args.get("cp") or request.args.get("cpDestino") or "").strip()
         kg_doc = _parse_float(request.args.get("pvkgDoc"))
         kg_real = _parse_float(request.args.get("pvkgReal"))
+        baremo = baremo_tsb_por_cp(cp) if agencia == "TSB" else None
         return jsonify({
             "ok": True,
             "tieneTarifa": agencia_con_tarifa(agencia),
-            "importeDocumentado": calcular_importe(agencia, kg_doc),
-            "importeReal": calcular_importe(agencia, kg_real),
+            "baremo": baremo,
+            "importeDocumentado": calcular_importe(agencia, kg_doc, cp),
+            "importeReal": calcular_importe(agencia, kg_real, cp),
         })
 
     @app.route("/api/rectificaciones/exportar")
@@ -269,7 +302,7 @@ def register_rectificaciones_routes(app):
         ws = wb.active
         ws.title = "Rectificaciones"
         headers = [
-            "Fecha", "Nº Expedición", "Agencia",
+            "Fecha", "Nº Expedición", "Agencia", "CP Destino",
             "Peso Documentado (kg)", "Peso Real (kg)", "Diferencia Peso (kg)",
             "Vol Documentado (m3)", "Vol Real (m3)", "Diferencia Vol (m3)",
             "PVKG Documentado (kg)", "PVKG Real (kg)",
@@ -283,6 +316,7 @@ def register_rectificaciones_routes(app):
                 r.fecha.strftime("%d/%m/%Y") if r.fecha else "",
                 r.expedicion or "",
                 r.agencia or "",
+                getattr(r, "cp_destino", None) or "",
                 r.peso_documentado if r.peso_documentado is not None else "",
                 r.peso_real if r.peso_real is not None else "",
                 r.diferencia_peso if r.diferencia_peso is not None else "",
