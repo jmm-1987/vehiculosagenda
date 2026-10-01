@@ -14,6 +14,15 @@ from models import Rectificacion
 AGENCIAS = ("Surpaq", "XPO", "TSB", "NTL", "Luis Simoes", "Otros")
 ESTADOS = ("Pendiente", "Aceptada", "Rechazada")
 
+# Factores kg/m³. TSB es por tramos: ≤1→200, ≤5→220, >5→250
+FACTORES_FIJOS = {
+    "NTL": 200.0,
+    "Surpaq": 225.0,
+    "XPO": 250.0,
+    "Luis Simoes": 250.0,
+    "Otros": 250.0,
+}
+
 
 def _parse_fecha(val):
     if not val:
@@ -33,17 +42,74 @@ def _parse_float(val):
         return None
 
 
-def _pvkg_factor(agencia: str) -> float:
-    return 200.0 if (agencia or "") == "NTL" else 250.0
+def _pvkg_factor(agencia: str, volumen: float | None = None) -> float | None:
+    """Devuelve kg/m³ según agencia. TSB depende del volumen."""
+    ag = (agencia or "").strip()
+    if ag == "TSB":
+        if volumen is None:
+            return None
+        if volumen <= 1:
+            return 200.0
+        if volumen <= 5:
+            return 220.0
+        return 250.0
+    return FACTORES_FIJOS.get(ag)
+
+
+def _pvkg_desde(peso, volumen, agencia: str):
+    """
+    PVKG = el superior entre peso (kg) y peso volumétrico (m³ × factor).
+    Si solo hay uno de los dos, se usa ese.
+    """
+    candidatos = []
+    if peso is not None:
+        candidatos.append(float(peso))
+    if volumen is not None:
+        factor = _pvkg_factor(agencia, volumen)
+        if factor is not None:
+            candidatos.append(float(volumen) * factor)
+        elif not candidatos:
+            return None
+    if not candidatos:
+        return None
+    return max(candidatos)
+
+
+def _as_bool(val) -> bool:
+    if isinstance(val, str):
+        return val.strip().lower() in ("1", "true", "si", "sí", "yes")
+    return bool(val)
 
 
 def _calcular_campos(data: dict):
+    from rectificaciones.tarifas_loader import calcular_importe
+
     agencia = (data.get("agencia") or "").strip()
     pd = _parse_float(data.get("pesoDocumentado", data.get("peso_documentado")))
     pr = _parse_float(data.get("pesoReal", data.get("peso_real")))
     vd = _parse_float(data.get("volDocumentado", data.get("vol_documentado")))
     vr = _parse_float(data.get("volReal", data.get("vol_real")))
-    factor = _pvkg_factor(agencia)
+    pvkg_doc = _pvkg_desde(pd, vd, agencia)
+    pvkg_real = _pvkg_desde(pr, vr, agencia)
+
+    sobredim = _as_bool(data.get("sobredimensionado", False))
+    precios_manuales = _as_bool(data.get("preciosManuales", data.get("precios_manuales", False)))
+
+    if precios_manuales:
+        importe_doc = _parse_float(data.get("importeDocumentado", data.get("importe_documentado")))
+        importe_real = _parse_float(data.get("importeReal", data.get("importe_real")))
+    else:
+        importe_doc = calcular_importe(agencia, pvkg_doc)
+        importe_real = calcular_importe(agencia, pvkg_real)
+
+    if sobredim:
+        importe_cobrar = _parse_float(data.get("importeCobrar", data.get("importe_cobrar")))
+    elif importe_doc is not None and importe_real is not None:
+        # Diferencia doc − real (mismo criterio que peso/volumen)
+        importe_cobrar = round(importe_doc - importe_real, 2)
+    else:
+        importe_cobrar = None
+
     return {
         "agencia": agencia[:80],
         "expedicion": (data.get("expedicion") or "").strip()[:100],
@@ -54,8 +120,13 @@ def _calcular_campos(data: dict):
         "vol_documentado": vd,
         "vol_real": vr,
         "diferencia_vol": (vd - vr) if vd is not None and vr is not None else None,
-        "pvkg_documentado": (vd * factor) if vd is not None else None,
-        "pvkg_real": (vr * factor) if vr is not None else None,
+        "pvkg_documentado": pvkg_doc,
+        "pvkg_real": pvkg_real,
+        "importe_documentado": importe_doc,
+        "importe_real": importe_real,
+        "sobredimensionado": sobredim,
+        "precios_manuales": precios_manuales,
+        "importe_cobrar": importe_cobrar,
     }
 
 
@@ -73,6 +144,11 @@ def _dict(r: Rectificacion):
         "diferenciaVol": r.diferencia_vol,
         "pvkgDocumentado": r.pvkg_documentado,
         "pvkgReal": r.pvkg_real,
+        "importeDocumentado": r.importe_documentado,
+        "importeReal": r.importe_real,
+        "sobredimensionado": bool(r.sobredimensionado),
+        "preciosManuales": bool(getattr(r, "precios_manuales", False)),
+        "importeCobrar": r.importe_cobrar,
         "estado": r.estado or "Pendiente",
         "usuario": r.usuario or "",
         "createdAt": r.fecha_registro.isoformat() if r.fecha_registro else None,
@@ -92,6 +168,7 @@ def register_rectificaciones_routes(app):
         hasta = _parse_fecha(request.args.get("hasta"))
         agencia = (request.args.get("agencia") or "").strip()
         estado = (request.args.get("estado") or "").strip()
+        expedicion_q = (request.args.get("expedicion") or request.args.get("q") or "").strip()
 
         q = db.session.query(Rectificacion)
         if desde:
@@ -102,6 +179,8 @@ def register_rectificaciones_routes(app):
             q = q.filter(Rectificacion.agencia == agencia)
         if estado:
             q = q.filter(Rectificacion.estado == estado)
+        if expedicion_q:
+            q = q.filter(Rectificacion.expedicion.ilike(f"%{expedicion_q}%"))
 
         filas = (
             q.order_by(Rectificacion.fecha.desc(), Rectificacion.id.desc())
@@ -115,6 +194,14 @@ def register_rectificaciones_routes(app):
     def api_rectificaciones_crear():
         data = request.get_json(silent=True) or {}
         campos = _calcular_campos(data)
+        if not (campos.get("expedicion") or "").strip():
+            return jsonify({"ok": False, "error": "El nº de expedición es obligatorio."}), 400
+        if not (campos.get("agencia") or "").strip():
+            return jsonify({"ok": False, "error": "La agencia es obligatoria."}), 400
+        if campos["agencia"] not in AGENCIAS:
+            return jsonify({"ok": False, "error": "Agencia no válida."}), 400
+        if campos.get("sobredimensionado") and campos.get("importe_cobrar") is None:
+            return jsonify({"ok": False, "error": "Indica el importe a cobrar (sobredimensionado)."}), 400
         estado = (data.get("estado") or "Pendiente").strip()
         if estado not in ESTADOS:
             estado = "Pendiente"
@@ -152,6 +239,20 @@ def register_rectificaciones_routes(app):
         db.session.commit()
         return jsonify({"ok": True})
 
+    @app.route("/api/rectificaciones/calcular-importe")
+    @login_required
+    def api_rectificaciones_calcular_importe():
+        from rectificaciones.tarifas_loader import calcular_importe, agencia_con_tarifa
+        agencia = (request.args.get("agencia") or "").strip()
+        kg_doc = _parse_float(request.args.get("pvkgDoc"))
+        kg_real = _parse_float(request.args.get("pvkgReal"))
+        return jsonify({
+            "ok": True,
+            "tieneTarifa": agencia_con_tarifa(agencia),
+            "importeDocumentado": calcular_importe(agencia, kg_doc),
+            "importeReal": calcular_importe(agencia, kg_real),
+        })
+
     @app.route("/api/rectificaciones/exportar")
     @login_required
     def api_rectificaciones_exportar():
@@ -171,7 +272,10 @@ def register_rectificaciones_routes(app):
             "Fecha", "Nº Expedición", "Agencia",
             "Peso Documentado (kg)", "Peso Real (kg)", "Diferencia Peso (kg)",
             "Vol Documentado (m3)", "Vol Real (m3)", "Diferencia Vol (m3)",
-            "PVKG Documentado (kg)", "PVKG Real (kg)", "Estado", "Usuario",
+            "PVKG Documentado (kg)", "PVKG Real (kg)",
+            "Importe Doc (€)", "Importe Real (€)",
+            "Sobredimensionado", "Precios manuales", "Importe a cobrar (€)",
+            "Estado", "Usuario",
         ]
         ws.append(headers)
         for r in filas:
@@ -187,6 +291,11 @@ def register_rectificaciones_routes(app):
                 r.diferencia_vol if r.diferencia_vol is not None else "",
                 r.pvkg_documentado if r.pvkg_documentado is not None else "",
                 r.pvkg_real if r.pvkg_real is not None else "",
+                r.importe_documentado if r.importe_documentado is not None else "",
+                r.importe_real if r.importe_real is not None else "",
+                "Sí" if r.sobredimensionado else "No",
+                "Sí" if getattr(r, "precios_manuales", False) else "No",
+                r.importe_cobrar if r.importe_cobrar is not None else "",
                 r.estado or "Pendiente",
                 r.usuario or "",
             ])

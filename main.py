@@ -67,6 +67,11 @@ try:
     ensure_column_exists('presupuesto', 'usuario_creacion', 'VARCHAR(100)', '')
     ensure_column_exists('presupuesto', 'fecha_creacion', 'DATETIME', None)
     ensure_column_exists('vacaciones_ausencia', 'nota', 'VARCHAR(1000)', '')
+    ensure_column_exists('rectificacion', 'importe_documentado', 'FLOAT', None)
+    ensure_column_exists('rectificacion', 'importe_real', 'FLOAT', None)
+    ensure_column_exists('rectificacion', 'sobredimensionado', 'BOOLEAN', 0)
+    ensure_column_exists('rectificacion', 'precios_manuales', 'BOOLEAN', 0)
+    ensure_column_exists('rectificacion', 'importe_cobrar', 'FLOAT', None)
     # La tabla factura_proforma se creará automáticamente con SQLAlchemy
 except Exception as e:
     print(f"Error en migraciones: {e}")

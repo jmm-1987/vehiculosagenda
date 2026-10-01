@@ -267,6 +267,16 @@
     align-items:end;
     margin-bottom:4px;
   }
+  .form-row-importes{
+    grid-column:1 / -1;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:12px 14px;
+    align-items:end;
+    margin-top:4px;
+    padding-top:10px;
+    border-top:1px dashed var(--border);
+  }
   .field-submit .btn{
     width:100%;
     min-height:41px;
@@ -306,6 +316,23 @@
   .diff-pos{color:var(--gold-600);border-color:var(--gold-500);background:var(--gold-100);}
   .diff-neg{color:var(--danger);border-color:var(--danger);background:var(--danger-bg);}
   .diff-zero{color:var(--ok);}
+  .factor-locked{background:#eef1f4 !important;border-style:solid !important;border-color:var(--navy-700) !important;color:var(--navy-700);font-weight:800;cursor:default;user-select:none;}
+  .factor-grid label.check-label{
+    display:flex; align-items:center; gap:8px; margin-top:22px; cursor:pointer;
+    font-size:13px; font-weight:700; color:var(--navy-700);
+  }
+  .form-grid label.check-label input[type="checkbox"]{
+    width:auto; margin:0; accent-color:var(--navy-700);
+  }
+  #importeCobrar:disabled, #importeDoc[readonly], #importeReal[readonly], #importeCobrar[readonly],
+  input.input-locked[readonly]{
+    opacity:0.75; background:#eef1f4; cursor:default;
+  }
+  .badge-sobre{
+    display:inline-block; font-size:10px; font-weight:800; letter-spacing:0.02em;
+    padding:2px 6px; border-radius:4px; background:#fff3cd; color:#856404;
+    border:1px solid #ffc107; margin-left:4px; vertical-align:middle;
+  }
 
   .log-card{min-width:0;}
   .log-head{
@@ -317,8 +344,20 @@
     padding-bottom:10px;
   }
   .log-head h2{border:none;margin:0;padding:0;}
-  .log-head-title{display:flex;align-items:center;gap:8px;}
+  .log-head-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   .date-filter-wrap{position:relative;}
+  .search-exp{
+    font-family:inherit;
+    font-size:13px;
+    padding:6px 10px;
+    border-radius:6px;
+    border:1px solid var(--border);
+    background:var(--surface-2);
+    color:var(--text);
+    min-width:180px;
+    max-width:260px;
+  }
+  .search-exp:focus-visible{outline:none;box-shadow:var(--focus-ring);border-color:var(--gold-500);}
   .btn-cal{
     font-size:13px;
     line-height:1;
@@ -520,7 +559,7 @@
         <button type="button" class="btn btn-navy btn-sm" id="toggleFormBtn" aria-expanded="false" aria-controls="formCardBody">+ Nueva rectificación</button>
       </div>
       <div class="form-card-body" id="formCardBody" hidden>
-      <p class="form-note">El estado queda como <strong>Pendiente</strong> al guardar; se acepta o rechaza más tarde desde el registro. Puedes guardar aunque falte algún dato.</p>
+      <p class="form-note">Obligatorios: <strong>nº de expedición</strong> y <strong>agencia</strong>. El estado queda como <strong>Pendiente</strong> al guardar; se acepta o rechaza más tarde desde el registro.</p>
       <form id="rectForm">
         <div class="form-grid">
           <div class="field">
@@ -529,11 +568,11 @@
           </div>
           <div class="field">
             <label for="expedicion">Nº Expedición</label>
-            <input type="text" id="expedicion" placeholder="Ej. 20260922-001">
+            <input type="text" id="expedicion" placeholder="Ej. 20260922-001" required>
           </div>
           <div class="field">
             <label for="agencia">Agencia</label>
-            <select id="agencia">
+            <select id="agencia" required>
               <option value="" selected>Sin especificar</option>
               <option>Surpaq</option>
               <option>XPO</option>
@@ -568,6 +607,10 @@
             <output id="diffVol" class="diff-output" aria-live="polite">—</output>
           </div>
           <div class="field diff-field">
+            <label>Factor conversión (kg/m³)</label>
+            <output id="factorConv" class="diff-output factor-locked" aria-live="polite">—</output>
+          </div>
+          <div class="field diff-field">
             <label>PVKG Documentado</label>
             <output id="pvkgDoc" class="diff-output" aria-live="polite">—</output>
           </div>
@@ -575,9 +618,36 @@
             <label>PVKG Real</label>
             <output id="pvkgReal" class="diff-output" aria-live="polite">—</output>
           </div>
-          <div class="field field-submit">
-            <label class="field-hint">Guardar</label>
-            <button type="submit" class="btn btn-navy" id="saveBtn">Guardar rectificación</button>
+
+          <div class="form-row-importes">
+            <div class="field">
+              <label for="preciosManuales" class="check-label">
+                <input type="checkbox" id="preciosManuales">
+                Precios manuales
+              </label>
+            </div>
+            <div class="field">
+              <label for="importeDoc">Importe Doc (€)</label>
+              <input type="number" id="importeDoc" step="0.01" inputmode="decimal" readonly class="input-locked" placeholder="Automático">
+            </div>
+            <div class="field">
+              <label for="importeReal">Importe Real (€)</label>
+              <input type="number" id="importeReal" step="0.01" inputmode="decimal" readonly class="input-locked" placeholder="Automático">
+            </div>
+            <div class="field">
+              <label for="sobredimensionado" class="check-label">
+                <input type="checkbox" id="sobredimensionado">
+                Sobredimensionado
+              </label>
+            </div>
+            <div class="field">
+              <label for="importeCobrar">Importe a cobrar (€)</label>
+              <input type="number" id="importeCobrar" step="0.01" inputmode="decimal" readonly class="input-locked" placeholder="Dif. doc − real">
+            </div>
+            <div class="field field-submit">
+              <label class="field-hint">Guardar</label>
+              <button type="submit" class="btn btn-navy" id="saveBtn">Guardar rectificación</button>
+            </div>
           </div>
         </div>
       </form>
@@ -588,6 +658,7 @@
       <div class="log-head">
         <div class="log-head-title">
           <h2>Registro</h2>
+          <input type="search" id="searchExpedicion" class="search-exp" placeholder="Buscar nº expedición…" autocomplete="off">
           <div class="date-filter-wrap">
             <button type="button" id="dateFilterBtn" class="btn-cal" aria-label="Filtrar por fecha" title="Filtrar por fecha">📅</button>
             <div id="dateFilterPanel" class="export-panel filter-panel" hidden>
@@ -598,7 +669,7 @@
                 <input type="date" id="filterTo">
               </label>
               <div class="export-actions">
-                <button type="button" id="filterDateClear" class="btn btn-ghost">Limpiar</button>
+                <button type="button" id="filterDateClear" class="btn btn-ghost">Últimos 3 días</button>
                 <button type="button" id="filterDateApply" class="btn btn-gold">Aplicar</button>
               </div>
             </div>
@@ -627,6 +698,7 @@
               </th>
               <th>Peso Doc.</th><th>Peso Real</th><th>Dif. Peso</th>
               <th>Vol Doc.</th><th>Vol Real</th><th>Dif. Vol</th><th>PVKG Doc.</th><th>PVKG Real</th>
+              <th>Imp. Doc.</th><th>Imp. Real</th><th>A cobrar</th>
               <th>
                 <div class="th-filter">
                   <span>Estado</span>
@@ -642,7 +714,7 @@
             </tr>
           </thead>
           <tbody id="logBody">
-            <tr><td colspan="13" class="empty-row">Aún no hay rectificaciones registradas.</td></tr>
+            <tr><td colspan="16" class="empty-row">Aún no hay rectificaciones registradas.</td></tr>
           </tbody>
         </table>
       </div>
@@ -660,6 +732,9 @@
   const fecha=$('fecha'), expedicion=$('expedicion'), agencia=$('agencia'), pesoDoc=$('pesoDoc'), pesoReal=$('pesoReal'),
         volDoc=$('volDoc'), volReal=$('volReal'),
         diffPesoOut=$('diffPeso'), diffVolOut=$('diffVol'), pvkgDocOut=$('pvkgDoc'), pvkgRealOut=$('pvkgReal'),
+        factorConvOut=$('factorConv'), importeDoc=$('importeDoc'), importeReal=$('importeReal'),
+        sobredimensionado=$('sobredimensionado'), preciosManuales=$('preciosManuales'),
+        importeCobrar=$('importeCobrar'),
         form=$('rectForm'), saveBtn=$('saveBtn'),
         logBody=$('logBody'), countBadge=$('countBadge'), syncText=$('syncText'), syncDot=$('syncStatus'),
         exportBtn=$('exportBtn'), exportPanel=$('exportPanel'), exportFrom=$('exportFrom'), exportTo=$('exportTo'),
@@ -668,24 +743,42 @@
         dateFilterBtn=$('dateFilterBtn'), dateFilterPanel=$('dateFilterPanel'),
         filterFrom=$('filterFrom'), filterTo=$('filterTo'),
         filterDateClear=$('filterDateClear'), filterDateApply=$('filterDateApply'),
-        filterAgencia=$('filterAgencia'), filterEstado=$('filterEstado');
+        filterAgencia=$('filterAgencia'), filterEstado=$('filterEstado'),
+        searchExpedicion=$('searchExpedicion');
 
   let allRows = [];
   let activeFrom = '', activeTo = '';
   const ESTADOS = ['Pendiente', 'Aceptada', 'Rechazada'];
   const todayStr = new Date().toISOString().slice(0,10);
+
+  function daysAgoISO(n){
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    return d.toISOString().slice(0,10);
+  }
+  function setDefaultDateRange(){
+    activeFrom = daysAgoISO(3);
+    activeTo = todayStr;
+    filterFrom.value = activeFrom;
+    filterTo.value = activeTo;
+    dateFilterBtn.classList.add('active');
+  }
+
   fecha.value = todayStr;
   exportTo.value = todayStr;
   exportFrom.value = todayStr.slice(0,8) + '01';
+  setDefaultDateRange();
 
   function hasActiveFilters(){
-    return !!(activeFrom || activeTo || filterAgencia.value || filterEstado.value);
+    return !!(activeFrom || activeTo || filterAgencia.value || filterEstado.value || (searchExpedicion.value || '').trim());
   }
   function passesFilters(r){
     if (activeFrom && (!r.fecha || r.fecha < activeFrom)) return false;
     if (activeTo && (!r.fecha || r.fecha > activeTo)) return false;
     if (filterAgencia.value && r.agencia !== filterAgencia.value) return false;
     if (filterEstado.value && (r.estado || 'Pendiente') !== filterEstado.value) return false;
+    const q = (searchExpedicion.value || '').trim().toLowerCase();
+    if (q && !(r.expedicion || '').toLowerCase().includes(q)) return false;
     return true;
   }
   function applyAndRender(){
@@ -706,16 +799,16 @@
     activeTo = filterTo.value || '';
     dateFilterBtn.classList.toggle('active', !!(activeFrom || activeTo));
     dateFilterPanel.hidden = true;
-    applyAndRender();
+    cargar();
   });
   filterDateClear.addEventListener('click', () => {
-    filterFrom.value = ''; filterTo.value = ''; activeFrom = ''; activeTo = '';
-    dateFilterBtn.classList.remove('active');
+    setDefaultDateRange();
     dateFilterPanel.hidden = true;
-    applyAndRender();
+    cargar();
   });
   filterAgencia.addEventListener('change', applyAndRender);
   filterEstado.addEventListener('change', applyAndRender);
+  searchExpedicion.addEventListener('input', applyAndRender);
 
   toggleFormBtn.addEventListener('click', () => {
     const expanded = !formCardBody.hidden;
@@ -761,14 +854,134 @@
   [pesoDoc, pesoReal, volDoc, volReal].forEach(el => el.addEventListener('input', updateDiffs));
   updateDiffs();
 
-  function pvkgFactor(){ return agencia.value === 'NTL' ? 200 : 250; }
-  function updatePvkg(){
-    const vd = parseFloat(volDoc.value), vr = parseFloat(volReal.value);
-    const factor = pvkgFactor();
-    pvkgDocOut.textContent = Number.isNaN(vd) ? '—' : fmtNum(vd*factor,2) + ' kg';
-    pvkgRealOut.textContent = Number.isNaN(vr) ? '—' : fmtNum(vr*factor,2) + ' kg';
+  const FACTORES_FIJOS = { NTL: 200, Surpaq: 225, XPO: 250, 'Luis Simoes': 250, Otros: 250 };
+
+  function pvkgFactor(agencia, volumen){
+    if (agencia === 'TSB'){
+      if (volumen == null || Number.isNaN(volumen)) return null;
+      if (volumen <= 1) return 200;
+      if (volumen <= 5) return 220;
+      return 250;
+    }
+    return FACTORES_FIJOS[agencia] ?? null;
   }
-  [volDoc, volReal].forEach(el => el.addEventListener('input', updatePvkg));
+
+  function pvkgDesde(peso, volumen, agencia){
+    // Superior entre kg reales y kg volumétricos (m³ × factor)
+    const candidatos = [];
+    if (peso != null && !Number.isNaN(peso)) candidatos.push(peso);
+    if (volumen != null && !Number.isNaN(volumen)){
+      const f = pvkgFactor(agencia, volumen);
+      if (f != null) candidatos.push(volumen * f);
+    }
+    if (!candidatos.length) return null;
+    return Math.max(...candidatos);
+  }
+
+  function factorLabel(){
+    const ag = agencia.value;
+    if (!ag) return 'Selecciona agencia';
+    if (ag === 'TSB'){
+      const vd = parseFloat(volDoc.value), vr = parseFloat(volReal.value);
+      const fd = Number.isNaN(vd) ? null : pvkgFactor('TSB', vd);
+      const fr = Number.isNaN(vr) ? null : pvkgFactor('TSB', vr);
+      if (fd != null && fr != null && fd === fr) return fd + ' kg/m³ (TSB)';
+      if (fd != null || fr != null){
+        const parts = [];
+        if (fd != null) parts.push('Doc ' + fd);
+        if (fr != null) parts.push('Real ' + fr);
+        return parts.join(' · ') + ' kg/m³ (TSB tramos)';
+      }
+      return '≤1→200 · ≤5→220 · >5→250';
+    }
+    const f = pvkgFactor(ag);
+    return f == null ? '—' : f + ' kg/m³';
+  }
+
+  function syncPreciosManuales(){
+    const manual = preciosManuales.checked;
+    importeDoc.readOnly = !manual;
+    importeReal.readOnly = !manual;
+    importeDoc.classList.toggle('input-locked', !manual);
+    importeReal.classList.toggle('input-locked', !manual);
+    if (!manual) updatePvkg();
+    else updateImporteCobrarAuto();
+  }
+
+  function syncSobredimensionado(){
+    const on = sobredimensionado.checked;
+    importeCobrar.readOnly = !on;
+    importeCobrar.classList.toggle('input-locked', !on);
+    if (!on) updateImporteCobrarAuto();
+  }
+
+  function updateImporteCobrarAuto(){
+    if (sobredimensionado.checked) return;
+    const d = parseFloat(importeDoc.value), r = parseFloat(importeReal.value);
+    if (!Number.isNaN(d) && !Number.isNaN(r)){
+      importeCobrar.value = (d - r).toFixed(2);
+    } else {
+      importeCobrar.value = '';
+    }
+  }
+
+  preciosManuales.addEventListener('change', () => {
+    syncPreciosManuales();
+    if (preciosManuales.checked) importeDoc.focus();
+  });
+  sobredimensionado.addEventListener('change', () => {
+    syncSobredimensionado();
+    if (sobredimensionado.checked) importeCobrar.focus();
+  });
+  [importeDoc, importeReal].forEach(el => el.addEventListener('input', updateImporteCobrarAuto));
+  syncPreciosManuales();
+  syncSobredimensionado();
+
+  let importeTimer = null;
+  async function refreshImportes(pvD, pvR){
+    if (preciosManuales.checked){
+      updateImporteCobrarAuto();
+      return;
+    }
+    const ag = agencia.value;
+    if (!ag || (ag !== 'NTL' && ag !== 'Surpaq')){
+      importeDoc.value = '';
+      importeReal.value = '';
+      updateImporteCobrarAuto();
+      return;
+    }
+    clearTimeout(importeTimer);
+    importeTimer = setTimeout(async () => {
+      try {
+        const params = new URLSearchParams({ agencia: ag });
+        if (pvD != null) params.set('pvkgDoc', String(pvD));
+        if (pvR != null) params.set('pvkgReal', String(pvR));
+        const res = await fetch('/api/rectificaciones/calcular-importe?' + params.toString());
+        const data = await res.json();
+        if (!data.ok) throw new Error();
+        importeDoc.value = data.importeDocumentado == null ? '' : Number(data.importeDocumentado).toFixed(2);
+        importeReal.value = data.importeReal == null ? '' : Number(data.importeReal).toFixed(2);
+        updateImporteCobrarAuto();
+      } catch (err) {
+        importeDoc.value = '';
+        importeReal.value = '';
+        updateImporteCobrarAuto();
+      }
+    }, 180);
+  }
+
+  function updatePvkg(){
+    const ag = agencia.value;
+    const pd = parseFloat(pesoDoc.value), pr = parseFloat(pesoReal.value);
+    const vd = parseFloat(volDoc.value), vr = parseFloat(volReal.value);
+    const pvD = pvkgDesde(pd, vd, ag);
+    const pvR = pvkgDesde(pr, vr, ag);
+    factorConvOut.textContent = factorLabel();
+    pvkgDocOut.textContent = pvD == null ? '—' : fmtNum(pvD, 2) + ' kg';
+    pvkgRealOut.textContent = pvR == null ? '—' : fmtNum(pvR, 2) + ' kg';
+    refreshImportes(pvD, pvR);
+  }
+  [pesoDoc, pesoReal, volDoc, volReal].forEach(el => el.addEventListener('input', updatePvkg));
   agencia.addEventListener('change', updatePvkg);
   updatePvkg();
 
@@ -788,21 +1001,22 @@
   function renderRows(rows, filtered){
     if (!rows || rows.length === 0){
       const msg = filtered ? 'Ningún registro coincide con los filtros aplicados.' : 'Aún no hay rectificaciones registradas.';
-      logBody.innerHTML = `<tr><td colspan="13" class="empty-row">${msg}</td></tr>`;
+      logBody.innerHTML = `<tr><td colspan="16" class="empty-row">${msg}</td></tr>`;
       return;
     }
     const frag = document.createDocumentFragment();
     rows.forEach(r => {
       const dPeso = (typeof r.pesoReal === 'number' && typeof r.pesoDocumentado === 'number') ? r.pesoDocumentado - r.pesoReal : (typeof r.diferenciaPeso === 'number' ? r.diferenciaPeso : null);
       const dVol = (typeof r.volReal === 'number' && typeof r.volDocumentado === 'number') ? r.volDocumentado - r.volReal : (typeof r.diferenciaVol === 'number' ? r.diferenciaVol : null);
-      const factor = r.agencia === 'NTL' ? 200 : 250;
-      const pvkgDoc = typeof r.pvkgDocumentado === 'number' ? r.pvkgDocumentado : (typeof r.volDocumentado === 'number' ? r.volDocumentado*factor : null);
-      const pvkgReal = typeof r.pvkgReal === 'number' ? r.pvkgReal : (typeof r.volReal === 'number' ? r.volReal*factor : null);
+      const pvkgDoc = typeof r.pvkgDocumentado === 'number' ? r.pvkgDocumentado : null;
+      const pvkgReal = typeof r.pvkgReal === 'number' ? r.pvkgReal : null;
       const estado = r.estado || 'Pendiente';
+      const sobreBadge = r.sobredimensionado ? ' <span class="badge-sobre">SOBRE</span>' : '';
+      const manualBadge = r.preciosManuales ? ' <span class="badge-sobre" style="background:#e7f1ff;color:#0b5ed7;border-color:#0d6efd;">MANUAL</span>' : '';
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${fmtDate(r.fecha)}</td>
-        <td>${escapeHtml(r.expedicion || '—')}</td>
+        <td>${escapeHtml(r.expedicion || '—')}${sobreBadge}${manualBadge}</td>
         <td>${escapeHtml(r.agencia || '—')}</td>
         <td>${fmtNum(r.pesoDocumentado, 2)}</td>
         <td>${fmtNum(r.pesoReal, 2)}</td>
@@ -812,6 +1026,9 @@
         <td class="${diffClass(dVol)}">${dVol===null?'—':((dVol>0?'+':'')+fmtNum(dVol,3))}</td>
         <td>${fmtNum(pvkgDoc, 2)}</td>
         <td>${fmtNum(pvkgReal, 2)}</td>
+        <td>${fmtNum(r.importeDocumentado, 2)}</td>
+        <td>${fmtNum(r.importeReal, 2)}</td>
+        <td>${fmtNum(r.importeCobrar, 2)}</td>
         <td><select class="estado-select estado-${estado.toLowerCase()}" data-id="${r.id}">${estadoOptionsHtml(estado)}</select></td>
         <td><button type="button" class="btn-delete" data-id="${r.id}">Eliminar</button></td>`;
       frag.appendChild(tr);
@@ -863,7 +1080,10 @@
     syncText.textContent = 'Cargando…';
     syncDot.className = 'status-dot';
     try {
-      const res = await fetch('/api/rectificaciones');
+      const params = new URLSearchParams();
+      if (activeFrom) params.set('desde', activeFrom);
+      if (activeTo) params.set('hasta', activeTo);
+      const res = await fetch('/api/rectificaciones?' + params.toString());
       const data = await res.json();
       if (!data.ok) throw new Error();
       allRows = data.items || [];
@@ -879,6 +1099,31 @@
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const exp = expedicion.value.trim();
+    const ag = agencia.value.trim();
+    if (!exp){
+      showToast('Indica el nº de expedición.', true);
+      expedicion.focus();
+      return;
+    }
+    if (!ag){
+      showToast('Selecciona la agencia.', true);
+      agencia.focus();
+      return;
+    }
+    if (sobredimensionado.checked && (importeCobrar.value === '' || Number.isNaN(parseFloat(importeCobrar.value)))){
+      showToast('Indica el importe a cobrar (sobredimensionado).', true);
+      importeCobrar.focus();
+      return;
+    }
+    if (preciosManuales.checked){
+      if (importeDoc.value === '' || Number.isNaN(parseFloat(importeDoc.value)) ||
+          importeReal.value === '' || Number.isNaN(parseFloat(importeReal.value))){
+        showToast('Con precios manuales indica importe doc y real.', true);
+        importeDoc.focus();
+        return;
+      }
+    }
     saveBtn.disabled = true;
     saveBtn.textContent = 'Guardando…';
     try {
@@ -886,26 +1131,32 @@
         method: 'POST', headers: {'Content-Type':'application/json'},
         body: JSON.stringify({
           fecha: fecha.value || null,
-          expedicion: expedicion.value.trim() || '',
-          agencia: agencia.value || '',
+          expedicion: exp,
+          agencia: ag,
           pesoDocumentado: pesoDoc.value,
           pesoReal: pesoReal.value,
           volDocumentado: volDoc.value,
           volReal: volReal.value,
+          sobredimensionado: sobredimensionado.checked,
+          preciosManuales: preciosManuales.checked,
+          importeDocumentado: preciosManuales.checked ? importeDoc.value : null,
+          importeReal: preciosManuales.checked ? importeReal.value : null,
+          importeCobrar: sobredimensionado.checked ? importeCobrar.value : null,
           estado: 'Pendiente'
         })
       });
       const data = await res.json();
-      if (!data.ok) throw new Error();
+      if (!data.ok) throw new Error(data.error || 'Error');
       showToast('Rectificación guardada correctamente.');
-      const keepFecha = fecha.value, keepAgencia = agencia.value;
+      const keepFecha = fecha.value;
       form.reset();
       fecha.value = keepFecha;
-      agencia.value = keepAgencia;
+      syncPreciosManuales();
+      syncSobredimensionado();
       updateDiffs(); updatePvkg();
       await cargar();
     } catch (err) {
-      showToast('No se pudo guardar. Inténtalo de nuevo.', true);
+      showToast(err.message || 'No se pudo guardar. Inténtalo de nuevo.', true);
     } finally {
       saveBtn.disabled = false;
       saveBtn.textContent = 'Guardar rectificación';
