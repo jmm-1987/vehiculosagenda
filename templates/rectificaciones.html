@@ -398,6 +398,17 @@
     padding:4px 10px;
     border-radius:999px;
   }
+  .log-head-stats{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .total-cobrar-badge{
+    font-size:12.5px;
+    font-weight:800;
+    color:#fff;
+    background:var(--navy-900);
+    padding:5px 12px;
+    border-radius:999px;
+    font-variant-numeric:tabular-nums;
+    border:1px solid var(--gold-500);
+  }
   .table-wrap{overflow-x:auto;max-height:min(74vh,780px);overflow-y:auto;}
   table{border-collapse:collapse;width:100%;font-size:11px;table-layout:auto;}
   thead th{
@@ -687,7 +698,10 @@
             </div>
           </div>
         </div>
-        <span id="countBadge" class="count-badge">0 registros</span>
+        <div class="log-head-stats">
+          <span id="countBadge" class="count-badge">0 registros</span>
+          <span id="totalCobrarBadge" class="total-cobrar-badge">Total a cobrar: 0,00 €</span>
+        </div>
       </div>
       <div class="table-wrap">
         <table id="logTable">
@@ -750,7 +764,8 @@
         sobredimensionado=$('sobredimensionado'), preciosManuales=$('preciosManuales'),
         importeCobrar=$('importeCobrar'),
         form=$('rectForm'), saveBtn=$('saveBtn'),
-        logBody=$('logBody'), countBadge=$('countBadge'), syncText=$('syncText'), syncDot=$('syncStatus'),
+        logBody=$('logBody'), countBadge=$('countBadge'), totalCobrarBadge=$('totalCobrarBadge'),
+        syncText=$('syncText'), syncDot=$('syncStatus'),
         exportBtn=$('exportBtn'), exportPanel=$('exportPanel'), exportFrom=$('exportFrom'), exportTo=$('exportTo'),
         exportCancel=$('exportCancel'), exportConfirm=$('exportConfirm'), toast=$('toast'),
         toggleFormBtn=$('toggleFormBtn'), formCardBody=$('formCardBody'),
@@ -802,6 +817,15 @@
     const filtered = allRows.filter(passesFilters);
     countBadge.textContent = filtered.length + (filtered.length === 1 ? ' registro' : ' registros')
       + (hasActiveFilters() ? ' (filtrado)' : '');
+    let total = 0;
+    filtered.forEach(r => {
+      const v = r.importeCobrar;
+      if (typeof v === 'number' && !Number.isNaN(v)) total += v;
+    });
+    totalCobrarBadge.textContent = 'Total a cobrar: ' + total.toLocaleString('es-ES', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }) + ' €';
     renderRows(filtered, hasActiveFilters());
   }
 
