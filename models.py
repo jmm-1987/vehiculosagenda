@@ -1,5 +1,5 @@
 import db
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float, Text
 from sqlalchemy import DateTime, Date
 from sqlalchemy.orm import relationship
 from flask_login import UserMixin
@@ -640,3 +640,130 @@ class Rectificacion(db.Base):
     estado = Column(String(20), default='Pendiente')
     usuario = Column(String(100), default='')
     fecha_registro = Column(DateTime)
+
+
+class DecaTransportista(db.Base):
+    """Transportista efectivo reutilizable en los DeCA."""
+    __tablename__ = "deca_transportista"
+    id = Column(Integer, primary_key=True)
+    nombre = Column(String(300), nullable=False, default='')
+    nif = Column(String(20), nullable=False, default='')
+    domicilio = Column(String(400), default='')
+    telefono = Column(String(50), default='')
+    activo = Column(Boolean, default=True)
+
+
+class DecaContratante(db.Base):
+    """Cargador contractual (contratante del servicio) reutilizable."""
+    __tablename__ = "deca_contratante"
+    id = Column(Integer, primary_key=True)
+    nombre = Column(String(300), nullable=False, default='')
+    nif = Column(String(20), nullable=False, default='')
+    domicilio = Column(String(400), default='')
+    telefono = Column(String(50), default='')
+    activo = Column(Boolean, default=True)
+
+
+class DecaConductor(db.Base):
+    """Conductor reutilizable."""
+    __tablename__ = "deca_conductor"
+    id = Column(Integer, primary_key=True)
+    nombre = Column(String(300), nullable=False, default='')
+    nif = Column(String(20), default='')
+    telefono = Column(String(50), default='')
+    activo = Column(Boolean, default=True)
+
+
+class DecaVehiculoCat(db.Base):
+    """Vehículo reutilizable en los DeCA (matrícula tractora y remolque)."""
+    __tablename__ = "deca_vehiculo"
+    id = Column(Integer, primary_key=True)
+    matricula = Column(String(40), nullable=False, default='')
+    matricula_remolque = Column(String(40), default='')
+    descripcion = Column(String(200), default='')
+    activo = Column(Boolean, default=True)
+
+
+class DecaLugar(db.Base):
+    """Origen o destino reutilizable."""
+    __tablename__ = "deca_lugar"
+    id = Column(Integer, primary_key=True)
+    tipo = Column(String(20), nullable=False, default='origen')
+    lugar = Column(String(300), nullable=False, default='')
+    direccion = Column(String(300), default='')
+    cp = Column(String(20), default='')
+    poblacion = Column(String(150), default='')
+    provincia = Column(String(150), default='')
+    activo = Column(Boolean, default=True)
+
+
+class DecaDocumento(db.Base):
+    """Documento electrónico de control administrativo.
+
+    Los datos de las partes se copian aquí para que un cambio posterior
+    en las listas no altere un DeCA ya emitido.
+    """
+    __tablename__ = "deca_documento"
+    id = Column(Integer, primary_key=True)
+    numero = Column(String(40), nullable=False, unique=True)
+    token = Column(String(80), nullable=False, unique=True, index=True)
+    url_descarga = Column(String(500), nullable=False, default='')
+    fecha_realizacion = Column(Date, nullable=False)
+    transportista_id = Column(Integer)
+    transportista_nombre = Column(String(300), default='')
+    transportista_nif = Column(String(20), default='')
+    transportista_domicilio = Column(String(400), default='')
+    transportista_telefono = Column(String(50), default='')
+    contratante_id = Column(Integer)
+    contratante_nombre = Column(String(300), default='')
+    contratante_nif = Column(String(20), default='')
+    contratante_domicilio = Column(String(400), default='')
+    contratante_telefono = Column(String(50), default='')
+    conductor_id = Column(Integer)
+    conductor_nombre = Column(String(300), default='')
+    conductor_nif = Column(String(20), default='')
+    conductor_telefono = Column(String(50), default='')
+    vehiculo_id = Column(Integer)
+    vehiculo_matricula = Column(String(40), default='')
+    vehiculo_remolque = Column(String(40), default='')
+    vehiculo_descripcion = Column(String(200), default='')
+    autorizacion_especial = Column(String(300), default='')
+    observaciones = Column(Text, default='')
+    fecha_creacion = Column(DateTime, nullable=False)
+    fecha_modificacion = Column(DateTime, nullable=False)
+    usuario_creacion = Column(String(100), default='')
+    usuario_modificacion = Column(String(100), default='')
+    activo = Column(Boolean, default=True)
+
+
+class DecaEnvio(db.Base):
+    """Envío de un DeCA. Puede haber varios si comparten partes."""
+    __tablename__ = "deca_envio"
+    id = Column(Integer, primary_key=True)
+    documento_id = Column(Integer, ForeignKey('deca_documento.id'), nullable=False)
+    orden = Column(Integer, default=1)
+    origen_id = Column(Integer)
+    origen_lugar = Column(String(300), default='')
+    origen_direccion = Column(String(300), default='')
+    origen_cp = Column(String(20), default='')
+    origen_poblacion = Column(String(150), default='')
+    origen_provincia = Column(String(150), default='')
+    destino_id = Column(Integer)
+    destino_lugar = Column(String(300), default='')
+    destino_direccion = Column(String(300), default='')
+    destino_cp = Column(String(20), default='')
+    destino_poblacion = Column(String(150), default='')
+    destino_provincia = Column(String(150), default='')
+    naturaleza = Column(String(400), default='')
+    peso = Column(String(40), default='')
+
+
+class DecaCambio(db.Base):
+    """Modificación durante el servicio: se conserva el dato anterior y el motivo."""
+    __tablename__ = "deca_cambio"
+    id = Column(Integer, primary_key=True)
+    documento_id = Column(Integer, ForeignKey('deca_documento.id'), nullable=False)
+    fecha = Column(DateTime, nullable=False)
+    usuario = Column(String(100), default='')
+    motivo = Column(Text, default='')
+    datos_anteriores = Column(Text, default='')

@@ -212,6 +212,13 @@
                     <p>Gestión de órdenes de carga y transporte</p>
                 </a>
                 {% endif %}
+                {% if 'deca' in permisos %}
+                <a href="/deca" class="portada-card" style="border-top: 5px solid #0e2a4a;">
+                    <i class="fas fa-qrcode"></i>
+                    <h2>DeCa</h2>
+                    <p>Documento electrónico de control administrativo</p>
+                </a>
+                {% endif %}
                 {% if 'llegadas' in permisos %}
                 <a href="/llegadas-camiones" class="portada-card" style="border-top: 5px solid #12233F;">
                     <i class="fas fa-clock"></i>
@@ -280,6 +287,11 @@
                 <h2>Órdenes de Carga Internacionales</h2>
                 <p>Gestión de órdenes de carga y transporte</p>
             </a>
+            <a href="/deca" class="portada-card" style="border-top: 5px solid #0e2a4a;">
+                <i class="fas fa-qrcode"></i>
+                <h2>DeCa</h2>
+                <p>Documento electrónico de control administrativo</p>
+            </a>
 
             {# ===== Legacy: usuario caja ===== #}
             {% elif current_user.username == 'caja' %}
@@ -320,6 +332,11 @@
                 <i class="fas fa-truck-loading"></i>
                 <h2>Órdenes de Carga Internacionales</h2>
                 <p>Gestión de órdenes de carga y transporte</p>
+            </a>
+            <a href="/deca" class="portada-card" style="border-top: 5px solid #0e2a4a;">
+                <i class="fas fa-qrcode"></i>
+                <h2>DeCa</h2>
+                <p>Documento electrónico de control administrativo</p>
             </a>
             <a href="/llegadas-camiones" class="portada-card" style="border-top: 5px solid #12233F;">
                 <i class="fas fa-clock"></i>

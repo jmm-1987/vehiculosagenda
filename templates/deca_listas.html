@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listas DeCa</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; margin: 0; }
+        .top-bar { display: flex; align-items: center; padding: 2px 30px; background: linear-gradient(to right, #ffffff, #343a40); color: white; height: 50px; box-sizing: border-box; }
+        .top-bar img { width: 200px; height: 45px; object-fit: contain; }
+        .top-user { font-weight: bold; font-size: 14px; margin-left: auto; margin-right: 20px; }
+        .top-button { padding: 2px 8px; background: #c51500; color: white; text-decoration: none; border-radius: 5px; }
+        .container { max-width: 1100px; margin: 20px auto; padding: 0 16px 48px; }
+        h1 { color: #0e2a4a; margin-bottom: 8px; }
+        .indice { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 18px; }
+        .indice a, button, .btn { background: #0e2a4a; color: white; text-decoration: none; border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer; font: inherit; }
+        button.sec { background: #5c6770; }
+        button.peligro { background: #8d3a32; }
+        section { background: white; border-radius: 8px; padding: 14px; margin-bottom: 18px; border: 1px solid #d5dde6; }
+        h2 { margin: 0 0 6px; color: #0e2a4a; font-size: 1.2em; }
+        .ayuda { color: #5c6770; margin-top: 0; }
+        .errores { background: #fdecea; color: #7a1f16; padding: 8px 10px; border-radius: 4px; }
+        form.alta, form.fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; align-items: end; margin-bottom: 10px; }
+        label { display: block; font-size: 12px; color: #333; }
+        input { width: 100%; box-sizing: border-box; padding: 7px; border: 1px solid #c5ced6; border-radius: 4px; }
+        .botones { display: flex; gap: 6px; }
+        @media (max-width: 800px) {
+            .top-bar { padding: 2px 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="/portada"><img src="{{ url_for('static', filename='logo.png') }}" alt="Logo"></a>
+        <span class="top-user">{{ current_user.username }}</span>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+    </div>
+    <div class="container">
+        <a href="{{ url_for('deca_lista') }}">Volver a DeCa</a>
+        <h1>Listas DeCa</h1>
+        <p class="ayuda">Aquí se guardan transportistas, contratantes, conductores, vehículos, orígenes y destinos para reutilizarlos al crear un documento. Quitar un elemento de la lista no cambia los DeCa ya emitidos.</p>
+        {% if mensajes %}
+        <div class="errores">{% for mensaje in mensajes %}<div>{{ mensaje }}</div>{% endfor %}</div>
+        {% endif %}
+        <div class="indice">
+            {% for sec in secciones %}
+            <a href="#{{ sec.tipo }}">{{ sec.titulo }}</a>
+            {% endfor %}
+        </div>
+        {% for sec in secciones %}
+        <section id="{{ sec.tipo }}">
+            <h2>{{ sec.titulo }}</h2>
+            <p class="ayuda">{{ sec.ayuda }}</p>
+            {% if sec.mensajes %}
+            <div class="errores">{% for mensaje in sec.mensajes %}<div>{{ mensaje }}</div>{% endfor %}</div>
+            {% endif %}
+            <form class="alta" method="post" action="{{ url_for('deca_guardar_lista') }}">
+                <input type="hidden" name="tipo" value="{{ sec.tipo }}">
+                {% for campo in sec.campos %}
+                <div>
+                    <label>{{ campo[1] }}{% if campo[2] %} *{% endif %}</label>
+                    <input name="{{ campo[0] }}" {% if campo[2] %}required{% endif %}>
+                </div>
+                {% endfor %}
+                <button type="submit">Añadir</button>
+            </form>
+            {% for fila in sec.filas %}
+            <form class="fila" method="post" action="{{ url_for('deca_guardar_lista') }}">
+                <input type="hidden" name="tipo" value="{{ sec.tipo }}">
+                <input type="hidden" name="id" value="{{ fila.id }}">
+                {% for campo in sec.campos %}
+                <div>
+                    <label>{{ campo[1] }}</label>
+                    <input name="{{ campo[0] }}" value="{{ fila|attr(campo[0]) or '' }}" {% if campo[2] %}required{% endif %}>
+                </div>
+                {% endfor %}
+                <div class="botones">
+                    <button type="submit">Guardar</button>
+                </div>
+            </form>
+            <form method="post" action="{{ url_for('deca_archivar_lista') }}" onsubmit="return confirm('¿Quitar este elemento de la lista?');" style="margin:-6px 0 12px;">
+                <input type="hidden" name="tipo" value="{{ sec.tipo }}">
+                <input type="hidden" name="id" value="{{ fila.id }}">
+                <button type="submit" class="peligro">Quitar de la lista</button>
+            </form>
+            {% else %}
+            <p class="ayuda">La lista está vacía. También se rellena sola al generar un DeCa.</p>
+            {% endfor %}
+        </section>
+        {% endfor %}
+    </div>
+</body>
+</html>

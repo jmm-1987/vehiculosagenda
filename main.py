@@ -42,6 +42,7 @@ from ordenes_carga.ordenes_carga import register_ordenes_carga_routes
 from vacaciones.vacaciones import register_vacaciones_routes
 from llegadas_camiones.llegadas_camiones import register_llegadas_camiones_routes
 from rectificaciones.rectificaciones import register_rectificaciones_routes
+from deca.deca import register_deca_routes
 from permisos import permisos_usuario, ruta_permitida, tiene_restriccion, acceso_total
 from sqlalchemy import func
 
@@ -145,6 +146,7 @@ register_ordenes_carga_routes(app)
 register_vacaciones_routes(app)
 register_llegadas_camiones_routes(app)
 register_rectificaciones_routes(app)
+register_deca_routes(app)
 
 with app.app_context():
     db.Base.metadata.create_all(db.engine)

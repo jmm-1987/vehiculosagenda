@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if datos.modo == 'editar' %}Modificar DeCa{% elif datos.modo == 'reutilizar' %}Reutilizar DeCa{% else %}Nuevo DeCa{% endif %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; margin: 0; }
+        .top-bar { display: flex; align-items: center; padding: 2px 30px; background: linear-gradient(to right, #ffffff, #343a40); color: white; height: 50px; box-sizing: border-box; }
+        .top-bar img { width: 200px; height: 45px; object-fit: contain; }
+        .top-user { font-weight: bold; font-size: 14px; margin-left: auto; margin-right: 20px; }
+        .top-button { padding: 2px 8px; background: #c51500; color: white; text-decoration: none; border-radius: 5px; }
+        .container { max-width: 1180px; margin: 12px auto 0; padding: 0 16px 28px; text-align: left; }
+        .cabecera { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+        h1 { margin: 2px 0 0; color: #0e2a4a; font-size: 22px; }
+        a.volver { color: #0e2a4a; font-size: 14px; }
+        .fecha-cabecera { min-width: 220px; }
+        .errores { background: #fdecea; border: 1px solid #e7b2ab; color: #7a1f16; padding: 8px 12px; border-radius: 6px; margin-bottom: 8px; }
+        .nota { background: #eef3f8; border: 1px solid #c9d6e5; border-radius: 6px; color: #243140; margin-bottom: 10px; }
+        .nota summary { cursor: pointer; padding: 8px 12px; font-weight: 600; }
+        .nota p { margin: 0 12px 8px; font-size: 13px; }
+        .rejilla { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
+        .cajon, .envio { background: white; border: 1px solid #d5dde6; border-radius: 8px; }
+        .cajon { border-left: 4px solid #0e2a4a; }
+        .cajon.ancho, .nota { grid-column: 1 / -1; }
+        summary { list-style: none; }
+        summary::-webkit-details-marker { display: none; }
+        .cajon > summary, .envio > summary {
+            display: flex; align-items: center; gap: 8px; cursor: pointer;
+            padding: 8px 12px; font-weight: 700; color: #0e2a4a;
+        }
+        .cajon > summary .resumen, .envio > summary .resumen {
+            margin-left: auto; font-weight: 500; color: #5c6770; font-size: 13px;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 58%;
+        }
+        .cajon > summary::after, .envio > summary::after {
+            content: ""; width: 7px; height: 7px; flex: 0 0 auto;
+            border-right: 2px solid #0e2a4a; border-bottom: 2px solid #0e2a4a;
+            transform: rotate(45deg); margin-bottom: 3px;
+        }
+        .cajon:not([open]) > summary::after, .envio:not([open]) > summary::after {
+            transform: rotate(-45deg); margin-bottom: 0; margin-top: 3px;
+        }
+        .cuerpo { padding: 0 12px 12px; }
+        label { display: block; font-size: 12px; color: #333; margin-bottom: 2px; }
+        input, select, textarea { width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #c5ced6; border-radius: 4px; font: inherit; font-size: 14px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; }
+        .full { grid-column: 1 / -1; }
+        .envio { margin-top: 8px; border-style: dashed; }
+        .extra { margin-top: 8px; background: #f7f9fb; border-radius: 6px; }
+        .extra > summary { cursor: pointer; padding: 6px 8px; color: #0e2a4a; font-size: 13px; font-weight: 600; }
+        .extra .grid { padding: 0 8px 8px; }
+        .fila-acciones { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        button, .btn { background: #0e2a4a; color: white; border: none; border-radius: 4px; padding: 8px 14px; cursor: pointer; text-decoration: none; display: inline-block; font: inherit; }
+        button.sec, .btn.sec { background: #5c6770; }
+        button.peligro { background: #8d3a32; padding: 4px 10px; font-size: 13px; }
+        .ayuda { color: #5c6770; font-size: 12px; margin: 0 0 8px; }
+        .barra { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+        @media (max-width: 800px) {
+            .rejilla, .grid { grid-template-columns: 1fr; }
+            .cajon.ancho { grid-column: auto; }
+            .top-bar { padding: 2px 10px; }
+            .cajon > summary .resumen, .envio > summary .resumen { display: none; }
+        }
+    </style>
+</head>
+<body>
+    {% macro campo_envio(envio, listas) %}
+    {% set extra = envio.origen_direccion or envio.origen_cp or envio.origen_poblacion or envio.origen_provincia or envio.destino_direccion or envio.destino_cp or envio.destino_poblacion or envio.destino_provincia %}
+    <details class="envio" open>
+        <summary>
+            <span class="titulo-envio">Envío</span>
+            <span class="resumen" data-campos="origen_lugar,destino_lugar,naturaleza,peso"></span>
+        </summary>
+        <div class="cuerpo">
+            <div class="grid">
+                <div>
+                    <label>Origen de la lista</label>
+                    <select name="origen_id" onchange="rellenar(this, {lugar:'origen_lugar', direccion:'origen_direccion', cp:'origen_cp', poblacion:'origen_poblacion', provincia:'origen_provincia'})">
+                        <option value="">Nuevo, se guardará en la lista</option>
+                        {% for item in listas.origenes %}
+                        <option value="{{ item.id }}" {% if envio.origen_id|string == item.id|string %}selected{% endif %} data-lugar="{{ item.lugar }}" data-direccion="{{ item.direccion or '' }}" data-cp="{{ item.cp or '' }}" data-poblacion="{{ item.poblacion or '' }}" data-provincia="{{ item.provincia or '' }}">{{ item.lugar }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label>Destino de la lista</label>
+                    <select name="destino_id" onchange="rellenar(this, {lugar:'destino_lugar', direccion:'destino_direccion', cp:'destino_cp', poblacion:'destino_poblacion', provincia:'destino_provincia'})">
+                        <option value="">Nuevo, se guardará en la lista</option>
+                        {% for item in listas.destinos %}
+                        <option value="{{ item.id }}" {% if envio.destino_id|string == item.id|string %}selected{% endif %} data-lugar="{{ item.lugar }}" data-direccion="{{ item.direccion or '' }}" data-cp="{{ item.cp or '' }}" data-poblacion="{{ item.poblacion or '' }}" data-provincia="{{ item.provincia or '' }}">{{ item.lugar }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label>Lugar de origen</label>
+                    <input name="origen_lugar" required value="{{ envio.origen_lugar }}">
+                </div>
+                <div>
+                    <label>Lugar de destino</label>
+                    <input name="destino_lugar" required value="{{ envio.destino_lugar }}">
+                </div>
+                <div>
+                    <label>Naturaleza de la mercancía</label>
+                    <input name="naturaleza" required value="{{ envio.naturaleza }}">
+                </div>
+                <div>
+                    <label>Peso (kg)</label>
+                    <input name="peso" required inputmode="decimal" value="{{ envio.peso }}" placeholder="Ej. 1500 o 1.500,5">
+                </div>
+            </div>
+            <details class="extra" {% if extra %}open{% endif %}>
+                <summary>Dirección, código postal, población y provincia</summary>
+                <div class="grid">
+                    <div>
+                        <label>Dirección de origen</label>
+                        <input name="origen_direccion" value="{{ envio.origen_direccion }}">
+                    </div>
+                    <div>
+                        <label>Dirección de destino</label>
+                        <input name="destino_direccion" value="{{ envio.destino_direccion }}">
+                    </div>
+                    <div>
+                        <label>CP origen</label>
+                        <input name="origen_cp" value="{{ envio.origen_cp }}">
+                    </div>
+                    <div>
+                        <label>CP destino</label>
+                        <input name="destino_cp" value="{{ envio.destino_cp }}">
+                    </div>
+                    <div>
+                        <label>Población origen</label>
+                        <input name="origen_poblacion" value="{{ envio.origen_poblacion }}">
+                    </div>
+                    <div>
+                        <label>Población destino</label>
+                        <input name="destino_poblacion" value="{{ envio.destino_poblacion }}">
+                    </div>
+                    <div>
+                        <label>Provincia origen</label>
+                        <input name="origen_provincia" value="{{ envio.origen_provincia }}">
+                    </div>
+                    <div>
+                        <label>Provincia destino</label>
+                        <input name="destino_provincia" value="{{ envio.destino_provincia }}">
+                    </div>
+                </div>
+            </details>
+            <div class="fila-acciones">
+                <button type="button" class="peligro" onclick="quitarEnvio(this)">Quitar envío</button>
+            </div>
+        </div>
+    </details>
+    {% endmacro %}
+    <div class="top-bar">
+        <a href="/portada"><img src="{{ url_for('static', filename='logo.png') }}" alt="Logo"></a>
+        <span class="top-user">{{ current_user.username }}</span>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+    </div>
+    <div class="container">
+        <form method="post" action="{{ url_for('deca_guardar') }}" id="form-deca">
+        <input type="hidden" name="id" value="{{ datos.id }}">
+        <input type="hidden" name="modo" value="{{ datos.modo }}">
+        <div class="cabecera">
+            <div>
+                <a class="volver" href="{{ url_for('deca_lista') }}">Volver a DeCa</a>
+                <h1>
+                    {% if datos.modo == 'editar' %}Modificar {{ datos.numero }}
+                    {% elif datos.modo == 'reutilizar' %}Reutilizar datos en un DeCa nuevo
+                    {% else %}Nuevo DeCa{% endif %}
+                </h1>
+            </div>
+            <div class="fecha-cabecera">
+                <label for="fecha_realizacion">Fecha de realización del transporte</label>
+                <input type="date" id="fecha_realizacion" name="fecha_realizacion" required value="{{ datos.fecha_realizacion }}">
+            </div>
+        </div>
+        {% if datos.mensajes %}
+        <div class="errores">
+            {% for mensaje in datos.mensajes %}<div>{{ mensaje }}</div>{% endfor %}
+        </div>
+        {% endif %}
+        <details class="nota">
+            <summary>Datos que exige la norma</summary>
+            <p>Orden FOM/2861/2012, artículo 6, y resolución del documento electrónico de control administrativo. Hay que hacer constar al cargador contractual (nombre, NIF y domicilio), al transportista efectivo (nombre y NIF), el origen y el destino, la naturaleza y el peso de la mercancía, la matrícula, la fecha del transporte y, si aplica, la autorización especial de circulación. El conductor se guarda junto con el vehículo.</p>
+            <p>El PDF es nativo, lleva la fecha y hora de creación y de modificación, y un QR. Ese QR abre el PDF directamente, sin usuario ni contraseña. Si modificas un documento ya emitido, se conservan los datos anteriores y el motivo, y se mantiene el mismo QR. Reutilizar crea un documento nuevo, con otra URL.</p>
+            <p>Se puede agrupar varios envíos si el contratante y el transportista son los mismos. Cada envío se identifica con su origen, su destino y su mercancía. El documento tiene que existir antes de que empiece el servicio y se conserva al menos un año.</p>
+        </details>
+
+            <div class="rejilla">
+                {% if datos.modo == 'editar' %}
+                <details class="cajon ancho" open>
+                    <summary>Documento ya emitido</summary>
+                    <div class="cuerpo">
+                        <p class="ayuda">La URL y el QR no cambian. Indica por qué se modifica: el PDF guardará los datos anteriores. {{ datos.url_descarga }}</p>
+                        <label for="motivo">Motivo de la modificación</label>
+                        <textarea id="motivo" name="motivo" required rows="2">{{ datos.motivo }}</textarea>
+                    </div>
+                </details>
+                {% endif %}
+
+                <details class="cajon" {% if datos.mensajes %}open{% endif %}>
+                    <summary>
+                        Transportista efectivo
+                        <span class="resumen" data-campos="transportista_nombre,transportista_nif"></span>
+                    </summary>
+                    <div class="cuerpo">
+                        <label>Usar de la lista</label>
+                        <select name="transportista_id" onchange="rellenar(this, {nombre:'transportista_nombre', nif:'transportista_nif', domicilio:'transportista_domicilio', telefono:'transportista_telefono'})">
+                            <option value="">Nuevo, se guardará en la lista</option>
+                            {% for item in listas.transportistas %}
+                            <option value="{{ item.id }}" {% if datos.transportista_id|string == item.id|string %}selected{% endif %} data-nombre="{{ item.nombre }}" data-nif="{{ item.nif }}" data-domicilio="{{ item.domicilio or '' }}" data-telefono="{{ item.telefono or '' }}">{{ item.nombre }} — {{ item.nif }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="grid" style="margin-top:8px;">
+                            <div>
+                                <label>Nombre o razón social</label>
+                                <input name="transportista_nombre" required value="{{ datos.transportista_nombre }}">
+                            </div>
+                            <div>
+                                <label>NIF</label>
+                                <input name="transportista_nif" required value="{{ datos.transportista_nif }}" autocomplete="off">
+                            </div>
+                            <div>
+                                <label>Domicilio</label>
+                                <input name="transportista_domicilio" value="{{ datos.transportista_domicilio }}">
+                            </div>
+                            <div>
+                                <label>Teléfono</label>
+                                <input name="transportista_telefono" value="{{ datos.transportista_telefono }}">
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="cajon" {% if datos.mensajes %}open{% endif %}>
+                    <summary>
+                        Contratante del servicio
+                        <span class="resumen" data-campos="contratante_nombre,contratante_nif"></span>
+                    </summary>
+                    <div class="cuerpo">
+                        <label>Usar de la lista</label>
+                        <select name="contratante_id" onchange="rellenar(this, {nombre:'contratante_nombre', nif:'contratante_nif', domicilio:'contratante_domicilio', telefono:'contratante_telefono'})">
+                            <option value="">Nuevo, se guardará en la lista</option>
+                            {% for item in listas.contratantes %}
+                            <option value="{{ item.id }}" {% if datos.contratante_id|string == item.id|string %}selected{% endif %} data-nombre="{{ item.nombre }}" data-nif="{{ item.nif }}" data-domicilio="{{ item.domicilio or '' }}" data-telefono="{{ item.telefono or '' }}">{{ item.nombre }} — {{ item.nif }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="grid" style="margin-top:8px;">
+                            <div>
+                                <label>Nombre o razón social</label>
+                                <input name="contratante_nombre" required value="{{ datos.contratante_nombre }}">
+                            </div>
+                            <div>
+                                <label>NIF</label>
+                                <input name="contratante_nif" required value="{{ datos.contratante_nif }}" autocomplete="off">
+                            </div>
+                            <div class="full">
+                                <label>Domicilio</label>
+                                <textarea name="contratante_domicilio" required rows="2">{{ datos.contratante_domicilio }}</textarea>
+                            </div>
+                            <div>
+                                <label>Teléfono</label>
+                                <input name="contratante_telefono" value="{{ datos.contratante_telefono }}">
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="cajon" {% if datos.mensajes %}open{% endif %}>
+                    <summary>
+                        Conductor
+                        <span class="resumen" data-campos="conductor_nombre"></span>
+                    </summary>
+                    <div class="cuerpo">
+                        <label>Usar de la lista</label>
+                        <select name="conductor_id" onchange="rellenar(this, {nombre:'conductor_nombre', nif:'conductor_nif', telefono:'conductor_telefono'})">
+                            <option value="">Nuevo, se guardará en la lista</option>
+                            {% for item in listas.conductores %}
+                            <option value="{{ item.id }}" {% if datos.conductor_id|string == item.id|string %}selected{% endif %} data-nombre="{{ item.nombre }}" data-nif="{{ item.nif or '' }}" data-telefono="{{ item.telefono or '' }}">{{ item.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="grid" style="margin-top:8px;">
+                            <div>
+                                <label>Nombre</label>
+                                <input name="conductor_nombre" required value="{{ datos.conductor_nombre }}">
+                            </div>
+                            <div>
+                                <label>NIF o DNI</label>
+                                <input name="conductor_nif" value="{{ datos.conductor_nif }}" autocomplete="off">
+                            </div>
+                            <div class="full">
+                                <label>Teléfono</label>
+                                <input name="conductor_telefono" value="{{ datos.conductor_telefono }}">
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="cajon" {% if datos.mensajes %}open{% endif %}>
+                    <summary>
+                        Vehículo
+                        <span class="resumen" data-campos="vehiculo_matricula,vehiculo_remolque"></span>
+                    </summary>
+                    <div class="cuerpo">
+                        <label>Usar de la lista</label>
+                        <select name="vehiculo_id" onchange="rellenar(this, {matricula:'vehiculo_matricula', remolque:'vehiculo_remolque', descripcion:'vehiculo_descripcion'})">
+                            <option value="">Nuevo, se guardará en la lista</option>
+                            {% for item in listas.vehiculos %}
+                            <option value="{{ item.id }}" {% if datos.vehiculo_id|string == item.id|string %}selected{% endif %} data-matricula="{{ item.matricula }}" data-remolque="{{ item.matricula_remolque or '' }}" data-descripcion="{{ item.descripcion or '' }}">{{ item.matricula }}{% if item.matricula_remolque %} / {{ item.matricula_remolque }}{% endif %}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="grid" style="margin-top:8px;">
+                            <div>
+                                <label>Matrícula del vehículo motor</label>
+                                <input name="vehiculo_matricula" required value="{{ datos.vehiculo_matricula }}">
+                            </div>
+                            <div>
+                                <label>Matrícula del remolque</label>
+                                <input name="vehiculo_remolque" value="{{ datos.vehiculo_remolque }}">
+                            </div>
+                            <div class="full">
+                                <label>Descripción</label>
+                                <input name="vehiculo_descripcion" value="{{ datos.vehiculo_descripcion }}">
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="cajon ancho" id="cajon-envios" {% if datos.mensajes %}open{% endif %}>
+                    <summary>
+                        Envíos
+                        <span class="resumen cuenta"></span>
+                    </summary>
+                    <div class="cuerpo">
+                        <p class="ayuda">Origen, destino, naturaleza y peso. Varios envíos solo si el contratante y el transportista son los mismos.</p>
+                        <div id="envios">
+                            {% for envio in datos.envios %}
+                            {{ campo_envio(envio, listas) }}
+                            {% endfor %}
+                        </div>
+                        <div class="fila-acciones">
+                            <button type="button" class="sec" onclick="anadirEnvio()">Añadir envío</button>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="cajon ancho" {% if datos.autorizacion_especial or datos.observaciones %}open{% endif %}>
+                    <summary>
+                        Autorización especial y observaciones
+                        <span class="resumen" data-campos="autorizacion_especial"></span>
+                    </summary>
+                    <div class="cuerpo">
+                        <div class="grid">
+                            <div class="full">
+                                <label>Autorización especial de circulación, si el vehículo la necesita</label>
+                                <input name="autorizacion_especial" value="{{ datos.autorizacion_especial }}" placeholder="Déjalo en blanco si no aplica">
+                            </div>
+                            <div class="full">
+                                <label>Observaciones</label>
+                                <textarea name="observaciones" rows="2">{{ datos.observaciones }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <div class="barra">
+                <button type="submit">{% if datos.modo == 'editar' %}Guardar modificación{% else %}Generar DeCa{% endif %}</button>
+                <a class="btn sec" href="{{ url_for('deca_listas') }}">Gestionar listas</a>
+            </div>
+        </form>
+    </div>
+
+    <template id="plantilla-envio">
+        {{ campo_envio({'origen_id':'', 'origen_lugar':'', 'origen_direccion':'', 'origen_cp':'', 'origen_poblacion':'', 'origen_provincia':'', 'destino_id':'', 'destino_lugar':'', 'destino_direccion':'', 'destino_cp':'', 'destino_poblacion':'', 'destino_provincia':'', 'naturaleza':'', 'peso':''}, listas) }}
+    </template>
+    <script>
+        function raizDe(select) {
+            return select.closest('.envio') || select.closest('.cajon') || document;
+        }
+        function rellenar(select, mapa) {
+            var raiz = raizDe(select);
+            var opcion = select.options[select.selectedIndex];
+            Object.keys(mapa).forEach(function (attr) {
+                var input = raiz.querySelector('[name="' + mapa[attr] + '"]');
+                if (!input) return;
+                input.value = (opcion && opcion.value) ? (opcion.getAttribute('data-' + attr) || '') : '';
+            });
+            actualizarResumenes();
+        }
+        function anadirEnvio() {
+            var nodo = document.getElementById('plantilla-envio').content.cloneNode(true);
+            document.getElementById('envios').appendChild(nodo);
+            numerar();
+        }
+        function quitarEnvio(boton) {
+            var bloques = document.querySelectorAll('#envios .envio');
+            if (bloques.length < 2) return;
+            boton.closest('.envio').remove();
+            numerar();
+        }
+        function numerar() {
+            var bloques = document.querySelectorAll('#envios .envio');
+            bloques.forEach(function (bloque, i) {
+                var titulo = bloque.querySelector('.titulo-envio');
+                if (titulo) titulo.textContent = 'Envío ' + (i + 1);
+            });
+            var cuenta = document.querySelector('#cajon-envios .cuenta');
+            if (cuenta) cuenta.textContent = bloques.length + (bloques.length === 1 ? ' envío' : ' envíos');
+            actualizarResumenes();
+        }
+        function actualizarResumenes() {
+            document.querySelectorAll('.resumen[data-campos]').forEach(function (resumen) {
+                var raiz = resumen.closest('.envio') || resumen.closest('.cajon') || document;
+                var partes = resumen.getAttribute('data-campos').split(',').map(function (nombre) {
+                    var input = raiz.querySelector('[name="' + nombre.trim() + '"]');
+                    return input ? input.value.trim() : '';
+                }).filter(Boolean);
+                resumen.textContent = partes.join(' · ');
+            });
+        }
+        document.getElementById('form-deca').addEventListener('input', actualizarResumenes);
+        document.getElementById('form-deca').addEventListener('change', actualizarResumenes);
+        numerar();
+    </script>
+</body>
+</html>

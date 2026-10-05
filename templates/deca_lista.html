@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeCa</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; margin: 0; }
+        .top-bar { display: flex; align-items: center; padding: 2px 30px; background: linear-gradient(to right, #ffffff, #343a40); color: white; height: 50px; box-sizing: border-box; }
+        .top-bar img { width: 200px; height: 45px; object-fit: contain; }
+        .top-user { font-weight: bold; font-size: 14px; margin-left: auto; margin-right: 20px; }
+        .top-button { padding: 2px 8px; background: #c51500; color: white; text-decoration: none; border-radius: 5px; }
+        .container { max-width: 1400px; margin: 20px auto; padding: 0 16px 40px; }
+        h1 { margin: 8px 0 4px; color: #0e2a4a; }
+        .sub { color: #5c6770; margin: 0 0 16px; }
+        .acciones { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+        .btn { padding: 8px 14px; background: #0e2a4a; color: white; border: none; border-radius: 4px; text-decoration: none; display: inline-block; font-size: 14px; cursor: pointer; }
+        .btn.sec { background: #5c6770; }
+        .btn.sm { padding: 4px 8px; font-size: 12px; background: #1f6b4a; }
+        .btn.alt { background: #0d6efd; }
+        .aviso { background: #fff4e5; border: 1px solid #e0b15a; color: #6a4b10; padding: 10px 12px; border-radius: 6px; margin-bottom: 12px; }
+        input[type="search"] { width: 100%; max-width: 420px; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 12px; }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th, td { padding: 8px 10px; border-bottom: 1px solid #e6e6e6; text-align: left; vertical-align: top; font-size: 14px; }
+        th { background: #0e2a4a; color: white; }
+        .url { font-size: 12px; color: #333; word-break: break-all; }
+        .vacio { padding: 24px; background: white; border-radius: 6px; }
+        @media (max-width: 800px) {
+            .top-bar { padding: 2px 10px; }
+            table, thead, tbody, th, td, tr { display: block; }
+            thead { display: none; }
+            tr { margin-bottom: 12px; background: white; border: 1px solid #e6e6e6; }
+            td { border: none; }
+            td::before { content: attr(data-label); display: block; font-weight: 700; color: #0e2a4a; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="/portada"><img src="{{ url_for('static', filename='logo.png') }}" alt="Logo"></a>
+        <span class="top-user">{{ current_user.username }}</span>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+    </div>
+    <div class="container">
+        <h1>DeCa</h1>
+        <p class="sub">Documento electrónico de control administrativo. Los documentos se guardan y se pueden reutilizar.</p>
+        <div class="acciones">
+            <a class="btn" href="{{ url_for('deca_nuevo') }}">Nuevo DeCa</a>
+            <a class="btn sec" href="{{ url_for('deca_listas') }}">Listas</a>
+        </div>
+        {% if aviso_https %}
+        <div class="aviso">Hay documentos cuya URL no es HTTPS. La resolución DeCA exige que el QR abra el PDF por HTTPS, sin usuario ni contraseña. Define la variable DECA_PUBLIC_BASE_URL con la dirección pública del servidor antes de emitir los documentos.</div>
+        {% endif %}
+        {% if filas %}
+        <input id="buscar" type="search" placeholder="Buscar por número, transportista, matrícula, origen..." oninput="filtrar()">
+        <table>
+            <thead>
+                <tr>
+                    <th>Número</th>
+                    <th>Fecha</th>
+                    <th>Contratante</th>
+                    <th>Transportista</th>
+                    <th>Conductor</th>
+                    <th>Vehículo</th>
+                    <th>Origen y destino</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila in filas %}
+                <tr>
+                    <td data-label="Número">{{ fila.doc.numero }}</td>
+                    <td data-label="Fecha">{{ fila.fecha }}</td>
+                    <td data-label="Contratante">{{ fila.doc.contratante_nombre }}</td>
+                    <td data-label="Transportista">{{ fila.doc.transportista_nombre }}</td>
+                    <td data-label="Conductor">{{ fila.doc.conductor_nombre }}</td>
+                    <td data-label="Vehículo">{{ fila.doc.vehiculo_matricula }}{% if fila.doc.vehiculo_remolque %} / {{ fila.doc.vehiculo_remolque }}{% endif %}</td>
+                    <td data-label="Origen y destino">{{ fila.ruta }}<br><span class="url">{{ fila.mercancia }}</span><br><span class="url">{{ fila.doc.url_descarga }}</span></td>
+                    <td data-label="Acciones">
+                        <a class="btn sm" href="{{ url_for('deca_pdf', doc_id=fila.doc.id) }}" target="_blank">PDF</a>
+                        <a class="btn sm alt" href="{{ url_for('deca_editar', doc_id=fila.doc.id) }}">Modificar</a>
+                        <a class="btn sm sec" href="{{ url_for('deca_nuevo', desde=fila.doc.id) }}">Reutilizar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="vacio">Todavía no hay documentos. Crea el primero: se guardará el PDF y las listas de transportista, contratante, conductor, vehículo, origen y destino.</div>
+        {% endif %}
+    </div>
+    <script>
+        function filtrar() {
+            var q = document.getElementById('buscar').value.toLowerCase();
+            document.querySelectorAll('tbody tr').forEach(function (tr) {
+                tr.style.display = tr.innerText.toLowerCase().indexOf(q) === -1 ? 'none' : '';
+            });
+        }
+    </script>
+</body>
+</html>

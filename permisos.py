@@ -9,6 +9,7 @@ ALL_MODULOS = frozenset({
     "caja_reembolsos",
     "presupuestos",
     "ordenes_carga",
+    "deca",
     "llegadas",
     "rectificaciones",
     "vacaciones",
@@ -27,9 +28,13 @@ PERMISOS_USUARIO = {
     "jamurillo": frozenset({"*"}),  # alias histórico
     "padiaz": frozenset({"rectificaciones", "aldipod"}),
     "fbonilla": frozenset({"rectificaciones", "aldipod", "caja", "presupuestos"}),
+    "djimenez": frozenset({"deca", "aldipod", "rectificaciones"}),
+    "mjbejarano": frozenset({"presupuestos", "rectificaciones"}),
+    "amesonero": frozenset({"presupuestos", "rectificaciones"}),
     "icastro": frozenset({
         "presupuestos",
         "ordenes_carga",
+        "deca",
         "llegadas",
         "vacaciones",
         "rectificaciones",
@@ -67,6 +72,9 @@ RUTAS_POR_MODULO = {
     "ordenes_carga": (
         "/ordenes_carga_internacionales",
         "/api/ordenes_carga/",
+    ),
+    "deca": (
+        "/deca",
     ),
     "llegadas": (
         "/llegadas-camiones",
@@ -176,6 +184,9 @@ def ruta_permitida(username: str | None, path: str) -> bool:
     p = permisos_usuario(username) or frozenset()
     path = path or "/"
     if path in RUTAS_SIEMPRE or path.startswith("/static/"):
+        return True
+    # El QR del DeCA tiene que abrir el PDF sin login y sin más pasos.
+    if path.startswith("/deca/d/"):
         return True
 
     # Descarga de BD: solo acceso total (ya cubierto arriba); restringidos no
