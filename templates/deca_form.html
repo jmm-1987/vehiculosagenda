@@ -220,8 +220,8 @@
                                 <input name="transportista_nombre" required value="{{ datos.transportista_nombre }}">
                             </div>
                             <div>
-                                <label>NIF</label>
-                                <input name="transportista_nif" required value="{{ datos.transportista_nif }}" autocomplete="off">
+                                <label>NIF, CIF o documento</label>
+                                <input name="transportista_nif" required value="{{ datos.transportista_nif }}" autocomplete="off" maxlength="30">
                             </div>
                             <div>
                                 <label>Domicilio</label>
@@ -254,8 +254,8 @@
                                 <input name="contratante_nombre" required value="{{ datos.contratante_nombre }}">
                             </div>
                             <div>
-                                <label>NIF</label>
-                                <input name="contratante_nif" required value="{{ datos.contratante_nif }}" autocomplete="off">
+                                <label>NIF, CIF o documento</label>
+                                <input name="contratante_nif" required value="{{ datos.contratante_nif }}" autocomplete="off" maxlength="30">
                             </div>
                             <div class="full">
                                 <label>Domicilio</label>
@@ -288,8 +288,8 @@
                                 <input name="conductor_nombre" required value="{{ datos.conductor_nombre }}">
                             </div>
                             <div>
-                                <label>NIF o DNI</label>
-                                <input name="conductor_nif" value="{{ datos.conductor_nif }}" autocomplete="off">
+                                <label>NIF, DNI o documento</label>
+                                <input name="conductor_nif" value="{{ datos.conductor_nif }}" autocomplete="off" maxlength="30">
                             </div>
                             <div class="full">
                                 <label>Teléfono</label>

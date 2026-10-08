@@ -30,36 +30,36 @@ _TOKEN_RE = re.compile(r"^[A-Za-z0-9_-]{12,80}$")
 CATALOGOS = {
     "transportista": {
         "titulo": "Transportistas",
-        "ayuda": "Transportista efectivo. La norma exige nombre o razón social y NIF.",
+        "ayuda": "Transportista efectivo. La norma exige nombre o razón social y NIF. Se acepta NIF, CIF o DNI español o de otro país.",
         "model": DecaTransportista,
         "orden": "nombre",
         "campos": [
             ("nombre", "Nombre o razón social", True),
-            ("nif", "NIF", True),
+            ("nif", "NIF, CIF o documento", True),
             ("domicilio", "Domicilio", False),
             ("telefono", "Teléfono", False),
         ],
     },
     "contratante": {
         "titulo": "Contratantes del servicio",
-        "ayuda": "Cargador contractual. La norma exige nombre o razón social, NIF y domicilio.",
+        "ayuda": "Cargador contractual. La norma exige nombre o razón social, NIF y domicilio. Se acepta NIF, CIF o DNI español o de otro país.",
         "model": DecaContratante,
         "orden": "nombre",
         "campos": [
             ("nombre", "Nombre o razón social", True),
-            ("nif", "NIF", True),
+            ("nif", "NIF, CIF o documento", True),
             ("domicilio", "Domicilio", True),
             ("telefono", "Teléfono", False),
         ],
     },
     "conductor": {
         "titulo": "Conductores",
-        "ayuda": "Se guarda el nombre. El NIF o DNI es voluntario, pero si se indica tiene que ser válido.",
+        "ayuda": "Se guarda el nombre. El NIF o DNI es voluntario y puede ser español o de otro país.",
         "model": DecaConductor,
         "orden": "nombre",
         "campos": [
             ("nombre", "Nombre", True),
-            ("nif", "NIF o DNI", False),
+            ("nif", "NIF, DNI o documento", False),
             ("telefono", "Teléfono", False),
         ],
     },
@@ -311,7 +311,10 @@ def _exigir_nif(valor: str, etiqueta: str, obligatorio: bool) -> str:
             raise DecaError(f"El {etiqueta} necesita NIF.")
         return ""
     if not nif_valido(texto):
-        raise DecaError(f"El NIF del {etiqueta} no es válido ({texto}).")
+        raise DecaError(
+            f"El documento del {etiqueta} no es válido ({texto}). "
+            "Tiene que tener entre 4 y 20 caracteres."
+        )
     return texto
 
 
