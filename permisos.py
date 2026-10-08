@@ -30,7 +30,7 @@ PERMISOS_USUARIO = {
     "fbonilla": frozenset({"rectificaciones", "aldipod", "caja", "presupuestos"}),
     "djimenez": frozenset({"deca", "aldipod", "rectificaciones"}),
     "mjbejarano": frozenset({"presupuestos", "rectificaciones"}),
-    "amesonero": frozenset({"presupuestos", "rectificaciones"}),
+    "amesonero": frozenset({"presupuestos","deca", "rectificaciones"}),
     "icastro": frozenset({
         "presupuestos",
         "ordenes_carga",
