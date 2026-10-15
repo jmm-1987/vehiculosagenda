@@ -26,11 +26,15 @@ PERMISOS_USUARIO = {
     "pserrano": frozenset({"*"}),
     "javimurillo": frozenset({"*"}),
     "jamurillo": frozenset({"*"}),  # alias histórico
-    "padiaz": frozenset({"rectificaciones", "aldipod"}),
-    "fbonilla": frozenset({"rectificaciones", "aldipod", "caja", "presupuestos"}),
-    "djimenez": frozenset({"deca", "aldipod", "rectificaciones"}),
+    "padiaz": frozenset({"rectificaciones", "aldipod","deca"}),
+    "fbonilla": frozenset({"rectificaciones", "aldipod", "caja", "deca", "presupuestos"}),
+    "aespino": frozenset({"rectificaciones", "aldipod", "deca", "llegadas", "presupuestos"}),
+    "amoreno": frozenset({"rectificaciones", "aldipod","llegadas", "presupuestos", "deca"}),
     "mjbejarano": frozenset({"presupuestos", "rectificaciones"}),
     "amesonero": frozenset({"presupuestos","deca", "rectificaciones"}),
+    "pcortes": frozenset({"caja","deca", "rectificaciones"}),
+    "vbejarano": frozenset({"deca", "rectificaciones","llegadas"}),
+    "ctrinidad": frozenset({"rectificaciones", "aldipod","llegadas", "caja", "deca"}),
     "icastro": frozenset({
         "presupuestos",
         "ordenes_carga",
@@ -39,8 +43,24 @@ PERMISOS_USUARIO = {
         "vacaciones",
         "rectificaciones",
     }),
-    "mgallego": frozenset({"llegadas", "caja_reembolsos", "aldipod"}),
-    "bgarcia": frozenset({"llegadas", "caja_reembolsos", "aldipod"}),
+    "djimenez": frozenset({
+        "presupuestos",
+        "ordenes_carga",
+        "deca",
+        "llegadas",
+        "vacaciones",
+        "rectificaciones",
+    }),
+    "jadiaz": frozenset({
+        "presupuestos",
+        "ordenes_carga",
+        "deca",
+        "llegadas",
+        "vacaciones",
+        "rectificaciones",
+    }),
+    "mgallego": frozenset({"llegadas", "caja_reembolsos", "aldipod", "deca"}),
+    "bgarcia": frozenset({"rectificaciones", "aldipod","llegadas", "caja", "deca"}),
 }
 
 # Prefijos de ruta por módulo (orden: más específicos primero en la comprobación)
