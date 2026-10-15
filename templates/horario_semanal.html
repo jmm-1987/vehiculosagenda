@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horario semanal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <style>
+        html, body { height: 100%; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f7f4ef; margin: 0; overflow: hidden; }
+        .top-bar { display: flex; align-items: center; padding: 2px 30px; background: linear-gradient(to right, #ffffff, #343a40); color: white; height: 50px; box-sizing: border-box; }
+        .top-bar img { width: 200px; height: 45px; object-fit: contain; }
+        .top-user { font-weight: bold; font-size: 14px; margin-left: auto; margin-right: 20px; }
+        .top-button { padding: 2px 8px; background: #c51500; color: white; text-decoration: none; border-radius: 5px; }
+        .container { max-width: none; height: calc(100vh - 50px); margin: 0; padding: 6px 10px 8px; box-sizing: border-box; display: flex; flex-direction: column; }
+        h1 { margin: 0; color: #3f2e1e; font-size: 1.15em; }
+        .sub { color: #6b5b4b; margin: 0 0 4px; font-size: 12px; }
+        .aviso { background: #fff4e5; border: 1px solid #e0b15a; color: #6a4b10; padding: 8px 10px; border-radius: 8px; margin-bottom: 10px; }
+        .barra { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+        label { font-size: 13px; color: #3f2e1e; }
+        select { padding: 6px 8px; border: 1px solid #d7cbbd; border-radius: 6px; font: inherit; background: white; }
+        .leyenda { display: flex; gap: 14px; font-size: 13px; color: #6b5b4b; }
+        .punto { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+        .punto.rojo { background: #c24141; }
+        .punto.verde { background: #1f7a4d; }
+        .rejilla { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); grid-template-rows: repeat(5, minmax(0, 1fr)); gap: 4px; }
+        .caja { position: relative; border-radius: 6px; padding: 2px 3px; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-sizing: border-box; overflow: hidden; }
+        .caja.vacia { background: #fde8e6; border: 1px solid #e7b2ad; color: #8d2f2f; }
+        .caja.llena { background: #e5f6ec; border: 1px solid #b7dfc6; color: #1b5e3b; }
+        .caja.actual { outline: 2px solid #b45309; outline-offset: 1px; }
+        .num { font-size: 14px; font-weight: 700; line-height: 1; }
+        .dias { font-size: 10px; margin: 1px 0 2px; line-height: 1.15; }
+        .cruz { font-size: 13px; line-height: 1; }
+        .pie { display: flex; align-items: center; justify-content: center; gap: 4px; }
+        .abrir { background: #1f7a4d; color: white; text-decoration: none; border-radius: 4px; padding: 1px 6px; font-size: 11px; line-height: 1.4; }
+        .abrir:hover { background: #17633e; }
+        form.subir, form.quitar { margin: 0; }
+        form.subir { position: absolute; inset: 0; z-index: 2; }
+        form.subir input[type=file] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        button.subir { background: transparent; color: inherit; border: none; font: inherit; font-size: 13px; line-height: 1; padding: 0; cursor: pointer; }
+        button.quitar { background: transparent; color: #8d2f2f; border: none; font-size: 12px; line-height: 1; padding: 0 2px; cursor: pointer; }
+        @media (max-width: 900px) {
+            body { overflow: auto; height: auto; }
+            .top-bar { padding: 2px 10px; }
+            .container { height: auto; }
+            .rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); grid-template-rows: none; height: auto; }
+            .caja { min-height: 68px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="/portada"><img src="{{ url_for('static', filename='logo.png') }}" alt="Logo"></a>
+        <span class="top-user">{{ current_user.username }}</span>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+    </div>
+    <div class="container">
+        <h1>Horario semanal {{ anio }}</h1>
+        <p class="sub">Cada recuadro es una semana. Debajo del número están los días que abarca, de lunes a domingo.</p>
+        {% with mensajes = get_flashed_messages() %}
+        {% if mensajes %}
+        <div class="aviso">{% for mensaje in mensajes %}<div>{{ mensaje }}</div>{% endfor %}</div>
+        {% endif %}
+        {% endwith %}
+        <div class="barra">
+            <form method="get">
+                <label>Año
+                    <select name="anio" onchange="this.form.submit()" aria-label="Año">
+                        {% for y in anios %}
+                        <option value="{{ y }}" {% if y == anio %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </form>
+            <div class="leyenda">
+                <span><i class="punto rojo"></i>Sin archivo</span>
+                <span><i class="punto verde"></i>Con horario</span>
+            </div>
+        </div>
+        <div class="rejilla">
+            {% for semana in semanas %}
+            <article class="caja {{ 'llena' if semana.registro else 'vacia' }} {{ 'actual' if semana.actual else '' }}" {% if not semana.registro %}title="Sin archivo"{% endif %}>
+                <div class="num">{{ semana.numero }}</div>
+                <div class="dias">{{ semana.dias }}</div>
+                {% if semana.registro %}
+                <div class="pie">
+                    <a class="abrir" href="{{ url_for('horario_semanal_archivo', horario_id=semana.registro.id) }}" target="_blank">Abrir</a>
+                    {% if puede_gestionar %}
+                    <form class="quitar" method="post" action="{{ url_for('horario_semanal_borrar', horario_id=semana.registro.id) }}" onsubmit="return confirm('¿Quitar el horario de esta semana?');">
+                        <input type="hidden" name="anio" value="{{ anio }}">
+                        <button type="submit" class="quitar" title="Quitar" aria-label="Quitar horario de la semana {{ semana.numero }}">✕</button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% elif puede_gestionar %}
+                <form class="subir" method="post" action="{{ url_for('horario_semanal_subir') }}" enctype="multipart/form-data">
+                    <input type="hidden" name="anio" value="{{ anio }}">
+                    <input type="hidden" name="semana" value="{{ semana.numero }}">
+                    <input type="file" name="archivo" accept="application/pdf,.pdf" title="Sin archivo" aria-label="PDF de la semana {{ semana.numero }}" onchange="if (this.files.length) this.form.submit()">
+                </form>
+                <div class="cruz" aria-hidden="true">✕</div>
+                {% else %}
+                <div class="cruz" aria-hidden="true">✕</div>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

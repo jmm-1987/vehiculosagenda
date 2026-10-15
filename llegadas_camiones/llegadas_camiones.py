@@ -3,9 +3,12 @@ from __future__ import annotations
 
 from datetime import datetime, date
 from collections import Counter
+from io import BytesIO
 
-from flask import render_template, request, jsonify
+from flask import render_template, request, jsonify, send_file
 from flask_login import login_required, current_user
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill
 
 import db
 from models import LlegadaCamionDia, LlegadaCamionLinea
@@ -85,11 +88,111 @@ def _obtener_o_crear_dia(fecha: date, turno: str | None = None):
     return dia, lineas
 
 
+def _excel(nombre, cabeceras, filas):
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Llegadas"
+    ws.append(cabeceras)
+    for celda in ws[1]:
+        celda.font = Font(bold=True, color="FFFFFF")
+        celda.fill = PatternFill("solid", fgColor="12233F")
+    for fila in filas:
+        ws.append(list(fila))
+    for columna in ws.columns:
+        ancho = max((len(str(celda.value or "")) for celda in columna), default=12)
+        ws.column_dimensions[columna[0].column_letter].width = min(max(ancho + 2, 12), 42)
+    ws.auto_filter.ref = ws.dimensions
+    ws.freeze_panes = "A2"
+    salida = BytesIO()
+    wb.save(salida)
+    salida.seek(0)
+    return send_file(
+        salida,
+        as_attachment=True,
+        download_name=nombre,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        max_age=0,
+    )
+
+
+def _filas_analisis():
+    desde = _parse_fecha(request.args.get("desde"))
+    hasta = _parse_fecha(request.args.get("hasta"))
+    agencia = (request.args.get("agencia") or "").strip()
+    ruta = (request.args.get("ruta") or "").strip()
+    matricula = (request.args.get("matricula") or "").strip()
+
+    consulta = (
+        db.session.query(LlegadaCamionLinea, LlegadaCamionDia)
+        .join(LlegadaCamionDia, LlegadaCamionLinea.dia_id == LlegadaCamionDia.id)
+    )
+    if desde:
+        consulta = consulta.filter(LlegadaCamionDia.fecha >= desde)
+    if hasta:
+        consulta = consulta.filter(LlegadaCamionDia.fecha <= hasta)
+    if agencia:
+        consulta = consulta.filter(LlegadaCamionLinea.agencia.ilike(f"%{agencia}%"))
+    if ruta:
+        consulta = consulta.filter(LlegadaCamionLinea.ruta.ilike(f"%{ruta}%"))
+    if matricula:
+        consulta = consulta.filter(LlegadaCamionLinea.matricula.ilike(f"%{matricula}%"))
+    return consulta.order_by(LlegadaCamionDia.fecha.desc(), LlegadaCamionLinea.orden).all()
+
+
 def register_llegadas_camiones_routes(app):
     @app.route("/llegadas-camiones")
     @login_required
     def llegadas_camiones():
         return render_template("llegadas_camiones.html")
+
+    @app.route("/llegadas-camiones/excel")
+    @login_required
+    def llegadas_camiones_excel():
+        if request.args.get("modo") == "analisis":
+            filas = []
+            for lin, dia in _filas_analisis():
+                filas.append((
+                    dia.fecha.strftime("%d/%m/%Y"),
+                    lin.agencia or "",
+                    lin.ruta or "",
+                    lin.matricula or "",
+                    lin.hora_llegada or "",
+                    lin.fin_descarga or "",
+                    lin.pallets or "",
+                    lin.personas or "",
+                    "Sí" if lin.es_manual else "",
+                ))
+            desde = request.args.get("desde") or "inicio"
+            hasta = request.args.get("hasta") or "fin"
+            return _excel(
+                f"llegadas_{desde}_{hasta}.xlsx",
+                ["Fecha", "Agencia", "Ruta", "Matrícula", "Hora llegada", "Fin descarga", "% o pallets", "Personas", "Manual"],
+                filas,
+            )
+
+        fecha = _parse_fecha(request.args.get("fecha"))
+        if not fecha:
+            return jsonify({"ok": False, "error": "Fecha no válida"}), 400
+        dia, lineas = _obtener_o_crear_dia(fecha)
+        filas = [
+            (
+                fecha.strftime("%d/%m/%Y"),
+                dia.turno or "",
+                lin.agencia or "",
+                lin.ruta or "",
+                lin.matricula or "",
+                lin.hora_llegada or "",
+                lin.fin_descarga or "",
+                lin.pallets or "",
+                lin.personas or "",
+            )
+            for lin in lineas
+        ]
+        return _excel(
+            f"llegadas_{fecha.isoformat()}.xlsx",
+            ["Fecha", "Turno", "Agencia", "Ruta", "Matrícula", "Hora llegada", "Fin descarga", "% o pallets", "Persona/s que descargan"],
+            filas,
+        )
 
     @app.route("/api/llegadas-camiones/dia")
     @login_required
@@ -192,28 +295,7 @@ def register_llegadas_camiones_routes(app):
     @app.route("/api/llegadas-camiones/analisis")
     @login_required
     def api_llegadas_analisis():
-        desde = _parse_fecha(request.args.get("desde"))
-        hasta = _parse_fecha(request.args.get("hasta"))
-        agencia = (request.args.get("agencia") or "").strip()
-        ruta = (request.args.get("ruta") or "").strip()
-        matricula = (request.args.get("matricula") or "").strip()
-
-        q = (
-            db.session.query(LlegadaCamionLinea, LlegadaCamionDia)
-            .join(LlegadaCamionDia, LlegadaCamionLinea.dia_id == LlegadaCamionDia.id)
-        )
-        if desde:
-            q = q.filter(LlegadaCamionDia.fecha >= desde)
-        if hasta:
-            q = q.filter(LlegadaCamionDia.fecha <= hasta)
-        if agencia:
-            q = q.filter(LlegadaCamionLinea.agencia.ilike(f"%{agencia}%"))
-        if ruta:
-            q = q.filter(LlegadaCamionLinea.ruta.ilike(f"%{ruta}%"))
-        if matricula:
-            q = q.filter(LlegadaCamionLinea.matricula.ilike(f"%{matricula}%"))
-
-        filas = q.order_by(LlegadaCamionDia.fecha.desc(), LlegadaCamionLinea.orden).all()
+        filas = _filas_analisis()
 
         items = []
         por_agencia = Counter()

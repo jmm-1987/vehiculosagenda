@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calidad</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #eef6f4; margin: 0; }
+        .top-bar { display: flex; align-items: center; padding: 2px 30px; background: linear-gradient(to right, #ffffff, #134e4a); color: white; height: 50px; box-sizing: border-box; }
+        .top-bar img { width: 200px; height: 45px; object-fit: contain; }
+        .top-user { font-weight: bold; font-size: 14px; margin-left: auto; margin-right: 20px; }
+        .top-button { padding: 2px 8px; background: #9f1239; color: white; text-decoration: none; border-radius: 5px; }
+        .container { max-width: 1200px; margin: 16px auto; padding: 0 16px 48px; }
+        .banda { background: #134e4a; color: white; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .banda h1 { margin: 0; font-size: 1.5em; }
+        .banda p { margin: 4px 0 0; color: #d1fae5; font-size: 13px; }
+        .aviso { background: #fff4e5; border: 1px solid #e0b15a; color: #6a4b10; padding: 8px 10px; border-radius: 8px; margin-bottom: 10px; }
+        .panel { background: white; border-left: 4px solid #0f766e; border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; }
+        .linea { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        input, select { box-sizing: border-box; padding: 4px 6px; border: 1px solid #b7d0cb; border-radius: 4px; font: inherit; font-size: 13px; }
+        .panel select, .panel input[type="text"], .panel input[type="search"], .panel input[type="date"] { width: 180px; max-width: 100%; }
+        .panel input[type="file"] { width: 190px; max-width: 100%; font-size: 12px; }
+        .check { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #134e4a; white-space: nowrap; }
+        button, .btn { background: #0f766e; color: white; border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer; text-decoration: none; display: inline-block; font: inherit; }
+        button.sec, .btn.sec { background: #115e59; }
+        button.claro, .btn.claro { background: white; color: #134e4a; }
+        button.peligro { background: #9f1239; }
+        button.sm, .btn.sm { padding: 4px 8px; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 8px 10px; border-bottom: 1px solid #e4eeeb; text-align: left; vertical-align: top; font-size: 14px; }
+        th { background: #134e4a; color: white; }
+        .cliente { font-weight: 700; color: #134e4a; }
+        .fecha { font-variant-numeric: tabular-nums; }
+        .marca { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+        .marca.ok { background: #d1fae5; color: #065f46; }
+        .marca.hoy { background: #fff4e5; color: #6a4b10; }
+        .marca.vencido { background: #ffe4e6; color: #9f1239; }
+        .marca.sin { background: #eef2f5; color: #3d4a55; }
+        tr.vencido { background: #fff7f7; }
+        .archivo { word-break: break-all; }
+        .acciones { display: flex; flex-wrap: wrap; gap: 6px; }
+        details summary { cursor: pointer; color: #0f766e; margin-top: 6px; }
+        .alta { margin-top: 8px; }
+        .alta .campo { min-width: 140px; flex: 1; }
+        .alta label { display: block; font-size: 12px; color: #333; }
+        .alta input, .alta select { width: 100%; }
+        .vacio { color: #3d5c57; margin: 8px 0; }
+        .resumen { color: #3d5c57; margin: 0 0 8px; font-size: 13px; }
+        @media (max-width: 800px) {
+            .top-bar { padding: 2px 10px; }
+            .panel select, .panel input[type="text"], .panel input[type="search"], .panel input[type="date"], .panel input[type="file"] { width: 100%; }
+            table, thead, tbody, th, td, tr { display: block; }
+            thead { display: none; }
+            tr { margin-bottom: 12px; border: 1px solid #d5e7e2; background: white; }
+            td { border: none; }
+            td::before { content: attr(data-label); display: block; font-weight: 700; color: #134e4a; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="/portada"><img src="{{ url_for('static', filename='logo.png') }}" alt="Logo"></a>
+        <span class="top-user">{{ current_user.username }}</span>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+    </div>
+    <div class="container">
+        <div class="banda">
+            <div>
+                <h1>Calidad</h1>
+                <p>Cada registro lleva el cliente y la fecha. Pdf, xls, xlsx, jpg, jpeg y png. Máximo 20 MB.</p>
+            </div>
+            <a class="btn claro sm" href="{{ url_for('calidad_categorias') }}">Categorías</a>
+        </div>
+        {% with mensajes = get_flashed_messages() %}
+        {% if mensajes %}
+        <div class="aviso">{% for mensaje in mensajes %}<div>{{ mensaje }}</div>{% endfor %}</div>
+        {% endif %}
+        {% endwith %}
+
+        <form class="panel linea" method="get">
+            <input type="search" name="q" value="{{ filtro_q }}" placeholder="Buscar cliente" aria-label="Buscar cliente">
+            <select name="categoria" aria-label="Categoría" onchange="this.form.submit()">
+                <option value="">Todas las categorías</option>
+                {% for cat in categorias %}
+                <option value="{{ cat.id }}" {% if filtro_categoria == cat.id|string %}selected{% endif %}>{{ cat.nombre }} ({{ conteo.get(cat.id, 0) }})</option>
+                {% endfor %}
+            </select>
+            <select name="estado" aria-label="Vencimiento" onchange="this.form.submit()">
+                <option value="" {% if not filtro_estado %}selected{% endif %}>Todos los vencimientos</option>
+                <option value="vigentes" {% if filtro_estado == 'vigentes' %}selected{% endif %}>En vigor</option>
+                <option value="vencidos" {% if filtro_estado == 'vencidos' %}selected{% endif %}>Vencidos</option>
+                <option value="sin" {% if filtro_estado == 'sin' %}selected{% endif %}>Sin vencimiento</option>
+            </select>
+            <button type="submit" class="sm">Buscar</button>
+        </form>
+
+        <form class="panel linea" method="post" action="{{ url_for('calidad_subir') }}" enctype="multipart/form-data">
+            <input type="hidden" name="volver_categoria" value="{{ filtro_categoria }}">
+            <input type="hidden" name="volver_estado" value="{{ filtro_estado }}">
+            <input type="hidden" name="volver_q" value="{{ filtro_q }}">
+            {% if categorias %}
+            <input name="cliente" required maxlength="200" placeholder="Cliente" aria-label="Cliente" autocomplete="off">
+            <input name="fecha" type="date" required aria-label="Fecha">
+            <select name="categoria_id" required aria-label="Categoría">
+                <option value="">Categoría</option>
+                {% for cat in categorias %}
+                <option value="{{ cat.id }}">{{ cat.nombre }}</option>
+                {% endfor %}
+            </select>
+            <input name="archivo" type="file" required accept=".pdf,.xls,.xlsx,.jpg,.jpeg,.png" aria-label="Archivo">
+            <label class="check"><input type="checkbox" name="sin_vencimiento" checked onchange="sincronizarVencimiento(this.form)"> Sin vencimiento</label>
+            <input name="vencimiento" type="date" disabled aria-label="Fecha de vencimiento">
+            <button type="submit" class="sm">Guardar</button>
+            {% else %}
+            <p class="vacio">Primero <a href="{{ url_for('calidad_categorias') }}">crea una categoría</a>.</p>
+            {% endif %}
+        </form>
+
+        <p class="resumen">{{ total }} registros</p>
+        {% if filas %}
+        <div style="overflow-x:auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th>Fecha</th>
+                    <th>Categoría</th>
+                    <th>Archivo</th>
+                    <th>Vencimiento</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila in filas %}
+                <tr class="{{ fila.clase }}">
+                    <td class="cliente" data-label="Cliente">{{ fila.reg.cliente }}</td>
+                    <td class="fecha" data-label="Fecha">{{ fila.fecha }}</td>
+                    <td data-label="Categoría">{{ fila.categoria }}</td>
+                    <td class="archivo" data-label="Archivo">{{ fila.reg.nombre_original }}</td>
+                    <td data-label="Vencimiento"><span class="marca {{ fila.clase }}">{{ fila.vencimiento }}</span></td>
+                    <td data-label="Acciones">
+                        <div class="acciones">
+                            <a class="btn sm" href="{{ url_for('calidad_archivo', reg_id=fila.reg.id) }}" target="_blank">Ver</a>
+                            <a class="btn sm sec" href="{{ url_for('calidad_archivo', reg_id=fila.reg.id, descargar=1) }}">Descargar</a>
+                        </div>
+                        <details>
+                            <summary>Editar</summary>
+                            <form class="alta linea" method="post" action="{{ url_for('calidad_editar', reg_id=fila.reg.id) }}" enctype="multipart/form-data">
+                                <input type="hidden" name="volver_categoria" value="{{ filtro_categoria }}">
+                                <input type="hidden" name="volver_estado" value="{{ filtro_estado }}">
+                                <input type="hidden" name="volver_q" value="{{ filtro_q }}">
+                                <div class="campo">
+                                    <label>Cliente</label>
+                                    <input name="cliente" value="{{ fila.reg.cliente }}" required maxlength="200">
+                                </div>
+                                <div class="campo">
+                                    <label>Fecha</label>
+                                    <input name="fecha" type="date" required value="{{ fila.reg.fecha.isoformat() }}">
+                                </div>
+                                <div class="campo">
+                                    <label>Categoría</label>
+                                    <select name="categoria_id" required>
+                                        {% for cat in categorias %}
+                                        <option value="{{ cat.id }}" {% if fila.reg.categoria_id == cat.id %}selected{% endif %}>{{ cat.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="campo">
+                                    <label>Sustituir archivo</label>
+                                    <input name="archivo" type="file" accept=".pdf,.xls,.xlsx,.jpg,.jpeg,.png">
+                                </div>
+                                <div class="campo">
+                                    <label class="check"><input type="checkbox" name="sin_vencimiento" {% if not fila.reg.vencimiento %}checked{% endif %} onchange="sincronizarVencimiento(this.form)"> Sin vencimiento</label>
+                                    <input name="vencimiento" type="date" value="{{ fila.reg.vencimiento.isoformat() if fila.reg.vencimiento else '' }}" {% if not fila.reg.vencimiento %}disabled{% endif %}>
+                                </div>
+                                <button type="submit" class="sm">Guardar</button>
+                            </form>
+                            <form method="post" action="{{ url_for('calidad_borrar', reg_id=fila.reg.id) }}" onsubmit="return confirm('¿Quitar este registro?');" style="margin-top:8px;">
+                                <input type="hidden" name="volver_categoria" value="{{ filtro_categoria }}">
+                                <input type="hidden" name="volver_estado" value="{{ filtro_estado }}">
+                                <input type="hidden" name="volver_q" value="{{ filtro_q }}">
+                                <button type="submit" class="peligro sm">Quitar registro</button>
+                            </form>
+                        </details>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% else %}
+        <p class="vacio">No hay registros con este filtro.</p>
+        {% endif %}
+    </div>
+    <script>
+        function sincronizarVencimiento(form) {
+            var check = form.querySelector('[name="sin_vencimiento"]');
+            var fecha = form.querySelector('[name="vencimiento"]');
+            if (!check || !fecha) return;
+            fecha.disabled = check.checked;
+            fecha.required = !check.checked;
+            if (check.checked) fecha.value = "";
+        }
+    </script>
+</body>
+</html>

@@ -43,6 +43,9 @@ from vacaciones.vacaciones import register_vacaciones_routes
 from llegadas_camiones.llegadas_camiones import register_llegadas_camiones_routes
 from rectificaciones.rectificaciones import register_rectificaciones_routes
 from deca.deca import register_deca_routes
+from documentacion.documentacion import register_documentacion_routes
+from calidad.calidad import register_calidad_routes
+from horario.horario import register_horario_routes
 from permisos import permisos_usuario, ruta_permitida, tiene_restriccion, acceso_total
 from sqlalchemy import func
 
@@ -82,6 +85,8 @@ except Exception as e:
 #Arranque app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '78587fgrtyth'
+# Werkzeug 3.1 corta el cuerpo del formulario a 500 KB y un PDF real lo supera.
+app.request_class.max_form_memory_size = 25 * 1024 * 1024
 
 # Configurar cierre automático de sesión de BD al final de cada request
 @app.teardown_appcontext
@@ -147,6 +152,9 @@ register_vacaciones_routes(app)
 register_llegadas_camiones_routes(app)
 register_rectificaciones_routes(app)
 register_deca_routes(app)
+register_documentacion_routes(app)
+register_calidad_routes(app)
+register_horario_routes(app)
 
 with app.app_context():
     db.Base.metadata.create_all(db.engine)

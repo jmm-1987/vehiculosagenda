@@ -161,6 +161,23 @@
         <p class="portada-subtitle"></p>
 
         <div class="cards-grid">
+            <a href="/documentacion-publica" class="portada-card" style="border-top: 5px solid #1f6b4a;">
+                <i class="fas fa-book-open"></i>
+                <h2>Documentación pública</h2>
+                <p>Documentos compartidos para todos los usuarios</p>
+            </a>
+            <a href="/horario-semanal" class="portada-card" style="border-top: 5px solid #b45309;">
+                <i class="fas fa-calendar-week"></i>
+                <h2>Horario semanal</h2>
+                <p>Horarios de cada semana del año</p>
+            </a>
+            {% if current_user.username|lower in ['jmurillo', 'pserrano', 'rrodriguez'] %}
+            <a href="/calidad" class="portada-card" style="border-top: 5px solid #0f766e;">
+                <i class="fas fa-clipboard-check"></i>
+                <h2>Calidad</h2>
+                <p>Registros de cliente y fecha</p>
+            </a>
+            {% endif %}
             {# ===== Usuarios con ACL explícita (permisos) ===== #}
             {% if permisos is not none %}
                 {% if 'dashboard' in permisos %}

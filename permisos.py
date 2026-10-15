@@ -205,6 +205,15 @@ def ruta_permitida(username: str | None, path: str) -> bool:
     path = path or "/"
     if path in RUTAS_SIEMPRE or path.startswith("/static/"):
         return True
+    # Documentación pública: cualquier usuario autenticado, tenga o no ACL.
+    if path == "/documentacion-publica" or path.startswith("/documentacion-publica/"):
+        return True
+    # Horario semanal: todos pueden verlo. Subir y quitar se controla en la vista.
+    if path == "/horario-semanal" or path.startswith("/horario-semanal/"):
+        return True
+    # Calidad: jmurillo, pserrano y rrodriguez, aunque el resto de su ACL sea limitado.
+    if path == "/calidad" or path.startswith("/calidad/"):
+        return _norm(username) in {"jmurillo", "pserrano", "rrodriguez"}
     # El QR del DeCA tiene que abrir el PDF sin login y sin más pasos.
     if path.startswith("/deca/d/"):
         return True

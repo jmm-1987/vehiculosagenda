@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.pool import NullPool
@@ -26,6 +26,16 @@ engine = create_engine(
     },
     poolclass=NullPool,
 )
+
+@event.listens_for(engine, "connect")
+def _sqlite_varios_procesos(dbapi_connection, connection_record):
+    """Gunicorn usa varios procesos. Sin WAL, una lectura bloquea la subida."""
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.fetchone()
+    cursor.execute("PRAGMA busy_timeout=30000")
+    cursor.close()
+
 
 Session = sessionmaker(bind=engine)
 Base = declarative_base()

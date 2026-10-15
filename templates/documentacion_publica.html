@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentación pública</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; margin: 0; }
+        .top-bar { display: flex; align-items: center; padding: 2px 30px; background: linear-gradient(to right, #ffffff, #343a40); color: white; height: 50px; box-sizing: border-box; }
+        .top-bar img { width: 200px; height: 45px; object-fit: contain; }
+        .top-user { font-weight: bold; font-size: 14px; margin-left: auto; margin-right: 20px; }
+        .top-button { padding: 2px 8px; background: #c51500; color: white; text-decoration: none; border-radius: 5px; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 16px 48px; }
+        h1 { margin: 6px 0 2px; color: #0e2a4a; font-size: 1.45em; }
+        .sub { color: #5c6770; margin: 0 0 8px; font-size: 13px; }
+        .aviso { background: #fff4e5; border: 1px solid #e0b15a; color: #6a4b10; padding: 10px 12px; border-radius: 6px; margin-bottom: 12px; }
+        section { background: white; border: 1px solid #d5dde6; border-radius: 8px; padding: 14px; margin-bottom: 16px; }
+        h2 { margin: 0 0 10px; color: #0e2a4a; font-size: 1.15em; }
+        .filtros, .alta { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+        label { display: block; font-size: 12px; color: #333; }
+        input, select { box-sizing: border-box; padding: 7px; border: 1px solid #c5ced6; border-radius: 4px; font: inherit; }
+        input[type="text"], input[type="date"], input[type="file"], select { width: 100%; }
+        .campo { min-width: 180px; flex: 1; }
+        .check { display: flex; align-items: center; gap: 6px; font-size: 14px; min-height: 34px; }
+        button, .btn { background: #0e2a4a; color: white; border: none; border-radius: 4px; padding: 8px 12px; cursor: pointer; text-decoration: none; display: inline-block; font: inherit; }
+        button.sec, .btn.sec { background: #5c6770; }
+        button.peligro { background: #8d3a32; }
+        button.sm, .btn.sm { padding: 4px 8px; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th, td { padding: 8px 10px; border-bottom: 1px solid #e6e6e6; text-align: left; vertical-align: top; font-size: 14px; }
+        th { background: #0e2a4a; color: white; }
+        .marca { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+        .marca.ok { background: #e7f6ee; color: #1f6b4a; }
+        .marca.hoy { background: #fff4e5; color: #6a4b10; }
+        .marca.vencido { background: #fdecea; color: #7a1f16; }
+        .marca.sin { background: #eef2f5; color: #3d4a55; }
+        tr.vencido { background: #fff8f7; }
+        .archivo { word-break: break-all; }
+        .acciones { display: flex; flex-wrap: wrap; gap: 6px; }
+        details.editar { margin-top: 8px; }
+        details.editar summary { cursor: pointer; color: #0e2a4a; }
+        .vacio { color: #5c6770; }
+        .resumen { color: #5c6770; margin: 0 0 8px; }
+        section.barra { padding: 8px 10px; margin-bottom: 8px; }
+        section.barra h2 { font-size: 13px; margin: 0 8px 0 0; white-space: nowrap; }
+        .barra .filtros, .barra .alta { gap: 8px; align-items: center; }
+        .barra .campo { flex: 0 0 auto; min-width: 0; }
+        .barra label { font-size: 11px; }
+        .barra select { width: 220px; max-width: 100%; padding: 4px 6px; font-size: 13px; }
+        .barra input[type="text"], .barra input[type="date"] { width: 160px; max-width: 100%; padding: 4px 6px; font-size: 13px; }
+        .barra input[type="file"] { width: 190px; max-width: 100%; font-size: 12px; }
+        .barra .check { min-height: 0; font-size: 13px; white-space: nowrap; }
+        .barra .grupo-fecha { display: flex; align-items: center; gap: 6px; }
+        .linea { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        @media (max-width: 800px) {
+            .top-bar { padding: 2px 10px; }
+            .barra select, .barra input[type="text"], .barra input[type="date"], .barra input[type="file"] { width: 100%; }
+            .barra .campo, .barra .grupo-fecha { flex: 1 1 100%; }
+            table, thead, tbody, th, td, tr { display: block; }
+            thead { display: none; }
+            tr { margin-bottom: 12px; border: 1px solid #e6e6e6; background: white; }
+            td { border: none; }
+            td::before { content: attr(data-label); display: block; font-weight: 700; color: #0e2a4a; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="/portada"><img src="{{ url_for('static', filename='logo.png') }}" alt="Logo"></a>
+        <span class="top-user">{{ current_user.username }}</span>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+    </div>
+    <div class="container">
+        <h1>Documentación pública</h1>
+        <p class="sub">Cualquier usuario puede subir documentos y ver los del resto. Formatos: pdf, xls, xlsx, jpg, jpeg y png. Máximo 20 MB.</p>
+        {% with mensajes = get_flashed_messages() %}
+        {% if mensajes %}
+        <div class="aviso">{% for mensaje in mensajes %}<div>{{ mensaje }}</div>{% endfor %}</div>
+        {% endif %}
+        {% endwith %}
+
+        <section class="barra">
+            <form class="filtros linea" method="get">
+                <h2>Filtrar</h2>
+                <select id="categoria" name="categoria" aria-label="Categoría" onchange="this.form.submit()">
+                    <option value="">Todas las categorías</option>
+                    {% for cat in categorias %}
+                    <option value="{{ cat.id }}" {% if filtro_categoria == cat.id|string %}selected{% endif %}>{{ cat.nombre }} ({{ conteo.get(cat.id, 0) }})</option>
+                    {% endfor %}
+                </select>
+                <select id="estado" name="estado" aria-label="Vencimiento" onchange="this.form.submit()">
+                    <option value="" {% if not filtro_estado %}selected{% endif %}>Todos los vencimientos</option>
+                    <option value="vigentes" {% if filtro_estado == 'vigentes' %}selected{% endif %}>En vigor</option>
+                    <option value="vencidos" {% if filtro_estado == 'vencidos' %}selected{% endif %}>Vencidos</option>
+                    <option value="sin" {% if filtro_estado == 'sin' %}selected{% endif %}>Sin vencimiento</option>
+                </select>
+                <a class="btn sec sm" href="{{ url_for('documentacion_publica_categorias') }}">Categorías</a>
+            </form>
+        </section>
+
+        <section class="barra">
+            {% if categorias %}
+            <form class="alta linea" method="post" action="{{ url_for('documentacion_publica_subir') }}" enctype="multipart/form-data">
+                <input type="hidden" name="volver_categoria" value="{{ filtro_categoria }}">
+                <input type="hidden" name="volver_estado" value="{{ filtro_estado }}">
+                <h2>Subir</h2>
+                <input id="titulo" name="titulo" required maxlength="200" autocomplete="off" placeholder="Título" aria-label="Título">
+                <select id="categoria_id" name="categoria_id" required aria-label="Categoría">
+                    <option value="">Categoría</option>
+                    {% for cat in categorias %}
+                    <option value="{{ cat.id }}">{{ cat.nombre }}</option>
+                    {% endfor %}
+                </select>
+                <input id="archivo" name="archivo" type="file" required accept=".pdf,.xls,.xlsx,.jpg,.jpeg,.png" aria-label="Archivo">
+                <label class="check"><input type="checkbox" name="sin_vencimiento" checked onchange="sincronizarVencimiento(this.form)"> Sin vencimiento</label>
+                <input name="vencimiento" type="date" disabled aria-label="Fecha de vencimiento">
+                <button type="submit" class="sm">Subir</button>
+            </form>
+            {% else %}
+            <p class="vacio">Primero <a href="{{ url_for('documentacion_publica_categorias') }}">crea una categoría</a>. Después ya se pueden subir documentos.</p>
+            {% endif %}
+        </section>
+
+        <section>
+            <h2>Documentos</h2>
+            <p class="resumen">{{ total }} documentos{% if vencidos %} · {{ vencidos }} vencidos{% endif %}</p>
+            {% if filas %}
+            <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Categoría</th>
+                        <th>Archivo</th>
+                        <th>Vencimiento</th>
+                        <th>Subido</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fila in filas %}
+                    <tr class="{{ fila.clase }}">
+                        <td data-label="Título">{{ fila.doc.titulo }}</td>
+                        <td data-label="Categoría">{{ fila.categoria }}</td>
+                        <td data-label="Archivo" class="archivo">{{ fila.doc.nombre_original }}</td>
+                        <td data-label="Vencimiento"><span class="marca {{ fila.clase }}">{{ fila.vencimiento }}</span></td>
+                        <td data-label="Subido">{{ fila.doc.usuario }}<br>{{ fila.subida }}</td>
+                        <td data-label="Acciones">
+                            <div class="acciones">
+                                <a class="btn sm" href="{{ url_for('documentacion_publica_archivo', doc_id=fila.doc.id) }}" target="_blank">Ver</a>
+                                <a class="btn sm sec" href="{{ url_for('documentacion_publica_archivo', doc_id=fila.doc.id, descargar=1) }}">Descargar</a>
+                            </div>
+                            {% if puede_gestionar %}
+                            <details class="editar">
+                                <summary>Editar</summary>
+                                <form class="alta" method="post" action="{{ url_for('documentacion_publica_editar', doc_id=fila.doc.id) }}" enctype="multipart/form-data">
+                                    <input type="hidden" name="volver_categoria" value="{{ filtro_categoria }}">
+                                    <input type="hidden" name="volver_estado" value="{{ filtro_estado }}">
+                                    <div class="campo">
+                                        <label>Título</label>
+                                        <input name="titulo" value="{{ fila.doc.titulo }}" required maxlength="200">
+                                    </div>
+                                    <div class="campo">
+                                        <label>Categoría</label>
+                                        <select name="categoria_id" required>
+                                            {% for cat in categorias %}
+                                            <option value="{{ cat.id }}" {% if fila.doc.categoria_id == cat.id %}selected{% endif %}>{{ cat.nombre }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="campo">
+                                        <label>Sustituir archivo</label>
+                                        <input name="archivo" type="file" accept=".pdf,.xls,.xlsx,.jpg,.jpeg,.png">
+                                    </div>
+                                    <div class="campo">
+                                        <label class="check"><input type="checkbox" name="sin_vencimiento" {% if not fila.doc.vencimiento %}checked{% endif %} onchange="sincronizarVencimiento(this.form)"> Sin vencimiento</label>
+                                        <input name="vencimiento" type="date" value="{{ fila.doc.vencimiento.isoformat() if fila.doc.vencimiento else '' }}" {% if not fila.doc.vencimiento %}disabled{% endif %}>
+                                    </div>
+                                    <button type="submit">Guardar</button>
+                                </form>
+                                <form method="post" action="{{ url_for('documentacion_publica_borrar', doc_id=fila.doc.id) }}" onsubmit="return confirm('¿Quitar este documento?');" style="margin-top:8px;">
+                                    <input type="hidden" name="volver_categoria" value="{{ filtro_categoria }}">
+                                    <input type="hidden" name="volver_estado" value="{{ filtro_estado }}">
+                                    <button type="submit" class="peligro sm">Quitar documento</button>
+                                </form>
+                            </details>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+            {% else %}
+            <p class="vacio">No hay documentos con este filtro.</p>
+            {% endif %}
+        </section>
+    </div>
+    <script>
+        function sincronizarVencimiento(form) {
+            var check = form.querySelector('[name="sin_vencimiento"]');
+            var fecha = form.querySelector('[name="vencimiento"]');
+            if (!check || !fecha) return;
+            fecha.disabled = check.checked;
+            fecha.required = !check.checked;
+            if (check.checked) fecha.value = "";
+        }
+    </script>
+</body>
+</html>

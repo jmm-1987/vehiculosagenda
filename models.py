@@ -1,5 +1,5 @@
 import db
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float, Text
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float, Text, UniqueConstraint
 from sqlalchemy import DateTime, Date
 from sqlalchemy.orm import relationship
 from flask_login import UserMixin
@@ -767,3 +767,57 @@ class DecaCambio(db.Base):
     usuario = Column(String(100), default='')
     motivo = Column(Text, default='')
     datos_anteriores = Column(Text, default='')
+
+
+class DocPublicaCategoria(db.Base):
+    """Categoría de la documentación compartida entre todos los usuarios."""
+    __tablename__ = "doc_publica_categoria"
+    id = Column(Integer, primary_key=True)
+    nombre = Column(String(80), nullable=False, unique=True)
+
+
+class DocPublicaDocumento(db.Base):
+    """Documento visible para cualquier usuario de la aplicación."""
+    __tablename__ = "doc_publica_documento"
+    id = Column(Integer, primary_key=True)
+    categoria_id = Column(Integer, ForeignKey("doc_publica_categoria.id"), nullable=False, index=True)
+    titulo = Column(String(200), nullable=False, default="")
+    nombre_original = Column(String(300), nullable=False, default="")
+    nombre_archivo = Column(String(80), nullable=False, default="")
+    vencimiento = Column(Date, nullable=True)
+    usuario = Column(String(100), default="")
+    fecha_subida = Column(DateTime, nullable=False)
+
+
+class CalidadCategoria(db.Base):
+    """Categoría de los registros de calidad."""
+    __tablename__ = "calidad_categoria"
+    id = Column(Integer, primary_key=True)
+    nombre = Column(String(80), nullable=False, unique=True)
+
+
+class CalidadRegistro(db.Base):
+    """Registro de calidad: cliente, fecha y archivo."""
+    __tablename__ = "calidad_registro"
+    id = Column(Integer, primary_key=True)
+    categoria_id = Column(Integer, ForeignKey("calidad_categoria.id"), nullable=False, index=True)
+    cliente = Column(String(200), nullable=False, default="")
+    fecha = Column(Date, nullable=False)
+    nombre_original = Column(String(300), nullable=False, default="")
+    nombre_archivo = Column(String(80), nullable=False, default="")
+    vencimiento = Column(Date, nullable=True)
+    usuario = Column(String(100), default="")
+    fecha_subida = Column(DateTime, nullable=False)
+
+
+class HorarioSemanal(db.Base):
+    """PDF del horario de una semana ISO."""
+    __tablename__ = "horario_semanal"
+    __table_args__ = (UniqueConstraint("anio", "semana", name="uq_horario_anio_semana"),)
+    id = Column(Integer, primary_key=True)
+    anio = Column(Integer, nullable=False, index=True)
+    semana = Column(Integer, nullable=False)
+    nombre_original = Column(String(300), nullable=False, default="")
+    nombre_archivo = Column(String(80), nullable=False, default="")
+    usuario = Column(String(100), default="")
+    fecha_subida = Column(DateTime, nullable=False)
