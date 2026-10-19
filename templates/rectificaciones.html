@@ -479,6 +479,41 @@
   .btn-delete.btn-delete-armed{background:var(--danger);color:#fff;}
   .btn-delete:disabled{opacity:.5;cursor:default;}
 
+  .tarifa-modal{
+    position:fixed; inset:0; z-index:80; background:rgba(11,27,51,.45);
+    display:flex; align-items:flex-start; justify-content:center; padding:24px 12px;
+    overflow:auto;
+  }
+  .tarifa-modal[hidden]{display:none;}
+  .tarifa-card{
+    width:min(1040px, 100%); background:#fff; border-radius:12px;
+    border:1px solid var(--border); padding:16px 18px 18px;
+    box-shadow:0 16px 40px rgba(11,27,51,.25);
+    color:#1a1a1a;
+  }
+  .tarifa-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+  .tarifa-card h2{ margin:0; font-size:16px; color:var(--navy-900); }
+  .tarifa-card p{ margin:6px 0 12px; font-size:12.5px; color:var(--text-muted); }
+  .tarifa-pct{ display:flex; align-items:center; gap:10px; margin-bottom:12px; font-size:13px; font-weight:700; }
+  .tarifa-pct input{ width:110px; }
+  .tarifa-scroll{ max-height:min(58vh, 520px); overflow:auto; border:1px solid var(--border); border-radius:8px; }
+  .tarifa-tabla{ width:100%; border-collapse:separate; border-spacing:0; font-size:13px; background:#fff; }
+  .tarifa-tabla th, .tarifa-tabla td{
+    position:static; border-bottom:1px solid var(--border); padding:6px 8px;
+    text-align:left; background:#fff; color:#1a1a1a; white-space:normal;
+  }
+  .tarifa-tabla th{
+    position:static; top:auto; z-index:auto; font-size:11px; text-transform:uppercase;
+    color:#fff; background:var(--navy-900);
+  }
+  .tarifa-celda{ display:flex; align-items:center; gap:8px; }
+  .tarifa-tabla input{ width:88px; max-width:none; background:#fff; color:#1a1a1a; }
+  .tarifa-nuevo{
+    font-variant-numeric:tabular-nums; font-weight:700; font-size:12px;
+    color:var(--navy-800); white-space:nowrap; min-width:4.5em;
+  }
+  .tarifa-actions{ display:flex; justify-content:flex-end; gap:8px; position:relative; z-index:2; }
+
   .page-footer{
     max-width:1280px;
     margin:8px auto 0;
@@ -549,6 +584,8 @@
       <span id="syncStatus" class="status-dot"></span>
       <span id="syncText">Conectando…</span>
     </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <button id="tarifaXpoBtn" class="btn btn-navy" type="button">Tarifa XPO</button>
     <div class="export-wrap">
       <button id="exportBtn" class="btn btn-gold" type="button">⬇ Descargar Excel</button>
       <div id="exportPanel" class="export-panel" hidden>
@@ -563,6 +600,31 @@
           <button type="button" id="exportCancel" class="btn btn-ghost">Cancelar</button>
           <button type="button" id="exportConfirm" class="btn btn-gold">Descargar</button>
         </div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <div id="tarifaXpoModal" class="tarifa-modal" hidden>
+    <div class="tarifa-card" role="dialog" aria-labelledby="tarifaXpoTitulo">
+      <div class="tarifa-head">
+        <h2 id="tarifaXpoTitulo">Tarifa XPO</h2>
+        <div class="tarifa-actions">
+          <button type="button" id="tarifaCerrar" class="btn btn-ghost">Cerrar</button>
+          <button type="button" id="tarifaGuardar" class="btn btn-navy">Guardar tarifa</button>
+        </div>
+      </div>
+      <p>Los tramos son euros por kilo. Mínimo y máximo son el precio total. A la derecha de cada base se ve ese mismo precio con el porcentaje. Solo se guardan la base y el último porcentaje.</p>
+      <label class="tarifa-pct">Porcentaje de subida (%)
+        <input type="number" id="tarifaPct" step="0.01" value="0">
+      </label>
+      <div class="tarifa-scroll">
+        <table class="tarifa-tabla">
+          <thead>
+            <tr><th>Tramo</th><th>Baremo 1</th><th>Baremo 2</th><th>Baremo 3</th></tr>
+          </thead>
+          <tbody id="tarifaCuerpo"></tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -601,7 +663,7 @@
             </select>
           </div>
           <div class="field" id="cpDestinoWrap" hidden>
-            <label for="cpDestino">CP destino (TSB)</label>
+            <label for="cpDestino" id="cpDestinoLabel">CP destino (TSB)</label>
             <input type="text" id="cpDestino" inputmode="numeric" maxlength="5" placeholder="Ej. 06800" pattern="[0-9]{4,5}">
             <span id="baremoTsbHint" class="field-mini-hint"></span>
           </div>
@@ -758,7 +820,7 @@
   const $ = (id) => document.getElementById(id);
   const fecha=$('fecha'), expedicion=$('expedicion'), agencia=$('agencia'), pesoDoc=$('pesoDoc'), pesoReal=$('pesoReal'),
         volDoc=$('volDoc'), volReal=$('volReal'),
-        cpDestino=$('cpDestino'), cpDestinoWrap=$('cpDestinoWrap'), baremoTsbHint=$('baremoTsbHint'),
+        cpDestino=$('cpDestino'), cpDestinoWrap=$('cpDestinoWrap'), cpDestinoLabel=$('cpDestinoLabel'), baremoTsbHint=$('baremoTsbHint'),
         diffPesoOut=$('diffPeso'), diffVolOut=$('diffVol'), pvkgDocOut=$('pvkgDoc'), pvkgRealOut=$('pvkgReal'),
         factorConvOut=$('factorConv'), importeDoc=$('importeDoc'), importeReal=$('importeReal'),
         sobredimensionado=$('sobredimensionado'), preciosManuales=$('preciosManuales'),
@@ -980,9 +1042,11 @@
 
   let importeTimer = null;
   function syncCpDestino(){
-    const esTsb = agencia.value === 'TSB';
-    cpDestinoWrap.hidden = !esTsb;
-    if (!esTsb){
+    const ag = agencia.value;
+    const necesita = ag === 'TSB' || ag === 'XPO';
+    cpDestinoWrap.hidden = !necesita;
+    if (cpDestinoLabel) cpDestinoLabel.textContent = ag === 'XPO' ? 'CP destino (XPO)' : 'CP destino (TSB)';
+    if (!necesita){
       cpDestino.value = '';
       baremoTsbHint.textContent = '';
     }
@@ -999,20 +1063,32 @@
     return 'C';
   }
 
+  function baremoXpoLocal(cp){
+    let s = String(cp || '').replace(/\D/g, '').slice(0, 5);
+    if (!s) return null;
+    if (s.length < 5) s = s.padStart(5, '0');
+    const n = parseInt(s, 10);
+    if (Number.isNaN(n)) return null;
+    if (n >= 6800 && n <= 6899) return '1';
+    if (s.startsWith('06')) return '2';
+    if (s.startsWith('10')) return '3';
+    return null;
+  }
+
   async function refreshImportes(pvD, pvR){
     if (preciosManuales.checked){
       updateImporteCobrarAuto();
       return;
     }
     const ag = agencia.value;
-    if (!ag || (ag !== 'NTL' && ag !== 'Surpaq' && ag !== 'TSB')){
+    if (!ag || (ag !== 'NTL' && ag !== 'Surpaq' && ag !== 'TSB' && ag !== 'XPO')){
       importeDoc.value = '';
       importeReal.value = '';
-      if (ag !== 'TSB') baremoTsbHint.textContent = '';
+      if (ag !== 'TSB' && ag !== 'XPO') baremoTsbHint.textContent = '';
       updateImporteCobrarAuto();
       return;
     }
-    if (ag === 'TSB' && !cpDestino.value.trim()){
+    if ((ag === 'TSB' || ag === 'XPO') && !cpDestino.value.trim()){
       importeDoc.value = '';
       importeReal.value = '';
       baremoTsbHint.textContent = 'Indica CP destino';
@@ -1025,7 +1101,7 @@
         const params = new URLSearchParams({ agencia: ag });
         if (pvD != null) params.set('pvkgDoc', String(pvD));
         if (pvR != null) params.set('pvkgReal', String(pvR));
-        if (ag === 'TSB') params.set('cp', cpDestino.value.trim());
+        if (ag === 'TSB' || ag === 'XPO') params.set('cp', cpDestino.value.trim());
         const res = await fetch('/api/rectificaciones/calcular-importe?' + params.toString());
         const data = await res.json();
         if (!data.ok) throw new Error();
@@ -1034,6 +1110,13 @@
         if (ag === 'TSB'){
           const b = data.baremo || baremoTsbLocal(cpDestino.value);
           baremoTsbHint.textContent = b ? ('Baremo ' + b) : '';
+        } else if (ag === 'XPO'){
+          const b = data.baremo || baremoXpoLocal(cpDestino.value);
+          if (!b) baremoTsbHint.textContent = 'Sin tarifa para este CP';
+          else {
+            const pct = Number(data.porcentaje || 0);
+            baremoTsbHint.textContent = 'Baremo ' + b + (pct ? (' · subida ' + pct + '%') : '');
+          }
         } else {
           baremoTsbHint.textContent = '';
         }
@@ -1063,8 +1146,13 @@
     updatePvkg();
   });
   cpDestino.addEventListener('input', () => {
-    const b = baremoTsbLocal(cpDestino.value);
-    baremoTsbHint.textContent = (agencia.value === 'TSB' && b) ? ('Baremo ' + b) : '';
+    if (agencia.value === 'TSB'){
+      const b = baremoTsbLocal(cpDestino.value);
+      baremoTsbHint.textContent = b ? ('Baremo ' + b) : '';
+    } else if (agencia.value === 'XPO'){
+      const b = baremoXpoLocal(cpDestino.value);
+      baremoTsbHint.textContent = b ? ('Baremo ' + b) : (cpDestino.value.trim() ? 'Sin tarifa para este CP' : '');
+    }
     updatePvkg();
   });
   syncCpDestino();
@@ -1283,8 +1371,13 @@
       agencia.focus();
       return;
     }
-    if (ag === 'TSB' && !cpDestino.value.trim()){
-      showToast('Para TSB indica el código postal de destino.', true);
+    if ((ag === 'TSB' || ag === 'XPO') && !cpDestino.value.trim()){
+      showToast(ag === 'XPO' ? 'Para XPO indica el código postal de destino.' : 'Para TSB indica el código postal de destino.', true);
+      cpDestino.focus();
+      return;
+    }
+    if (ag === 'XPO' && !preciosManuales.checked && !baremoXpoLocal(cpDestino.value)){
+      showToast('Ese código postal no tiene tarifa XPO. Sirven los que empiezan por 06 o por 10.', true);
       cpDestino.focus();
       return;
     }
@@ -1308,7 +1401,7 @@
         fecha: fecha.value || null,
         expedicion: exp,
         agencia: ag,
-        cpDestino: ag === 'TSB' ? cpDestino.value.trim() : '',
+        cpDestino: (ag === 'TSB' || ag === 'XPO') ? cpDestino.value.trim() : '',
         pesoDocumentado: pesoDoc.value,
         pesoReal: pesoReal.value,
         volDocumentado: volDoc.value,
@@ -1355,6 +1448,112 @@
     window.location.href = '/api/rectificaciones/exportar?' + params.toString();
     exportPanel.hidden = true;
     showToast('Descarga iniciada.');
+  });
+
+  const tarifaXpoBtn = $('tarifaXpoBtn');
+  const tarifaXpoModal = $('tarifaXpoModal');
+  const tarifaCuerpo = $('tarifaCuerpo');
+  const tarifaPct = $('tarifaPct');
+
+  function filaTarifa(id, etiqueta, b1, b2, b3){
+    const tr = document.createElement('tr');
+    tr.dataset.id = id;
+    tr.dataset.dec = (id === 'minimos' || id === 'maximos') ? '2' : '4';
+    tr.innerHTML = `<td>${etiqueta}</td>` + [b1, b2, b3].map((v, i) =>
+      `<td><div class="tarifa-celda"><input type="number" step="any" min="0" data-b="${i + 1}" value="${v}"><span class="tarifa-nuevo"></span></div></td>`
+    ).join('');
+    return tr;
+  }
+
+  function textoConSubida(base, pct, decimales){
+    const n = Number(base);
+    const p = Number(pct);
+    if (!Number.isFinite(n) || !Number.isFinite(p)) return '';
+    const nuevo = n * (1 + p / 100);
+    return nuevo.toLocaleString('es-ES', {
+      minimumFractionDigits: decimales,
+      maximumFractionDigits: decimales,
+    });
+  }
+
+  function actualizarTarifaNueva(){
+    const pct = tarifaPct.value;
+    tarifaCuerpo.querySelectorAll('tr').forEach(tr => {
+      const dec = Number(tr.dataset.dec || 4);
+      tr.querySelectorAll('input').forEach(inp => {
+        const span = inp.parentElement.querySelector('.tarifa-nuevo');
+        if (!span) return;
+        const txt = textoConSubida(inp.value, pct, dec);
+        span.textContent = txt ? '→ ' + txt : '';
+      });
+    });
+  }
+
+  function pintarTarifa(tarifa){
+    tarifaPct.value = tarifa.porcentaje ?? 0;
+    tarifaCuerpo.innerHTML = '';
+    (tarifa.tramos || []).forEach(t => {
+      tarifaCuerpo.appendChild(filaTarifa(t.id, t.etiqueta, t.baremo_1, t.baremo_2, t.baremo_3));
+    });
+    tarifaCuerpo.appendChild(filaTarifa('minimos', 'Mínimo (precio total)', tarifa.minimos.baremo_1, tarifa.minimos.baremo_2, tarifa.minimos.baremo_3));
+    tarifaCuerpo.appendChild(filaTarifa('maximos', 'Máximo (precio total)', tarifa.maximos.baremo_1, tarifa.maximos.baremo_2, tarifa.maximos.baremo_3));
+    actualizarTarifaNueva();
+  }
+
+  function leerBloque(id){
+    const tr = tarifaCuerpo.querySelector(`tr[data-id="${id}"]`);
+    const out = {};
+    tr.querySelectorAll('input').forEach(inp => { out['baremo_' + inp.dataset.b] = inp.value; });
+    return out;
+  }
+
+  tarifaXpoBtn.addEventListener('click', async () => {
+    try {
+      const res = await fetch('/api/rectificaciones/tarifa-xpo');
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Error');
+      pintarTarifa(data.tarifa);
+      tarifaXpoModal.hidden = false;
+    } catch (err) {
+      showToast('No se pudo abrir la tarifa XPO.', true);
+    }
+  });
+  tarifaPct.addEventListener('input', actualizarTarifaNueva);
+  tarifaCuerpo.addEventListener('input', actualizarTarifaNueva);
+  $('tarifaCerrar').addEventListener('click', () => { tarifaXpoModal.hidden = true; });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !tarifaXpoModal.hidden) tarifaXpoModal.hidden = true;
+  });
+  tarifaXpoModal.addEventListener('click', (e) => {
+    if (e.target === tarifaXpoModal) tarifaXpoModal.hidden = true;
+  });
+  $('tarifaGuardar').addEventListener('click', async () => {
+    const tramos = [];
+    tarifaCuerpo.querySelectorAll('tr').forEach(tr => {
+      if (tr.dataset.id === 'minimos' || tr.dataset.id === 'maximos') return;
+      tramos.push({ id: tr.dataset.id, ...leerBloque(tr.dataset.id) });
+    });
+    const payload = {
+      porcentaje: tarifaPct.value,
+      tramos,
+      minimos: leerBloque('minimos'),
+      maximos: leerBloque('maximos'),
+    };
+    try {
+      const res = await fetch('/api/rectificaciones/tarifa-xpo', {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Error');
+      pintarTarifa(data.tarifa);
+      tarifaXpoModal.hidden = true;
+      updatePvkg();
+      showToast('Tarifa XPO guardada.');
+    } catch (err) {
+      showToast(err.message || 'No se pudo guardar la tarifa.', true);
+    }
   });
 
   cargar();

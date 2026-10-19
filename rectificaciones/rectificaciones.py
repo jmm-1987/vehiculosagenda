@@ -168,6 +168,13 @@ def _validar_campos(campos: dict):
         return "Agencia no válida."
     if campos["agencia"] == "TSB" and not (campos.get("cp_destino") or "").strip():
         return "Para TSB indica el código postal de destino."
+    if campos["agencia"] == "XPO":
+        if not (campos.get("cp_destino") or "").strip():
+            return "Para XPO indica el código postal de destino."
+        if not campos.get("precios_manuales"):
+            from rectificaciones.tarifa_xpo import baremo_xpo_por_cp
+            if baremo_xpo_por_cp(campos.get("cp_destino")) is None:
+                return "Ese código postal no tiene tarifa XPO. Sirven los que empiezan por 06 o por 10."
     if campos.get("sobredimensionado") and campos.get("importe_cobrar") is None:
         return "Indica el importe a cobrar (sobredimensionado)."
     return None
@@ -273,18 +280,41 @@ def register_rectificaciones_routes(app):
     @login_required
     def api_rectificaciones_calcular_importe():
         from rectificaciones.tarifas_loader import calcular_importe, agencia_con_tarifa, baremo_tsb_por_cp
+        from rectificaciones.tarifa_xpo import baremo_xpo_por_cp, obtener_tarifa
         agencia = (request.args.get("agencia") or "").strip()
         cp = (request.args.get("cp") or request.args.get("cpDestino") or "").strip()
         kg_doc = _parse_float(request.args.get("pvkgDoc"))
         kg_real = _parse_float(request.args.get("pvkgReal"))
-        baremo = baremo_tsb_por_cp(cp) if agencia == "TSB" else None
+        baremo = None
+        porcentaje = None
+        if agencia == "TSB":
+            baremo = baremo_tsb_por_cp(cp)
+        elif agencia == "XPO":
+            n = baremo_xpo_por_cp(cp)
+            baremo = str(n) if n else None
+            porcentaje, _datos = obtener_tarifa()
         return jsonify({
             "ok": True,
             "tieneTarifa": agencia_con_tarifa(agencia),
             "baremo": baremo,
+            "porcentaje": porcentaje,
             "importeDocumentado": calcular_importe(agencia, kg_doc, cp),
             "importeReal": calcular_importe(agencia, kg_real, cp),
         })
+
+    @app.route("/api/rectificaciones/tarifa-xpo", methods=["GET", "PUT"])
+    @login_required
+    def api_rectificaciones_tarifa_xpo():
+        from rectificaciones.tarifa_xpo import guardar_tarifa, obtener_tarifa, tarifa_publica
+        if request.method == "GET":
+            porcentaje, datos = obtener_tarifa()
+            return jsonify({"ok": True, "tarifa": tarifa_publica(porcentaje, datos)})
+        data = request.get_json(silent=True) or {}
+        resultado = guardar_tarifa(data.get("porcentaje"), data)
+        if isinstance(resultado, str):
+            return jsonify({"ok": False, "error": resultado}), 400
+        porcentaje, datos = resultado
+        return jsonify({"ok": True, "tarifa": tarifa_publica(porcentaje, datos)})
 
     @app.route("/api/rectificaciones/exportar")
     @login_required

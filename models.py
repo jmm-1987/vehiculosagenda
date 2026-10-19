@@ -642,6 +642,14 @@ class Rectificacion(db.Base):
     fecha_registro = Column(DateTime)
 
 
+class TarifaXpo(db.Base):
+    """Tarifa base XPO y el último porcentaje de subida aplicado."""
+    __tablename__ = "tarifa_xpo"
+    id = Column(Integer, primary_key=True)
+    porcentaje = Column(Float, nullable=False, default=0)
+    datos = Column(Text, nullable=False, default="")
+
+
 class DecaTransportista(db.Base):
     """Transportista efectivo reutilizable en los DeCA."""
     __tablename__ = "deca_transportista"

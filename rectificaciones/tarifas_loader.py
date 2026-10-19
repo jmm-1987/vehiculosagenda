@@ -145,8 +145,12 @@ def baremos_agencia(agencia: str, cp: str | None = None) -> tuple[tuple[float, f
 def calcular_importe(agencia: str, kg: float | None, cp: str | None = None) -> float | None:
     """
     Calcula el importe (€) según baremo de la agencia y los kg (PVKG).
-    Para TSB hace falta el CP de destino (baremo B/C).
+    Para TSB y XPO hace falta el CP de destino.
     """
+    if (agencia or "").strip() == "XPO":
+        from rectificaciones.tarifa_xpo import calcular_importe_xpo
+        return calcular_importe_xpo(kg, cp)
+
     if kg is None:
         return None
     try:
@@ -173,4 +177,5 @@ def calcular_importe(agencia: str, kg: float | None, cp: str | None = None) -> f
 
 
 def agencia_con_tarifa(agencia: str) -> bool:
-    return (agencia or "").strip() in TARIFA_FILES
+    ag = (agencia or "").strip()
+    return ag == "XPO" or ag in TARIFA_FILES

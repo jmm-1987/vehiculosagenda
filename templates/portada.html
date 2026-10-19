@@ -193,6 +193,11 @@
                     <h2>Manager</h2>
                     <p>Gestión de usuarios del sistema</p>
                 </a>
+                <a href="{{ url_for('descargar_db') }}" class="portada-card" style="border-top: 5px solid #6c757d;">
+                    <i class="fas fa-database"></i>
+                    <h2>Descargar DB</h2>
+                    <p>Copia de la base de datos</p>
+                </a>
                 {% endif %}
                 {% if 'aldipod' in permisos %}
                 <a href="/registro_incidencias_aldipod" class="portada-card card-aldipod">
