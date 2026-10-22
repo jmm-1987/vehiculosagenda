@@ -13,6 +13,7 @@ from sqlalchemy import func, or_
 
 import db
 from models import CalidadCategoria, CalidadRegistro
+from permisos import puede
 
 REPO_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "calidad_repositorio")
 os.makedirs(REPO_DIR, exist_ok=True)
@@ -28,7 +29,6 @@ EXTENSIONES = {
 _ARCHIVO_RE = re.compile(r"^[a-f0-9]{32}\.(pdf|xls|xlsx|jpg|jpeg|png)$")
 _MAX_BYTES = 20 * 1024 * 1024
 _ESTADOS = {"", "vigentes", "vencidos", "sin"}
-_ACCESO = frozenset({"jmurillo", "pserrano", "rrodriguez"})
 
 
 class CalidadError(Exception):
@@ -45,7 +45,7 @@ def _solo_calidad(vista):
     @wraps(vista)
     @login_required
     def envuelta(*args, **kwargs):
-        if _usuario().lower() not in _ACCESO:
+        if not puede(_usuario(), "calidad"):
             return redirect(url_for("portada"))
         return vista(*args, **kwargs)
     return envuelta

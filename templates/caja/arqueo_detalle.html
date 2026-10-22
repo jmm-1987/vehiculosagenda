@@ -164,6 +164,26 @@
         .btn-print:hover {
             background: #218838;
         }
+        .btn-deshacer {
+            background: #c51500;
+        }
+        .btn-deshacer:hover {
+            background: #a51200;
+        }
+        td .btn {
+            padding: 4px 8px;
+            margin: 0;
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+        td .btn i,
+        td img {
+            width: auto;
+            height: auto;
+            font-size: 12px;
+        }
         .badge {
             padding: 4px 8px;
             border-radius: 4px;
@@ -211,10 +231,16 @@
                     <i class="fas fa-print"></i> Imprimir
                 </button>
                 {% if tipo_caja == 'CAJA' %}
+                    <form method="POST" action="{{ url_for('deshacer_arqueo', id=arqueo.id) }}" style="display:inline;" onsubmit="return confirm('¿Deshacer este arqueo? Los cobros y pagos volverán a quedar pendientes.');">
+                        <button type="submit" class="btn btn-deshacer">Deshacer arqueo</button>
+                    </form>
                     <a href="{{ url_for('caja_arqueo') }}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Volver a Arqueos
                     </a>
                 {% else %}
+                    <form method="POST" action="{{ url_for('deshacer_arqueo_reembolsos', id=arqueo.id) }}" style="display:inline;" onsubmit="return confirm('¿Deshacer este arqueo? Los cobros y pagos volverán a quedar pendientes.');">
+                        <button type="submit" class="btn btn-deshacer">Deshacer arqueo</button>
+                    </form>
                     <a href="{{ url_for('caja_reembolsos_arqueo') }}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Volver a Arqueos
                     </a>
@@ -296,6 +322,7 @@
                     {% endif %}
                     <th class="text-right">Total</th>
                     <th class="text-center">Factura</th>
+                    <th class="text-center">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -324,10 +351,17 @@
                             <span>No</span>
                         {% endif %}
                     </td>
+                    <td class="text-center">
+                        {% if tipo_caja == 'CAJA' %}
+                            <a class="btn" href="{{ url_for('editar_cobro', id=cobro.id) }}">Editar</a>
+                        {% else %}
+                            <a class="btn" href="{{ url_for('editar_cobro_reembolsos', id=cobro.id) }}">Editar</a>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
                 <tr style="background: #f8f9fa; font-weight: bold;">
-                    <td colspan="{% if tipo_caja == 'CAJA' %}11{% else %}10{% endif %}" class="text-right">Total Cobros:</td>
+                    <td colspan="{% if tipo_caja == 'CAJA' %}12{% else %}11{% endif %}" class="text-right">Total Cobros:</td>
                     <td class="text-right">{{ "%.2f"|format(arqueo.total_cobros) }}€</td>
                     <td></td>
                 </tr>
@@ -350,6 +384,7 @@
                     <th class="text-right">IVA</th>
                     <th class="text-right">Total</th>
                     <th class="text-center">Factura</th>
+                    <th class="text-center">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -370,10 +405,17 @@
                             <span>No</span>
                         {% endif %}
                     </td>
+                    <td class="text-center">
+                        {% if tipo_caja == 'CAJA' %}
+                            <a class="btn" href="{{ url_for('editar_pago', id=pago.id) }}">Editar</a>
+                        {% else %}
+                            <a class="btn" href="{{ url_for('editar_pago_reembolsos', id=pago.id) }}">Editar</a>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
                 <tr style="background: #f8f9fa; font-weight: bold;">
-                    <td colspan="5" class="text-right">Total Pagos:</td>
+                    <td colspan="6" class="text-right">Total Pagos:</td>
                     <td class="text-right">{{ "%.2f"|format(arqueo.total_pagos) }}€</td>
                     <td></td>
                 </tr>

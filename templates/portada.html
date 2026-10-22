@@ -171,11 +171,18 @@
                 <h2>Horario semanal</h2>
                 <p>Horarios de cada semana del año</p>
             </a>
-            {% if current_user.username|lower in ['jmurillo', 'pserrano', 'rrodriguez'] %}
+            {% if (permisos is not none and 'calidad' in permisos) or (permisos is none and current_user.username|lower in ['jmurillo', 'pserrano', 'rrodriguez']) %}
             <a href="/calidad" class="portada-card" style="border-top: 5px solid #0f766e;">
                 <i class="fas fa-clipboard-check"></i>
                 <h2>Calidad</h2>
                 <p>Registros de cliente y fecha</p>
+            </a>
+            {% endif %}
+            {% if permisos is none and current_user.username|lower in ['pserrano', 'rrodriguez'] %}
+            <a href="{{ url_for('lista_usuarios') }}" class="portada-card" style="border-top: 5px solid #dc3545;">
+                <i class="fas fa-users-cog"></i>
+                <h2>Manager</h2>
+                <p>Gestión de usuarios del sistema</p>
             </a>
             {% endif %}
             {# ===== Usuarios con ACL explícita (permisos) ===== #}
@@ -187,12 +194,14 @@
                     <p>Panel completo con información de vehículos</p>
                 </a>
                 {% endif %}
-                {% if current_user.username|lower == 'jmurillo' %}
+                {% if 'manager' in permisos %}
                 <a href="{{ url_for('lista_usuarios') }}" class="portada-card" style="border-top: 5px solid #dc3545;">
                     <i class="fas fa-users-cog"></i>
                     <h2>Manager</h2>
                     <p>Gestión de usuarios del sistema</p>
                 </a>
+                {% endif %}
+                {% if current_user.username|lower == 'jmurillo' %}
                 <a href="{{ url_for('descargar_db') }}" class="portada-card" style="border-top: 5px solid #6c757d;">
                     <i class="fas fa-database"></i>
                     <h2>Descargar DB</h2>

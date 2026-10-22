@@ -289,7 +289,7 @@
         <a href="/selector">Gasoil/Add</a>
         <a href="/transpaletas">Transpaletas</a>
         <a href="/scanner_clientes">📸 Scanner FTP</a>
-        {% if current_user.username == "jmurillo" or current_user.username == "rocio" %}
+        {% if current_user.username|lower in ['jmurillo', 'rocio', 'pserrano', 'rrodriguez'] %}
         <a href="/manager">Manager</a>
         <a href="/tareas">Tareas</a>
         {% endif %}

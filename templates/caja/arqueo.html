@@ -135,6 +135,47 @@
         .btn-primary:hover {
             background: #0056b3;
         }
+        a.btn {
+            display: inline-block;
+            width: auto;
+            text-decoration: none;
+        }
+        td .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            width: auto;
+            margin: 0 2px;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.2;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+        td .btn i {
+            font-size: 12px;
+            width: auto;
+            height: auto;
+            line-height: 1;
+        }
+        .btn-deshacer {
+            background: #c51500;
+            color: #fff;
+        }
+        .btn-deshacer:hover {
+            background: #a51200;
+        }
+        .top-bar img {
+            width: 200px;
+            height: 45px;
+        }
+        .historial-section img,
+        td img {
+            width: auto;
+            height: auto;
+        }
         .historial-section {
             background: white;
             padding: 25px;
@@ -296,15 +337,17 @@
                         <td class="text-right">{{ "%.2f"|format(arqueo.entrega_efectivo) }}€</td>
                         <td>{{ arqueo.responsable }}</td>
                         <td>{{ arqueo.observaciones }}</td>
-                        <td class="text-center">
+                        <td class="text-center" style="white-space:nowrap;">
                             {% if tipo_caja == 'CAJA' %}
-                                <a href="{{ url_for('ver_arqueo_detalle', id=arqueo.id) }}" class="btn btn-primary btn-sm" title="Ver detalle">
-                                    <i class="fas fa-eye"></i> Ver Detalle
-                                </a>
+                                <a href="{{ url_for('ver_arqueo_detalle', id=arqueo.id) }}" class="btn btn-primary" title="Ver detalle">Ver detalle</a>
+                                <form method="POST" action="{{ url_for('deshacer_arqueo', id=arqueo.id) }}" style="display:inline;" onsubmit="return confirm('¿Deshacer este arqueo? Los cobros y pagos volverán a quedar pendientes.');">
+                                    <button type="submit" class="btn btn-deshacer">Deshacer</button>
+                                </form>
                             {% else %}
-                                <a href="{{ url_for('ver_arqueo_detalle_reembolsos', id=arqueo.id) }}" class="btn btn-primary btn-sm" title="Ver detalle">
-                                    <i class="fas fa-eye"></i> Ver Detalle
-                                </a>
+                                <a href="{{ url_for('ver_arqueo_detalle_reembolsos', id=arqueo.id) }}" class="btn btn-primary" title="Ver detalle">Ver detalle</a>
+                                <form method="POST" action="{{ url_for('deshacer_arqueo_reembolsos', id=arqueo.id) }}" style="display:inline;" onsubmit="return confirm('¿Deshacer este arqueo? Los cobros y pagos volverán a quedar pendientes.');">
+                                    <button type="submit" class="btn btn-deshacer">Deshacer</button>
+                                </form>
                             {% endif %}
                         </td>
                     </tr>

@@ -10,6 +10,9 @@ class Usuario(UserMixin, db.Base):
     id = Column(Integer, primary_key=True)
     username = Column(String(100), unique=True)
     password = Column(String(100))
+    # NULL = aún no se ha guardado desde el manager. "*" = acceso completo.
+    # Una lista JSON son los módulos marcados.
+    permisos = Column(Text, nullable=True)
 
     def __init__(self, username, password):
         self.username = username

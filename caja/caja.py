@@ -99,6 +99,12 @@ def register_caja_routes(app):
         """Ver detalles de un arqueo de Caja normal"""
         return _ver_arqueo_detalle(id, 'CAJA', 'Caja')
     
+    @app.route('/caja/arqueo/<int:id>/deshacer', methods=['POST'])
+    @solo_reembolsos_required
+    def deshacer_arqueo(id):
+        """Devuelve a pendientes los movimientos de un arqueo de Contados y lo elimina."""
+        return _deshacer_arqueo(id, 'CAJA', 'caja_arqueo')
+
     @app.route('/caja/arqueo/procesar', methods=['POST'])
     @solo_reembolsos_required
     def procesar_arqueo():
@@ -172,6 +178,12 @@ def register_caja_routes(app):
         """Procesar arqueo de Caja Reembolsos"""
         return _procesar_arqueo('REEMBOLSOS', 'caja_reembolsos_arqueo')
     
+    @app.route('/caja-reembolsos/arqueo/<int:id>/deshacer', methods=['POST'], endpoint='deshacer_arqueo_reembolsos')
+    @login_required
+    def deshacer_arqueo_reembolsos(id):
+        """Devuelve a pendientes los movimientos de un arqueo de reembolsos y lo elimina."""
+        return _deshacer_arqueo(id, 'REEMBOLSOS', 'caja_reembolsos_arqueo')
+
     @app.route('/caja-reembolsos/arqueo/<int:id>', endpoint='ver_arqueo_detalle_reembolsos')
     @login_required
     def ver_arqueo_detalle_reembolsos(id):
@@ -294,9 +306,6 @@ def _editar_cobro(id, tipo_caja, redirect_route):
     if not cobro:
         flash('Cobro no encontrado', 'error')
         return redirect(url_for(redirect_route))
-    if cobro.arqueado:
-        flash('No se puede editar un cobro que ya ha sido arqueado', 'error')
-        return redirect(url_for(redirect_route))
     
     if request.method == 'POST':
         try:
@@ -319,9 +328,14 @@ def _editar_cobro(id, tipo_caja, redirect_route):
             if tipo_caja == 'CAJA':
                 cobro.entrada_en_caja = float(request.form.get('entrada_en_caja', 0) or 0)
             cobro.es_factura = request.form.get('es_factura') == 'on'
+            if cobro.arqueo_id:
+                _recalcular_arqueo(cobro.arqueo_id, tipo_caja)
             
             db.session.commit()
             flash('Cobro actualizado correctamente', 'success')
+            if cobro.arqueado and cobro.arqueo_id:
+                destino = 'ver_arqueo_detalle' if tipo_caja == 'CAJA' else 'ver_arqueo_detalle_reembolsos'
+                return redirect(url_for(destino, id=cobro.arqueo_id))
             return redirect(url_for(redirect_route))
         except Exception as e:
             db.session.rollback()
@@ -383,9 +397,6 @@ def _editar_pago(id, tipo_caja, redirect_route):
     if not pago:
         flash('Pago no encontrado', 'error')
         return redirect(url_for(redirect_route))
-    if pago.arqueado:
-        flash('No se puede editar un pago que ya ha sido arqueado', 'error')
-        return redirect(url_for(redirect_route))
     
     if request.method == 'POST':
         try:
@@ -398,9 +409,14 @@ def _editar_pago(id, tipo_caja, redirect_route):
             pago.base = float(request.form.get('base', 0) or 0)
             pago.iva = float(request.form.get('iva', 0) or 0)
             pago.es_factura = request.form.get('es_factura') == 'on'
+            if pago.arqueo_id:
+                _recalcular_arqueo(pago.arqueo_id, tipo_caja)
             
             db.session.commit()
             flash('Pago actualizado correctamente', 'success')
+            if pago.arqueado and pago.arqueo_id:
+                destino = 'ver_arqueo_detalle' if tipo_caja == 'CAJA' else 'ver_arqueo_detalle_reembolsos'
+                return redirect(url_for(destino, id=pago.arqueo_id))
             return redirect(url_for(redirect_route))
         except Exception as e:
             db.session.rollback()
@@ -526,6 +542,50 @@ def _procesar_arqueo(tipo_caja, redirect_route):
         print(f"Error al procesar arqueo: {error_details}")
         flash(f'Error al procesar arqueo: {str(e)}', 'error')
         return redirect(url_for(redirect_route))
+
+def _sumar_movimientos(cobros, pagos, tipo_caja):
+    if tipo_caja == 'CAJA':
+        total_cobros = sum(float(c.entrada_en_caja or 0.0) for c in cobros)
+    else:
+        total_cobros = sum(
+            float(c.reembolso or 0.0) + float(c.comision_reembolso or 0.0) + float(c.portes_pagados or 0.0) + float(c.portes_debidos or 0.0) + float(c.iva or 0.0)
+            for c in cobros
+        )
+    total_pagos = sum(float(p.base or 0.0) + float(p.iva or 0.0) for p in pagos)
+    return total_cobros, total_pagos
+
+def _recalcular_arqueo(arqueo_id, tipo_caja):
+    """Actualiza los totales del arqueo con los movimientos que siguen asociados."""
+    arqueo = db.session.query(CajaArqueo).filter_by(id=arqueo_id, tipo_caja=tipo_caja).first()
+    if not arqueo:
+        return
+    cobros = db.session.query(CajaCobro).filter_by(arqueo_id=arqueo_id, tipo_caja=tipo_caja).all()
+    pagos = db.session.query(CajaPago).filter_by(arqueo_id=arqueo_id, tipo_caja=tipo_caja).all()
+    total_cobros, total_pagos = _sumar_movimientos(cobros, pagos, tipo_caja)
+    arqueo.total_cobros = total_cobros
+    arqueo.total_pagos = total_pagos
+    arqueo.diferencia = total_cobros - total_pagos
+
+def _deshacer_arqueo(id, tipo_caja, redirect_route):
+    """Quita el arqueo y deja sus cobros y pagos otra vez pendientes."""
+    arqueo = db.session.query(CajaArqueo).filter_by(id=id, tipo_caja=tipo_caja).first()
+    if not arqueo:
+        flash('Arqueo no encontrado', 'error')
+        return redirect(url_for(redirect_route))
+    cobros = db.session.query(CajaCobro).filter_by(arqueo_id=id, tipo_caja=tipo_caja).all()
+    pagos = db.session.query(CajaPago).filter_by(arqueo_id=id, tipo_caja=tipo_caja).all()
+    for cobro in cobros:
+        cobro.arqueado = False
+        cobro.fecha_arqueo = None
+        cobro.arqueo_id = None
+    for pago in pagos:
+        pago.arqueado = False
+        pago.fecha_arqueo = None
+        pago.arqueo_id = None
+    db.session.delete(arqueo)
+    db.session.commit()
+    flash(f'Arqueo deshecho. {len(cobros)} cobros y {len(pagos)} pagos vuelven a estar pendientes.', 'success')
+    return redirect(url_for(redirect_route))
 
 def _ver_arqueo_detalle(id, tipo_caja, titulo_caja):
     """Función helper para ver detalles de un arqueo"""

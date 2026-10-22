@@ -84,12 +84,183 @@
             background-color: transparent;
             border: none;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 13px;
             color: #dc3545;
             transition: color 0.3s;
         }
         .boton-borrar:hover {
             color: #c82333;
+        }
+        .permisos-nota {
+            max-width: 1100px;
+            margin: 0 auto 6px;
+            color: #495057;
+            font-size: 12px;
+            line-height: 1.3;
+        }
+        .aviso-ok {
+            max-width: 1100px;
+            margin: 0 auto 12px;
+            background: #d1e7dd;
+            color: #0f5132;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-weight: 600;
+        }
+        .aviso-error {
+            max-width: 1100px;
+            margin: 0 auto 12px;
+            background: #f8d7da;
+            color: #842029;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-weight: 600;
+        }
+        .edit-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 40;
+            background: rgba(11, 27, 51, .45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .edit-modal[hidden] { display: none; }
+        .edit-card {
+            width: min(360px, 100%);
+            background: #fff;
+            border-radius: 10px;
+            padding: 16px 16px 14px;
+            box-shadow: 0 16px 40px rgba(11, 27, 51, .25);
+        }
+        .edit-card h2 {
+            margin: 0 0 12px;
+            font-size: 16px;
+            color: #343a40;
+        }
+        .edit-card label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #495057;
+        }
+        .edit-card input {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 4px;
+            padding: 6px 8px;
+            font-size: 14px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+        }
+        .edit-acciones {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .edit-acciones .button,
+        .edit-acciones .button_red {
+            margin: 0;
+            padding: 6px 12px;
+            font-size: 13px;
+            border: none;
+            cursor: pointer;
+        }
+        .permisos-wrap {
+            overflow: auto;
+            max-height: calc(100vh - 210px);
+            background: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        table.permisos {
+            margin-top: 0;
+            min-width: 1100px;
+            box-shadow: none;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 12px;
+        }
+        table.permisos th,
+        table.permisos td {
+            padding: 3px 6px;
+        }
+        table.permisos thead th {
+            position: sticky;
+            top: 0;
+            z-index: 3;
+            background-color: #007bff;
+            font-size: 12px;
+        }
+        table.permisos th.mod {
+            font-size: 11px;
+            font-weight: 600;
+            height: 88px;
+            padding: 4px 2px;
+            vertical-align: bottom;
+        }
+        table.permisos th.mod span {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            display: inline-block;
+            white-space: nowrap;
+        }
+        table.permisos td.mod {
+            padding: 2px 4px;
+        }
+        table.permisos input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            margin: 0;
+        }
+        table.permisos td.usuario,
+        table.permisos th.usuario {
+            text-align: left;
+            position: sticky;
+            left: 0;
+            z-index: 1;
+            background: white;
+        }
+        table.permisos th.usuario {
+            background: #007bff;
+            top: 0;
+            z-index: 4;
+        }
+        tr.fila-fija td {
+            background: #f8f9fa;
+        }
+        tr.fila-fija td.usuario {
+            background: #f8f9fa;
+        }
+        .marca-fijo {
+            display: inline-block;
+            margin-left: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #842029;
+            background: #f8d7da;
+            border-radius: 999px;
+            padding: 0 5px;
+            vertical-align: middle;
+        }
+        button.button-green {
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .boton-editar {
+            background: transparent;
+            border: none;
+            color: #007bff;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .container > h1 {
+            font-size: 16px;
+            margin: 8px 0 4px;
         }
         @media screen and (max-width: 768px) {
             .nav-bar, .top-bar {
@@ -122,55 +293,133 @@
         <a href="/extintores">Extintores</a>
         <a href="/selector">Gasoil/Add</a>
         <a href="/transpaletas">Transpaletas</a>
-        {% if current_user.username == "jmurillo" or current_user.username == "rocio" %}
+        {% if current_user.username|lower in ['jmurillo', 'rocio', 'pserrano', 'rrodriguez'] %}
         <a href="/manager">Manager</a>
         <a href="/tareas">Tareas</a>
         {% endif %}
     </div>
     <div class="container">
         <h1>Listado de usuarios</h1>
-        <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+        {% if editado %}
+        <p class="aviso-ok">Usuario actualizado.</p>
+        {% elif guardado %}
+        <p class="aviso-ok">Accesos guardados.</p>
+        {% elif error == 'existe' %}
+        <p class="aviso-error">Ese nombre de usuario ya existe.</p>
+        {% elif error == 'vacio' %}
+        <p class="aviso-error">El usuario y la contraseña no pueden quedar vacíos.</p>
+        {% endif %}
+        <p class="permisos-nota">Marca a qué puede entrar cada usuario y pulsa Guardar accesos. Documentación pública y el horario semanal siguen visibles para todos. jmurillo tiene acceso completo y no se puede modificar.</p>
+        <form method="post" action="{{ url_for('guardar_permisos') }}">
+        <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
+            <button class="button-green" type="submit">Guardar accesos</button>
             <a class="button" href="/formulario_usuario">Crear Usuario</a>
             <a class="button_red" href="/index">Volver</a>
             <a class="button-dark" href="/ficheros">Ficheros</a>
             <a class="button-dark" href="/ftp_transfer">Ftp transfer</a>
             <a class="button-dark" href="/registro_incidencias_aldipod">Incidencias ALDIPOD</a>
         </div>
-        <table>
+        <div class="permisos-wrap">
+        <table class="permisos">
             <thead>
                 <tr>
-                    <th>Usuario</th>
+                    <th class="usuario">Usuario</th>
                     <th>Contraseña</th>
+                    {% for mid, etiqueta in modulos %}
+                    <th class="mod"><span>{{ etiqueta }}</span></th>
+                    {% endfor %}
                     <th colspan="2">Acciones</th>
                 </tr>
             </thead>
             <tbody>
             {% for u in lista_usuarios %}
-                <tr>
-                    <td>{{ u.username }}</td>
+                {% set fijo = (u.username or '')|lower == 'jmurillo' %}
+                <tr class="{{ 'fila-fija' if fijo else '' }}">
+                    <td class="usuario">{{ u.username }}{% if fijo %}<span class="marca-fijo">fijo</span>{% endif %}
+                        {% if not fijo %}<input type="hidden" name="usuarios" value="{{ u.id }}">{% endif %}
+                    </td>
                     <td>{{ u.password }}</td>
-                    <td><a href="/formulario_usuario?id={{ u.id }}" target="_blank">
-                        <button type="button" class="boton-editar"><i class="fas fa-pencil"></i></button>
-                    </a></td>
+                    {% for mid, etiqueta in modulos %}
+                    <td class="mod">
+                        <input type="checkbox" name="perm_{{ u.id }}" value="{{ mid }}" title="{{ etiqueta }}"
+                            {% if mid in accesos[u.id] %}checked{% endif %}
+                            {% if fijo %}disabled{% endif %}>
+                    </td>
+                    {% endfor %}
+                    {% if fijo %}
+                    <td></td>
+                    <td></td>
+                    {% else %}
+                    <td><button type="button" class="boton-editar"
+                        data-id="{{ u.id }}"
+                        data-usuario="{{ u.username or '' }}"
+                        data-password="{{ u.password or '' }}">
+                        <i class="fas fa-pencil"></i>
+                    </button></td>
                     {% if current_user.username == "jmurillo" or current_user.username == "javimurillo" %}
                     <td>
-                        <form action="/borrar_usuario/{{ u.id }}" method="POST">
-                            <input type="hidden" name="id" value="{{ u.id }}">
-                            <input type="hidden" name="clase" value="Usuario">
-                            <button type="submit" class="boton-borrar"><i class="fas fa-trash-alt"></i></button>
-                        </form>
+                        <button type="submit" class="boton-borrar" form="borrar-{{ u.id }}"><i class="fas fa-trash-alt"></i></button>
                     </td>
                     {% else %}
                     <td></td>
+                    {% endif %}
                     {% endif %}
                 </tr>
             {% endfor %}
             </tbody>
         </table>
+        </div>
+        </form>
+        {% for u in lista_usuarios %}
+            {% if (u.username or '')|lower != 'jmurillo' and (current_user.username == 'jmurillo' or current_user.username == 'javimurillo') %}
+            <form id="borrar-{{ u.id }}" action="/borrar_usuario/{{ u.id }}" method="POST"></form>
+            {% endif %}
+        {% endfor %}
+    </div>
+    <div id="editModal" class="edit-modal" hidden>
+        <div class="edit-card" role="dialog" aria-labelledby="editTitulo">
+            <h2 id="editTitulo">Modificar usuario</h2>
+            <form method="post" id="editForm" action="">
+                <label>Usuario
+                    <input id="editUsuario" name="usuario" required autocomplete="off">
+                </label>
+                <label>Contraseña
+                    <input id="editPassword" name="password" required autocomplete="off">
+                </label>
+                <div class="edit-acciones">
+                    <button type="button" class="button_red" id="editCerrar">Cancelar</button>
+                    <button type="submit" class="button">Guardar</button>
+                </div>
+            </form>
+        </div>
     </div>
     <footer>
-        <div class="banda-roja"></div>
         &copy; 2024 Empresa de Transporte. Todos los derechos reservados.
     </footer>
+    <script>
+    (function () {
+        const modal = document.getElementById('editModal');
+        const form = document.getElementById('editForm');
+        const usuario = document.getElementById('editUsuario');
+        const password = document.getElementById('editPassword');
+        function cerrar() { modal.hidden = true; }
+        document.querySelectorAll('.boton-editar').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                form.action = '/editar_usuario/' + btn.dataset.id;
+                usuario.value = btn.dataset.usuario || '';
+                password.value = btn.dataset.password || '';
+                modal.hidden = false;
+                usuario.focus();
+            });
+        });
+        document.getElementById('editCerrar').addEventListener('click', cerrar);
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) cerrar();
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && !modal.hidden) cerrar();
+        });
+    })();
+    </script>
 </body>
 </html>

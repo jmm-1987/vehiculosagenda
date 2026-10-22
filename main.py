@@ -46,7 +46,7 @@ from deca.deca import register_deca_routes
 from documentacion.documentacion import register_documentacion_routes
 from calidad.calidad import register_calidad_routes
 from horario.horario import register_horario_routes
-from permisos import permisos_usuario, ruta_permitida, tiene_restriccion, acceso_total
+from permisos import permisos_usuario, ruta_permitida, tiene_restriccion, acceso_total, sembrar_permisos, permisos_guardados, puede
 from sqlalchemy import func
 
 # Asegurar columnas nuevas en SQLite al arranque (sin migraciones)
@@ -77,6 +77,7 @@ try:
     ensure_column_exists('rectificacion', 'precios_manuales', 'BOOLEAN', 0)
     ensure_column_exists('rectificacion', 'importe_cobrar', 'FLOAT', None)
     ensure_column_exists('rectificacion', 'cp_destino', 'VARCHAR(10)', '')
+    ensure_column_exists('usuario', 'permisos', 'TEXT', None)
     # La tabla factura_proforma se creará automáticamente con SQLAlchemy
 except Exception as e:
     print(f"Error en migraciones: {e}")
@@ -99,9 +100,12 @@ def aplicar_permisos_usuario():
     if not current_user.is_authenticated:
         return None
     user = (current_user.username or '').strip().lower()
+    path = request.path or '/'
+    if path == '/calidad' or path.startswith('/calidad/'):
+        if not puede(user, 'calidad'):
+            return redirect(url_for('portada'))
     if not tiene_restriccion(user):
         return None
-    path = request.path or '/'
     if ruta_permitida(user, path):
         return None
     return redirect(url_for('portada'))
@@ -158,6 +162,7 @@ register_horario_routes(app)
 
 with app.app_context():
     db.Base.metadata.create_all(db.engine)
+    sembrar_permisos()
 
 # Iniciar scheduler después de registrar todas las rutas
 #iniciar_scheduler() LO DEJO COMENTADO PORQUE SE EJECUTABA EN 6 WORKERS
@@ -195,11 +200,12 @@ def portada():
     """Muestra la pantalla de portada con opciones principales"""
     # Redirección por usuario
     username = session.get('_user_id') and db.session.query(Usuario).filter_by(id=session.get('_user_id')).first()
-    if username and username.username == 'email':
+    user_l_previo = (username.username or '').strip().lower() if username else ''
+    if username and user_l_previo == 'email' and not permisos_guardados(user_l_previo):
         return redirect(url_for('email_destinatarios'))
-    if username and username.username == 'presupuestos':
+    if username and user_l_previo == 'presupuestos' and not permisos_guardados(user_l_previo):
         return render_template('portada.html', permisos=None)
-    if username and username.username == 'caja':
+    if username and user_l_previo == 'caja' and not permisos_guardados(user_l_previo):
         return redirect(url_for('caja_reembolsos_index'))
 
     username_str = username.username if username else None
