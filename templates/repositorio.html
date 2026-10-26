@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ titulo }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; margin: 0; }
+        .top-bar { display: flex; align-items: center; padding: 2px 30px; background: linear-gradient(to right, #ffffff, #343a40); color: white; height: 50px; box-sizing: border-box; }
+        .top-bar img { width: 200px; height: 45px; object-fit: contain; }
+        .top-user { font-weight: bold; font-size: 14px; margin-left: auto; margin-right: 20px; }
+        .top-button { padding: 2px 8px; background: #c51500; color: white; text-decoration: none; border-radius: 5px; }
+        .container { max-width: 1100px; margin: 20px auto; padding: 0 16px 48px; }
+        h1 { margin: 6px 0 2px; color: #0e2a4a; font-size: 1.45em; }
+        .sub { color: #5c6770; margin: 0 0 8px; font-size: 13px; }
+        .aviso { background: #fff4e5; border: 1px solid #e0b15a; color: #6a4b10; padding: 10px 12px; border-radius: 6px; margin-bottom: 12px; }
+        section { background: white; border: 1px solid #d5dde6; border-radius: 8px; padding: 14px; margin-bottom: 16px; }
+        h2 { margin: 0 0 10px; color: #0e2a4a; font-size: 1.05em; }
+        label { display: block; font-size: 12px; color: #333; }
+        input, select { box-sizing: border-box; padding: 7px; border: 1px solid #c5ced6; border-radius: 4px; font: inherit; }
+        button, .btn { background: #0e2a4a; color: white; border: none; border-radius: 4px; padding: 8px 12px; cursor: pointer; text-decoration: none; display: inline-block; font: inherit; }
+        button.sec, .btn.sec { background: #5c6770; }
+        button.peligro { background: #8d3a32; }
+        button.sm, .btn.sm { padding: 4px 8px; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 8px 10px; border-bottom: 1px solid #e6e6e6; text-align: left; vertical-align: middle; font-size: 14px; }
+        th { background: #0e2a4a; color: white; }
+        .linea { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .migas { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 12px; font-size: 14px; }
+        .migas a { color: #0e2a4a; }
+        .fila { display: flex; gap: 8px; align-items: center; }
+        .fila input[type="text"] { flex: 1; min-width: 140px; }
+        .vacio { color: #5c6770; margin: 0; }
+        .archivo { word-break: break-all; }
+        .acciones { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        details.editar { margin-top: 8px; }
+        details.editar summary { cursor: pointer; color: #0e2a4a; }
+        .carpeta-link { font-weight: 700; color: #0e2a4a; text-decoration: none; }
+        .carpeta-link:hover { text-decoration: underline; }
+        @media (max-width: 800px) {
+            .top-bar { padding: 2px 10px; }
+            table, thead, tbody, th, td, tr { display: block; }
+            thead { display: none; }
+            tr { margin-bottom: 12px; border: 1px solid #e6e6e6; }
+            td { border: none; }
+            td::before { content: attr(data-label); display: block; font-weight: 700; color: #0e2a4a; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="/portada"><img src="{{ url_for('static', filename='logo.png') }}" alt="Logo"></a>
+        <span class="top-user">{{ current_user.username }}</span>
+        <a href="/portada" class="top-button" style="background:#343a40; margin-right:8px;">Portada</a>
+        <a href="/logout" class="top-button">Cerrar sesión</a>
+    </div>
+    <div class="container">
+        <h1>{{ titulo }}</h1>
+        <p class="sub">{{ subtitulo }} Formatos: pdf, xls, xlsx, jpg, jpeg y png. Máximo 20 MB.</p>
+        {% with mensajes = get_flashed_messages() %}
+        {% if mensajes %}
+        <div class="aviso">{% for mensaje in mensajes %}<div>{{ mensaje }}</div>{% endfor %}</div>
+        {% endif %}
+        {% endwith %}
+
+        <section>
+            <form class="linea" method="get" action="{{ url_for(rutas.inicio) }}">
+                <label for="anio">Año</label>
+                <select id="anio" name="anio" onchange="this.form.submit()">
+                    {% for opcion in anios %}
+                    <option value="{{ opcion }}" {% if opcion == anio %}selected{% endif %}>{{ opcion }}</option>
+                    {% endfor %}
+                </select>
+                <noscript><button type="submit" class="sm">Ver</button></noscript>
+            </form>
+            <form class="linea" method="get" action="{{ url_for(rutas.inicio) }}" style="margin-top:8px;">
+                <label for="otro">Otro año</label>
+                <input id="otro" name="anio" type="number" min="2000" max="2100" placeholder="2018" style="width:110px;">
+                <button type="submit" class="sm sec">Abrir</button>
+            </form>
+        </section>
+
+        <p class="migas">
+            <a href="{{ url_for(rutas.inicio, anio=anio) }}">{{ anio }}</a>
+            {% for item in cadena %}
+            <span>/</span>
+            {% if loop.last %}
+            <strong>{{ item.nombre }}</strong>
+            {% else %}
+            <a href="{{ url_for(rutas.inicio, anio=anio, carpeta=item.id) }}">{{ item.nombre }}</a>
+            {% endif %}
+            {% endfor %}
+            {% if carpeta and carpeta.padre_id %}
+            <a class="btn sec sm" href="{{ url_for(rutas.inicio, anio=anio, carpeta=carpeta.padre_id) }}">Subir un nivel</a>
+            {% elif carpeta %}
+            <a class="btn sec sm" href="{{ url_for(rutas.inicio, anio=anio) }}">Volver al año</a>
+            {% endif %}
+        </p>
+
+        <section>
+            <h2>{% if carpeta %}Nueva subcarpeta{% else %}Nueva carpeta{% endif %}</h2>
+            <form class="linea" method="post" action="{{ url_for(rutas.carpeta) }}">
+                <input type="hidden" name="anio" value="{{ anio }}">
+                <input type="hidden" name="padre_id" value="{{ carpeta.id if carpeta else '' }}">
+                <input type="hidden" name="volver_anio" value="{{ anio }}">
+                <input type="hidden" name="volver_carpeta" value="{{ carpeta.id if carpeta else '' }}">
+                <input name="nombre" required maxlength="120" autocomplete="off" placeholder="Nombre" aria-label="Nombre de la carpeta" style="min-width:220px;">
+                <button type="submit">Crear</button>
+            </form>
+        </section>
+
+        <section>
+            <h2>{% if carpeta %}Subcarpetas{% else %}Carpetas de {{ anio }}{% endif %}</h2>
+            {% if carpetas %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Contenido</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cat in carpetas %}
+                    <tr>
+                        <td data-label="Nombre">
+                            <a class="carpeta-link" href="{{ url_for(rutas.inicio, anio=anio, carpeta=cat.id) }}"><i class="fas fa-folder"></i> {{ cat.nombre }}</a>
+                        </td>
+                        <td data-label="Contenido">{{ docs_n.get(cat.id, 0) }} documentos · {{ hijos_n.get(cat.id, 0) }} subcarpetas</td>
+                        <td data-label="Acciones">
+                            <form class="fila" method="post" action="{{ url_for(rutas.renombrar) }}">
+                                <input type="hidden" name="id" value="{{ cat.id }}">
+                                <input type="hidden" name="volver_anio" value="{{ anio }}">
+                                <input type="hidden" name="volver_carpeta" value="{{ carpeta.id if carpeta else '' }}">
+                                <input name="nombre" value="{{ cat.nombre }}" required maxlength="120" aria-label="Nuevo nombre">
+                                <button type="submit" class="sm sec">Renombrar</button>
+                            </form>
+                            <form method="post" action="{{ url_for(rutas.borrar_carpeta) }}" onsubmit="return confirm('¿Quitar esta carpeta?');" style="margin-top:6px;">
+                                <input type="hidden" name="id" value="{{ cat.id }}">
+                                <input type="hidden" name="volver_anio" value="{{ anio }}">
+                                <input type="hidden" name="volver_carpeta" value="{{ carpeta.id if carpeta else '' }}">
+                                <button type="submit" class="sm peligro">Quitar</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="vacio">{% if carpeta %}Esta carpeta no tiene subcarpetas.{% else %}Todavía no hay carpetas en {{ anio }}.{% endif %}</p>
+            {% endif %}
+        </section>
+
+        {% if carpeta %}
+        <section>
+            <h2>Subir documento</h2>
+            <form class="linea" method="post" action="{{ url_for(rutas.subir) }}" enctype="multipart/form-data">
+                <input type="hidden" name="carpeta_id" value="{{ carpeta.id }}">
+                <input type="hidden" name="volver_anio" value="{{ anio }}">
+                <input type="hidden" name="volver_carpeta" value="{{ carpeta.id }}">
+                <input name="titulo" required maxlength="200" autocomplete="off" placeholder="Título" aria-label="Título" style="min-width:180px;">
+                <input name="archivo" type="file" required accept=".pdf,.xls,.xlsx,.jpg,.jpeg,.png" aria-label="Archivo">
+                <button type="submit">Subir</button>
+            </form>
+        </section>
+
+        <section>
+            <h2>Documentos</h2>
+            {% if documentos %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Archivo</th>
+                        <th>Subido</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in documentos %}
+                    <tr>
+                        <td data-label="Título">{{ doc.titulo }}</td>
+                        <td class="archivo" data-label="Archivo">{{ doc.nombre_original }}</td>
+                        <td data-label="Subido">
+                            {{ doc.fecha_subida.strftime('%d/%m/%Y %H:%M') if doc.fecha_subida else '' }}
+                            {% if doc.usuario %}<div class="vacio">{{ doc.usuario }}</div>{% endif %}
+                        </td>
+                        <td data-label="Acciones">
+                            <div class="acciones">
+                                <a class="btn sm" href="{{ url_for(rutas.archivo, doc_id=doc.id) }}" target="_blank">Ver</a>
+                                <a class="btn sm sec" href="{{ url_for(rutas.archivo, doc_id=doc.id, descargar=1) }}">Descargar</a>
+                            </div>
+                            {% if puede_gestionar %}
+                            <details class="editar">
+                                <summary>Editar</summary>
+                                <form class="linea" method="post" action="{{ url_for(rutas.editar, doc_id=doc.id) }}" enctype="multipart/form-data" style="margin-top:8px;">
+                                    <input type="hidden" name="volver_anio" value="{{ anio }}">
+                                    <input type="hidden" name="volver_carpeta" value="{{ carpeta.id }}">
+                                    <input name="titulo" value="{{ doc.titulo }}" required maxlength="200" aria-label="Título">
+                                    <input name="archivo" type="file" accept=".pdf,.xls,.xlsx,.jpg,.jpeg,.png" aria-label="Sustituir archivo">
+                                    <button type="submit" class="sm">Guardar</button>
+                                </form>
+                                <form method="post" action="{{ url_for(rutas.borrar, doc_id=doc.id) }}" onsubmit="return confirm('¿Quitar este documento?');" style="margin-top:8px;">
+                                    <input type="hidden" name="volver_anio" value="{{ anio }}">
+                                    <input type="hidden" name="volver_carpeta" value="{{ carpeta.id }}">
+                                    <button type="submit" class="sm peligro">Quitar documento</button>
+                                </form>
+                            </details>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="vacio">Esta carpeta todavía no tiene documentos.</p>
+            {% endif %}
+        </section>
+        {% else %}
+        <p class="vacio">Entra en una carpeta para guardar documentos. Dentro puedes crear subcarpetas.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

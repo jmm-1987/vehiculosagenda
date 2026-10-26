@@ -372,6 +372,11 @@ def ruta_permitida(username: str | None, path: str) -> bool:
     # Documentación pública: cualquier usuario autenticado, tenga o no ACL.
     if path == "/documentacion-publica" or path.startswith("/documentacion-publica/"):
         return True
+    # Tarifa Alditraex y KPIs: mismo acceso que la documentación pública.
+    if path == "/tarifa-alditraex" or path.startswith("/tarifa-alditraex/"):
+        return True
+    if path == "/kpis" or path.startswith("/kpis/"):
+        return True
     # Horario semanal: todos pueden verlo. Subir y quitar se controla en la vista.
     if path == "/horario-semanal" or path.startswith("/horario-semanal/"):
         return True

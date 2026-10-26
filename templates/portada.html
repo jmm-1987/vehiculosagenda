@@ -171,6 +171,16 @@
                 <h2>Horario semanal</h2>
                 <p>Horarios de cada semana del año</p>
             </a>
+            <a href="/tarifa-alditraex" class="portada-card" style="border-top: 5px solid #1d4e89;">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <h2>Tarifa Alditraex</h2>
+                <p>Tarifas por año, en carpetas y subcarpetas</p>
+            </a>
+            <a href="/kpis" class="portada-card" style="border-top: 5px solid #6d28d9;">
+                <i class="fas fa-chart-line"></i>
+                <h2>KPIs</h2>
+                <p>Indicadores por año, en carpetas y subcarpetas</p>
+            </a>
             {% if (permisos is not none and 'calidad' in permisos) or (permisos is none and current_user.username|lower in ['jmurillo', 'pserrano', 'rrodriguez']) %}
             <a href="/calidad" class="portada-card" style="border-top: 5px solid #0f766e;">
                 <i class="fas fa-clipboard-check"></i>

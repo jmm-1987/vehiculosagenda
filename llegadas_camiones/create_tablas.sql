@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS llegada_camion_linea (
   agencia VARCHAR(120) DEFAULT '',
   ruta VARCHAR(200) DEFAULT '',
   matricula VARCHAR(50) DEFAULT '',
+  tipo VARCHAR(20) NOT NULL DEFAULT 'llegada',
   hora_llegada VARCHAR(10) DEFAULT '',
   fin_descarga VARCHAR(10) DEFAULT '',
   pallets VARCHAR(50) DEFAULT '',

@@ -610,6 +610,7 @@ class LlegadaCamionLinea(db.Base):
     agencia = Column(String(120), default='')
     ruta = Column(String(200), default='')
     matricula = Column(String(50), default='')
+    tipo = Column(String(20), default='llegada', nullable=False)
     hora_llegada = Column(String(10), default='')
     fin_descarga = Column(String(10), default='')
     pallets = Column(String(50), default='')
@@ -796,6 +797,28 @@ class DocPublicaDocumento(db.Base):
     nombre_original = Column(String(300), nullable=False, default="")
     nombre_archivo = Column(String(80), nullable=False, default="")
     vencimiento = Column(Date, nullable=True)
+    usuario = Column(String(100), default="")
+    fecha_subida = Column(DateTime, nullable=False)
+
+
+class RepositorioCarpeta(db.Base):
+    """Carpeta de Tarifa Alditraex o KPIs, dentro de un año y de otra carpeta."""
+    __tablename__ = "repositorio_carpeta"
+    id = Column(Integer, primary_key=True)
+    ambito = Column(String(20), nullable=False, index=True)
+    anio = Column(Integer, nullable=False, index=True)
+    padre_id = Column(Integer, ForeignKey("repositorio_carpeta.id"), nullable=True, index=True)
+    nombre = Column(String(120), nullable=False, default="")
+
+
+class RepositorioDocumento(db.Base):
+    """Documento guardado en una carpeta de Tarifa Alditraex o KPIs."""
+    __tablename__ = "repositorio_documento"
+    id = Column(Integer, primary_key=True)
+    carpeta_id = Column(Integer, ForeignKey("repositorio_carpeta.id"), nullable=False, index=True)
+    titulo = Column(String(200), nullable=False, default="")
+    nombre_original = Column(String(300), nullable=False, default="")
+    nombre_archivo = Column(String(80), nullable=False, default="")
     usuario = Column(String(100), default="")
     fecha_subida = Column(DateTime, nullable=False)
 

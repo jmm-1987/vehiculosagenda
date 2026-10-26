@@ -14,6 +14,17 @@ import db
 from models import LlegadaCamionDia, LlegadaCamionLinea
 from llegadas_camiones.plantilla import RUTAS_PLANTILLA, TURNO_DEFAULT
 
+TIPOS_CAMION = ("llegada", "salida")
+
+
+def _tipo_camion(val) -> str:
+    tipo = (val or "").strip().lower()
+    return tipo if tipo in TIPOS_CAMION else "llegada"
+
+
+def _etiqueta_tipo(val) -> str:
+    return "Salida" if _tipo_camion(val) == "salida" else "Llegada"
+
 
 def _parse_fecha(val):
     if not val:
@@ -31,6 +42,7 @@ def _linea_dict(lin: LlegadaCamionLinea):
         "orden": lin.orden,
         "agencia": lin.agencia or "",
         "ruta": lin.ruta or "",
+        "tipo": _tipo_camion(getattr(lin, "tipo", None)),
         "matricula": lin.matricula or "",
         "hora_llegada": lin.hora_llegada or "",
         "fin_descarga": lin.fin_descarga or "",
@@ -77,6 +89,7 @@ def _obtener_o_crear_dia(fecha: date, turno: str | None = None):
             orden=i,
             agencia=agencia,
             ruta=ruta,
+            tipo="llegada",
             es_manual=False,
             usuario_mod=username,
             fecha_mod=datetime.now(),
@@ -121,6 +134,7 @@ def _filas_analisis():
     agencia = (request.args.get("agencia") or "").strip()
     ruta = (request.args.get("ruta") or "").strip()
     matricula = (request.args.get("matricula") or "").strip()
+    tipo = _tipo_camion(request.args.get("tipo")) if (request.args.get("tipo") or "").strip() else ""
 
     consulta = (
         db.session.query(LlegadaCamionLinea, LlegadaCamionDia)
@@ -136,6 +150,8 @@ def _filas_analisis():
         consulta = consulta.filter(LlegadaCamionLinea.ruta.ilike(f"%{ruta}%"))
     if matricula:
         consulta = consulta.filter(LlegadaCamionLinea.matricula.ilike(f"%{matricula}%"))
+    if tipo:
+        consulta = consulta.filter(LlegadaCamionLinea.tipo == tipo)
     return consulta.order_by(LlegadaCamionDia.fecha.desc(), LlegadaCamionLinea.orden).all()
 
 
@@ -153,6 +169,7 @@ def register_llegadas_camiones_routes(app):
             for lin, dia in _filas_analisis():
                 filas.append((
                     dia.fecha.strftime("%d/%m/%Y"),
+                    _etiqueta_tipo(lin.tipo),
                     lin.agencia or "",
                     lin.ruta or "",
                     lin.matricula or "",
@@ -166,7 +183,7 @@ def register_llegadas_camiones_routes(app):
             hasta = request.args.get("hasta") or "fin"
             return _excel(
                 f"llegadas_{desde}_{hasta}.xlsx",
-                ["Fecha", "Agencia", "Ruta", "Matrícula", "Hora llegada", "Fin descarga", "% o pallets", "Personas", "Manual"],
+                ["Fecha", "Tipo", "Agencia", "Ruta", "Matrícula", "Hora llegada", "Fin descarga", "% o pallets", "Personas", "Manual"],
                 filas,
             )
 
@@ -174,10 +191,14 @@ def register_llegadas_camiones_routes(app):
         if not fecha:
             return jsonify({"ok": False, "error": "Fecha no válida"}), 400
         dia, lineas = _obtener_o_crear_dia(fecha)
+        tipo_dia = _tipo_camion(request.args.get("tipo")) if (request.args.get("tipo") or "").strip() else ""
+        if tipo_dia:
+            lineas = [lin for lin in lineas if _tipo_camion(lin.tipo) == tipo_dia]
         filas = [
             (
                 fecha.strftime("%d/%m/%Y"),
                 dia.turno or "",
+                _etiqueta_tipo(lin.tipo),
                 lin.agencia or "",
                 lin.ruta or "",
                 lin.matricula or "",
@@ -190,7 +211,7 @@ def register_llegadas_camiones_routes(app):
         ]
         return _excel(
             f"llegadas_{fecha.isoformat()}.xlsx",
-            ["Fecha", "Turno", "Agencia", "Ruta", "Matrícula", "Hora llegada", "Fin descarga", "% o pallets", "Persona/s que descargan"],
+            ["Fecha", "Turno", "Tipo", "Agencia", "Ruta", "Matrícula", "Hora llegada", "Fin descarga", "% o pallets", "Persona/s que descargan"],
             filas,
         )
 
@@ -236,6 +257,9 @@ def register_llegadas_camiones_routes(app):
             if "ruta" in data:
                 lin.ruta = (data.get("ruta") or "")[:200]
 
+        if "tipo" in data:
+            lin.tipo = _tipo_camion(data.get("tipo"))
+
         for campo, maxlen in (
             ("matricula", 50),
             ("hora_llegada", 10),
@@ -267,6 +291,7 @@ def register_llegadas_camiones_routes(app):
             orden=max_orden + 1,
             agencia=(data.get("agencia") or "")[:120],
             ruta=(data.get("ruta") or "")[:200],
+            tipo=_tipo_camion(data.get("tipo")),
             matricula=(data.get("matricula") or "")[:50],
             hora_llegada=(data.get("hora_llegada") or "")[:10],
             fin_descarga=(data.get("fin_descarga") or "")[:10],

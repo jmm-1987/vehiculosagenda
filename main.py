@@ -44,6 +44,7 @@ from llegadas_camiones.llegadas_camiones import register_llegadas_camiones_route
 from rectificaciones.rectificaciones import register_rectificaciones_routes
 from deca.deca import register_deca_routes
 from documentacion.documentacion import register_documentacion_routes
+from archivos.archivos import register_repositorio_routes
 from calidad.calidad import register_calidad_routes
 from horario.horario import register_horario_routes
 from permisos import permisos_usuario, ruta_permitida, tiene_restriccion, acceso_total, sembrar_permisos, permisos_guardados, puede
@@ -78,6 +79,7 @@ try:
     ensure_column_exists('rectificacion', 'importe_cobrar', 'FLOAT', None)
     ensure_column_exists('rectificacion', 'cp_destino', 'VARCHAR(10)', '')
     ensure_column_exists('usuario', 'permisos', 'TEXT', None)
+    ensure_column_exists('llegada_camion_linea', 'tipo', 'VARCHAR(20)', 'llegada')
     # La tabla factura_proforma se creará automáticamente con SQLAlchemy
 except Exception as e:
     print(f"Error en migraciones: {e}")
@@ -177,6 +179,7 @@ register_llegadas_camiones_routes(app)
 register_rectificaciones_routes(app)
 register_deca_routes(app)
 register_documentacion_routes(app)
+register_repositorio_routes(app)
 register_calidad_routes(app)
 register_horario_routes(app)
 

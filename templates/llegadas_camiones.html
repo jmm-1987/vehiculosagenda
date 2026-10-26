@@ -99,12 +99,15 @@
 
   .cell-agencia{ font-weight:700; color:var(--navy); min-width:120px; white-space:nowrap; }
   .cell-ruta{ font-weight:600; min-width:160px; }
-  td input{
+  td input, td select{
     width:100%; border:1px solid transparent; background:transparent; border-radius:3px;
     padding:4px 5px; font-size:12.5px; font-family:inherit; color:var(--black);
   }
-  td input:focus{ outline:none; border-color:var(--navy); background:#fff; }
-  td input.dirty{ border-color:var(--gold); background:#fffaf0; }
+  td input:focus, td select:focus{ outline:none; border-color:var(--navy); background:#fff; }
+  td input.dirty, td select.dirty{ border-color:var(--gold); background:#fffaf0; }
+  .col-tipo{ min-width:108px; }
+  tbody tr.tipo-salida{ background:#fff6ee; }
+  tbody tr.tipo-salida td:first-child{ box-shadow:inset 3px 0 0 #c51500; }
   .col-mat{ min-width:100px; }
   .col-hora{ min-width:78px; max-width:90px; }
   .col-pal{ min-width:70px; max-width:90px; }
@@ -165,6 +168,14 @@
         <label for="turnoDia">Turno / Nave</label>
         <input type="text" id="turnoDia" value="MÉRIDA LLEGADAS" style="min-width:180px;">
       </div>
+      <div>
+        <label for="filtroTipoDia">Tipo</label>
+        <select id="filtroTipoDia">
+          <option value="">Todos</option>
+          <option value="llegada">Llegada</option>
+          <option value="salida">Salida</option>
+        </select>
+      </div>
       <button type="button" class="btn btn-primary" id="btnCargar">Cargar día</button>
       <button type="button" class="btn btn-ghost" id="btnAddRuta">+ Añadir ruta</button>
       <span class="save-hint" id="saveHint">Los cambios se guardan al salir de cada celda</span>
@@ -174,6 +185,7 @@
       <table id="tablaDia">
         <thead>
           <tr>
+            <th>Tipo</th>
             <th>Agencia</th>
             <th>Ruta</th>
             <th>Matrícula</th>
@@ -212,6 +224,14 @@
         <label for="filtroMatricula">Matrícula</label>
         <input type="text" id="filtroMatricula" placeholder="ABC1234">
       </div>
+      <div>
+        <label for="filtroTipo">Tipo</label>
+        <select id="filtroTipo">
+          <option value="">Todos</option>
+          <option value="llegada">Llegada</option>
+          <option value="salida">Salida</option>
+        </select>
+      </div>
       <button type="button" class="btn btn-primary" id="btnAnalizar">Filtrar</button>
     </div>
 
@@ -222,6 +242,7 @@
         <thead>
           <tr>
             <th>Fecha</th>
+            <th>Tipo</th>
             <th>Agencia</th>
             <th>Ruta</th>
             <th>Matrícula</th>
@@ -291,8 +312,21 @@ async function cargarDia(){
   saveHint.classList.add('ok');
 }
 
+function etiquetaTipo(tipo){
+  return tipo === 'salida' ? 'Salida' : 'Llegada';
+}
+
+function selectTipo(valor){
+  const v = valor === 'salida' ? 'salida' : 'llegada';
+  return `<select data-field="tipo">
+    <option value="llegada"${v === 'llegada' ? ' selected' : ''}>Llegada</option>
+    <option value="salida"${v === 'salida' ? ' selected' : ''}>Salida</option>
+  </select>`;
+}
+
 function renderLineas(lineas){
   tbodyDia.innerHTML = lineas.map(lin => {
+    const tipo = lin.tipo === 'salida' ? 'salida' : 'llegada';
     const agenciaCell = lin.es_manual
       ? `<input data-field="agencia" value="${esc(lin.agencia)}" placeholder="Agencia">`
       : `<span class="cell-agencia">${esc(lin.agencia)}</span>`;
@@ -302,7 +336,9 @@ function renderLineas(lineas){
     const delBtn = lin.es_manual
       ? `<button type="button" class="btn btn-danger" data-del="${lin.id}">✕</button>`
       : '';
-    return `<tr class="${lin.es_manual ? 'manual-row' : ''}" data-id="${lin.id}">
+    const clases = [lin.es_manual ? 'manual-row' : '', tipo === 'salida' ? 'tipo-salida' : ''].filter(Boolean).join(' ');
+    return `<tr class="${clases}" data-id="${lin.id}" data-tipo="${tipo}">
+      <td class="col-tipo">${selectTipo(tipo)}</td>
       <td>${agenciaCell}</td>
       <td>${rutaCell}</td>
       <td class="col-mat"><input data-field="matricula" value="${esc(lin.matricula)}" placeholder="—"></td>
@@ -313,6 +349,7 @@ function renderLineas(lineas){
       <td class="col-acc">${delBtn}</td>
     </tr>`;
   }).join('');
+  aplicarFiltroDia();
 }
 
 async function guardarLineaDesdeInput(input){
@@ -320,9 +357,11 @@ async function guardarLineaDesdeInput(input){
   if(!tr) return;
   const id = parseInt(tr.dataset.id, 10);
   const payload = { id };
-  tr.querySelectorAll('input[data-field]').forEach(inp => {
+  tr.querySelectorAll('[data-field]').forEach(inp => {
     payload[inp.dataset.field] = inp.value;
   });
+  tr.dataset.tipo = payload.tipo === 'salida' ? 'salida' : 'llegada';
+  tr.classList.toggle('tipo-salida', tr.dataset.tipo === 'salida');
   input.classList.add('dirty');
   saveHint.textContent = 'Guardando…';
   saveHint.classList.remove('ok');
@@ -341,14 +380,22 @@ async function guardarLineaDesdeInput(input){
     input.classList.remove('dirty');
     saveHint.textContent = 'Guardado';
     saveHint.classList.add('ok');
+    aplicarFiltroDia();
   }catch(e){
     toast('Error de red al guardar');
     saveHint.textContent = 'Error de red';
   }
 }
 
+function aplicarFiltroDia(){
+  const tipo = document.getElementById('filtroTipoDia').value;
+  tbodyDia.querySelectorAll('tr').forEach(tr => {
+    tr.hidden = !!(tipo && tr.dataset.tipo !== tipo);
+  });
+}
+
 tbodyDia.addEventListener('change', (e) => {
-  if(e.target.matches('input[data-field]')) guardarLineaDesdeInput(e.target);
+  if(e.target.matches('[data-field]')) guardarLineaDesdeInput(e.target);
 });
 tbodyDia.addEventListener('focusout', (e) => {
   if(e.target.matches('input[data-field].dirty')) guardarLineaDesdeInput(e.target);
@@ -368,6 +415,7 @@ tbodyDia.addEventListener('click', async (e) => {
   cargarDia();
 });
 
+document.getElementById('filtroTipoDia').addEventListener('change', aplicarFiltroDia);
 document.getElementById('btnCargar').onclick = cargarDia;
 fechaDia.addEventListener('change', cargarDia);
 
@@ -410,9 +458,11 @@ async function cargarAnalisis(){
   const ag = document.getElementById('filtroAgencia').value.trim();
   const ru = document.getElementById('filtroRuta').value.trim();
   const ma = document.getElementById('filtroMatricula').value.trim();
+  const tipo = document.getElementById('filtroTipo').value;
   if(ag) params.set('agencia', ag);
   if(ru) params.set('ruta', ru);
   if(ma) params.set('matricula', ma);
+  if(tipo) params.set('tipo', tipo);
 
   const res = await fetch('/api/llegadas-camiones/analisis?' + params.toString());
   const data = await res.json();
@@ -431,11 +481,12 @@ async function cargarAnalisis(){
   const body = document.getElementById('tbodyAnalisis');
   const items = data.items || [];
   if(!items.length){
-    body.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--textgray);padding:16px;">Sin resultados</td></tr>`;
+    body.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--textgray);padding:16px;">Sin resultados</td></tr>`;
     return;
   }
-  body.innerHTML = items.map(it => `<tr>
+  body.innerHTML = items.map(it => `<tr class="${it.tipo === 'salida' ? 'tipo-salida' : ''}">
     <td>${esc(it.fecha)}</td>
+    <td>${esc(etiquetaTipo(it.tipo))}</td>
     <td class="cell-agencia">${esc(it.agencia)}</td>
     <td>${esc(it.ruta)}</td>
     <td>${esc(it.matricula)}</td>
@@ -459,14 +510,19 @@ document.getElementById('btnExcel').addEventListener('click', (e) => {
     const ag = document.getElementById('filtroAgencia').value.trim();
     const ru = document.getElementById('filtroRuta').value.trim();
     const ma = document.getElementById('filtroMatricula').value.trim();
+    const tipo = document.getElementById('filtroTipo').value;
     if(ag) params.set('agencia', ag);
     if(ru) params.set('ruta', ru);
     if(ma) params.set('matricula', ma);
+    if(tipo) params.set('tipo', tipo);
     window.location = '/llegadas-camiones/excel?' + params.toString();
     return;
   }
   if(!fechaDia.value){ toast('Indica una fecha'); return; }
-  window.location = '/llegadas-camiones/excel?fecha=' + encodeURIComponent(fechaDia.value);
+  const tipoDia = document.getElementById('filtroTipoDia').value;
+  let urlDia = '/llegadas-camiones/excel?fecha=' + encodeURIComponent(fechaDia.value);
+  if(tipoDia) urlDia += '&tipo=' + encodeURIComponent(tipoDia);
+  window.location = urlDia;
 });
 
 cargarDia();
