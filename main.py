@@ -95,12 +95,32 @@ def close_db(error):
     """Cierra la sesión de BD al final de cada request con commit automático"""
     db.close_session(error)
 
+_RUTAS_ALMACEN = (
+    '/scanner_clientes',
+    '/validar_codigo',
+    '/subir_imagen_scanner',
+    '/incidencia_aldipod/actualizar_observaciones',
+    '/test_camera',
+    '/logout',
+    '/login',
+)
+
+
+def _es_almacen(username):
+    return (username or '').strip().lower() == 'almacen'
+
+
 @app.before_request
 def aplicar_permisos_usuario():
     if not current_user.is_authenticated:
         return None
     user = (current_user.username or '').strip().lower()
     path = request.path or '/'
+    # almacen tiene su propia app (scanner) y no usa la portada ni las casillas.
+    if _es_almacen(user):
+        if path.startswith('/static/') or path in _RUTAS_ALMACEN:
+            return None
+        return redirect(url_for('scanner_clientes'))
     if path == '/calidad' or path.startswith('/calidad/'):
         if not puede(user, 'calidad'):
             return redirect(url_for('portada'))
@@ -183,6 +203,8 @@ def login():
         usuario = db.session.query(Usuario).filter_by(username=username).first()
         if usuario and usuario.password == password:
             login_user(usuario)
+            if (username or '').strip().lower() == 'almacen':
+                return redirect(url_for('scanner_clientes'))
             return redirect(url_for('portada'))
         else:
             return render_template('login.html', mensaje="Usuario o contraseña incorrectos")
@@ -201,6 +223,8 @@ def portada():
     # Redirección por usuario
     username = session.get('_user_id') and db.session.query(Usuario).filter_by(id=session.get('_user_id')).first()
     user_l_previo = (username.username or '').strip().lower() if username else ''
+    if user_l_previo == 'almacen':
+        return redirect(url_for('scanner_clientes'))
     if username and user_l_previo == 'email' and not permisos_guardados(user_l_previo):
         return redirect(url_for('email_destinatarios'))
     if username and user_l_previo == 'presupuestos' and not permisos_guardados(user_l_previo):
@@ -233,6 +257,8 @@ def portada():
 @app.route('/index')
 @login_required
 def home():
+    if (current_user.username or '').strip().lower() == 'almacen':
+        return redirect(url_for('scanner_clientes'))
     # Bloquear acceso al usuario 'presupuestos'
     if current_user.username == 'presupuestos':
         return redirect(url_for('lista_presupuestos'))
