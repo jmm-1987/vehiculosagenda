@@ -53,6 +53,169 @@
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
+            min-height: 0;
+        }
+
+        #panelZonas {
+            display: none;
+            flex: 1;
+            min-height: 0;
+            max-height: calc(100vh - 150px);
+            overflow: auto;
+            background: #f4f7fb;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        #panelZonas .zr-top {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: #14284B;
+            color: #fff;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 0 #C9A227;
+        }
+        #panelZonas .zr-mode { display: flex; gap: 6px; margin: 10px 0; }
+        #panelZonas .zr-mode button {
+            flex: 1;
+            font: 600 14px inherit;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,.25);
+            background: transparent;
+            color: #fff;
+            cursor: pointer;
+        }
+        #panelZonas .zr-mode button[aria-pressed="true"] {
+            background: #C9A227;
+            border-color: #C9A227;
+            color: #1B1606;
+        }
+        #panelZonas .zr-field { position: relative; }
+        #panelZonas #zr-q {
+            width: 100%;
+            font: 500 18px inherit;
+            padding: 12px 44px 12px 12px;
+            border-radius: 10px;
+            border: 0;
+            color: #14223A;
+        }
+        #panelZonas #zr-clear {
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 36px;
+            height: 36px;
+            border: 0;
+            border-radius: 50%;
+            background: #E6EAF1;
+            color: #14223A;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        #panelZonas .zr-answer {
+            background: #fff;
+            border: 1px solid #DCE2EC;
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+        #panelZonas .zr-answer small {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: #5D6B82;
+        }
+        #panelZonas .zr-answer .zone {
+            font-weight: 800;
+            font-size: 36px;
+            line-height: 1.1;
+            color: #14223A;
+            margin-top: 4px;
+        }
+        #panelZonas .zr-answer p { margin: 6px 0 0; color: #5D6B82; }
+        #panelZonas h2 {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: #5D6B82;
+            margin: 0 0 8px;
+            text-align: left;
+            text-shadow: none;
+        }
+        #panelZonas .zr-list, #panelZonas .zr-zones { margin: 0; padding: 0; list-style: none; }
+        #panelZonas .zr-list {
+            background: #fff;
+            border: 1px solid #DCE2EC;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        #panelZonas .zr-list li {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 2px 12px;
+            padding: 12px 14px;
+            border-top: 1px solid #DCE2EC;
+            align-items: center;
+        }
+        #panelZonas .zr-list li:first-child { border-top: 0; }
+        #panelZonas .zr-list .name { font-weight: 700; }
+        #panelZonas .zr-list .meta { grid-column: 1; font-size: 13px; color: #5D6B82; }
+        #panelZonas .zr-list .z {
+            grid-column: 2;
+            grid-row: 1 / span 2;
+            font-weight: 800;
+            background: #F6EED3;
+            border: 1px solid #C9A227;
+            border-radius: 6px;
+            padding: 4px 10px;
+            white-space: nowrap;
+        }
+        #panelZonas .zr-list li.empty, #panelZonas .zr-list li.meta {
+            display: block;
+            color: #5D6B82;
+        }
+        #panelZonas mark {
+            background: transparent;
+            color: inherit;
+            text-decoration: underline;
+            text-decoration-color: #C9A227;
+            text-decoration-thickness: 3px;
+        }
+        #panelZonas .zr-zones {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 8px;
+        }
+        #panelZonas .zr-zones button {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            text-align: left;
+            font: 600 15px inherit;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #DCE2EC;
+            background: #fff;
+            color: #14223A;
+            cursor: pointer;
+        }
+        #panelZonas .zr-zones button span { font-size: 13px; color: #5D6B82; font-weight: 500; }
+        #panelZonas .zr-foot { font-size: 12px; color: #5D6B82; text-align: center; margin: 14px 0 4px; }
+        #panelZonas .zr-volver {
+            background: transparent;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,.4);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font: 700 13px inherit;
+            cursor: pointer;
+            margin-bottom: 8px;
         }
 
         h1 {
@@ -527,7 +690,8 @@
         <!-- Opciones para usuario almacen -->
         <div id="opcionesAlmacen" style="display: none; margin-bottom: 30px;">
             <h2 style="text-align: center; color: #333; margin-bottom: 20px;">Selecciona el tipo de registro:</h2>
-            <div style="display: flex; justify-content: center; gap: 30px;">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 22px;">
+            <div style="display: flex; justify-content: center; gap: 30px; flex-wrap: wrap;">
                 <button onclick="seleccionarTipo('INCIDENCIA')" style="
                     padding: 20px 40px;
                     background: linear-gradient(135deg, #28a745, #20c997);
@@ -557,6 +721,45 @@
                     📏 MEDIDAS
                 </button>
             </div>
+                <button type="button" onclick="abrirZonasReparto()" style="
+                    padding: 20px 40px;
+                    background: linear-gradient(135deg, #14284B, #1a3159);
+                    color: white;
+                    border: none;
+                    border-radius: 10px;
+                    font-size: 18px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    box-shadow: 0 4px 15px rgba(20, 40, 75, 0.35);
+                    transition: transform 0.2s;
+                " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    ZONAS DE REPARTO
+                </button>
+            </div>
+        </div>
+
+        <div id="panelZonas">
+            <div class="zr-top">
+                <button type="button" class="zr-volver" onclick="cerrarZonasReparto()">← Volver</button>
+                <div class="zr-mode" role="group" aria-label="Buscar por">
+                    <button type="button" id="zr-m-pob" aria-pressed="true">Población</button>
+                    <button type="button" id="zr-m-cp" aria-pressed="false">Código postal</button>
+                </div>
+                <div class="zr-field">
+                    <input id="zr-q" type="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Escribe la población…" aria-label="Población o código postal">
+                    <button id="zr-clear" type="button" aria-label="Borrar" hidden>×</button>
+                </div>
+            </div>
+            <section id="zr-answer" class="zr-answer" hidden></section>
+            <section id="zr-results" hidden>
+                <h2 id="zr-rtitle"></h2>
+                <ul id="zr-rlist" class="zr-list"></ul>
+            </section>
+            <section id="zr-zonesec">
+                <h2>Todas las zonas</h2>
+                <div id="zr-zones" class="zr-zones"></div>
+            </section>
+            <p class="zr-foot" id="zr-foot"></p>
         </div>
         
         <!-- Opciones para usuario oficina -->
@@ -746,6 +949,8 @@
         </div>
     </div>
 
+    <script src="{{ url_for('static', filename='scanner/zonas_datos.js') }}"></script>
+    <script src="{{ url_for('static', filename='scanner/zonas_reparto.js') }}"></script>
     <script src="https://unpkg.com/@zxing/library@latest"></script>
     <script>
         // Detectar ubicación del usuario
@@ -810,6 +1015,7 @@
             // Ocultar todas las opciones
             document.getElementById('opcionesAlmacen').style.display = 'none';
             document.getElementById('opcionesOficina').style.display = 'none';
+            document.getElementById('panelZonas').style.display = 'none';
             document.getElementById('clientesGrid').style.display = 'grid';
             
             // Actualizar título según el tipo
@@ -821,6 +1027,28 @@
             } else if (tipo === 'alb_clientes') {
                 document.getElementById('ubicacion-principal').textContent = `📚 ${ubicacion} - ALB_CLIENTES`;
             }
+        }
+
+        function abrirZonasReparto() {
+            document.getElementById('opcionesAlmacen').style.display = 'none';
+            document.getElementById('opcionesOficina').style.display = 'none';
+            document.getElementById('clientesGrid').style.display = 'none';
+            const panel = document.getElementById('panelZonas');
+            panel.style.display = 'block';
+            const titulo = document.getElementById('ubicacion-principal');
+            if (titulo && !titulo.dataset.previo) titulo.dataset.previo = titulo.textContent;
+            if (titulo) titulo.textContent = 'Zonas de reparto';
+            if (window.iniciarZonasReparto) iniciarZonasReparto(panel);
+        }
+
+        function cerrarZonasReparto() {
+            document.getElementById('panelZonas').style.display = 'none';
+            const titulo = document.getElementById('ubicacion-principal');
+            if (titulo && titulo.dataset.previo) {
+                titulo.textContent = titulo.dataset.previo;
+                delete titulo.dataset.previo;
+            }
+            document.getElementById('opcionesAlmacen').style.display = 'block';
         }
         
         // Ejecutar al cargar la página
