@@ -1,0 +1,392 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0;font-family:system-ui,sans-serif;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<title>Tarificador Alditraex</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: barra superior con logo y pestañas; formulario compacto a la izquierda y liquidación fija a la derecha */
+:root{
+  --bg:#F2F3F5; --surface:#FFFFFF; --surface-2:#F7F8FA; --ink:#16181D; --muted:#5B626E; --line:#DCDFE4;
+  --gold:#E39B12; --gold-ink:#94620A; --gold-soft:#FCF1DC; --red:#C21F1F; --asphalt:#1D2026; --on-asphalt:#F4F5F7;
+  --ok:#1E7A46; --ok-soft:#E3F3EA; --warn:#9A5B00; --warn-soft:#FFF1D6; --bad:#B42318; --bad-soft:#FDE8E6;
+  --display:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif; --body:"Barlow","Segoe UI",Arial,sans-serif;
+  --r:7px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111317; --surface:#1A1D23; --surface-2:#20242B; --ink:#ECEEF1; --muted:#9DA4AF; --line:#2E333C;
+  --gold:#F0AC2E; --gold-ink:#F0AC2E; --gold-soft:#33280F; --asphalt:#0B0C0F; --on-asphalt:#F4F5F7;
+  --ok:#5CC98A; --ok-soft:#14301F; --warn:#F2B451; --warn-soft:#352610; --bad:#F2877D; --bad-soft:#3A1714; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111317; --surface:#1A1D23; --surface-2:#20242B; --ink:#ECEEF1; --muted:#9DA4AF; --line:#2E333C;
+  --gold:#F0AC2E; --gold-ink:#F0AC2E; --gold-soft:#33280F; --asphalt:#0B0C0F; --on-asphalt:#F4F5F7;
+  --ok:#5CC98A; --ok-soft:#14301F; --warn:#F2B451; --warn-soft:#352610; --bad:#F2877D; --bad-soft:#3A1714; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:13px;line-height:1.4}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:1320px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;gap:16px;padding-block:7px;flex-wrap:wrap}
+.logo{background:#fff;border-radius:5px;padding:3px 6px;display:flex;align-items:center}
+.logo img{height:30px;width:auto;display:block}
+.apptitle{font-family:var(--display);font-weight:600;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);border-left:2px solid var(--gold);padding-left:10px;line-height:1.15}
+.apptitle b{display:block;color:var(--ink);font-size:15px;letter-spacing:.04em}
+nav.tabs{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap}
+nav.tabs a{font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.03em;text-decoration:none;color:var(--muted);padding:6px 11px;border-radius:5px}
+nav.tabs a:hover{color:var(--ink);background:var(--surface-2)}
+nav.tabs a[aria-current="page"]{color:var(--ink);background:var(--gold-soft);box-shadow:inset 0 -2px 0 var(--gold)}
+.who{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
+.who img{width:24px;height:24px;border-radius:50%}
+.who b{color:var(--ink);font-weight:600}
+.who input{width:140px}
+main{padding-block:16px 48px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:20px;font-weight:700;letter-spacing:.01em}
+h2{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.pagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.pagehead p{margin:2px 0 0;color:var(--muted);font-size:12.5px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px;align-items:start}
+@media (max-width:960px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.panel+.panel{margin-top:10px}
+.panel h2{margin-bottom:9px;display:flex;align-items:center;gap:8px}
+.panel h2 .n{font-family:var(--display);background:var(--asphalt);color:var(--on-asphalt);border-radius:3px;font-size:10.5px;padding:1px 6px;letter-spacing:.05em}
+.row{display:grid;gap:9px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
+.row+.row{margin-top:8px}
+.f{display:flex;flex-direction:column;gap:3px;min-width:0;position:relative}
+.f label{font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+input,select,textarea{font:inherit;font-size:13px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:5px 8px;width:100%;min-width:0}
+input:not([type]),input[type="text"],input[type="tel"],textarea{text-transform:uppercase}
+input[type="email"]{text-transform:lowercase}
+input::placeholder,textarea::placeholder{text-transform:none;color:var(--muted);opacity:.75}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);outline-offset:0;border-color:var(--gold)}
+input[readonly]{background:var(--surface-2);color:var(--muted)}
+textarea{resize:vertical;min-height:48px}
+.hint{font-size:11px;color:var(--muted)}
+.btn{font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.03em;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:5px;padding:6px 11px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;text-decoration:none}
+.btn:hover{border-color:var(--ink)}
+.btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.btn.primary{background:var(--asphalt);color:var(--on-asphalt);border-color:var(--asphalt)}
+.btn.primary:hover{background:#000}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#1a1205}
+.btn.small{font-size:12px;padding:3px 8px}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.danger{color:var(--bad)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+.bultos{width:100%;border-collapse:collapse}
+.bultos select{width:96px}.bultos input[data-k="cant"]{width:64px}.bultos input[data-k="l"],.bultos input[data-k="a"],.bultos input[data-k="h"]{width:76px}
+.bultos td.vol{min-width:76px}.bultos td.vol,.bultos th.r{padding-right:14px}
+.bultos input[data-k="kg"]{width:82px}.bultos td.vol small{display:block;color:var(--ink);font-weight:600}.bultos td.desc{min-width:180px}.bultos td.desc input{width:100%}
+.bultos td.shared{vertical-align:top}
+.row.merc{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}.row.merc .f{width:210px}.row.merc .hint{flex:1;min-width:200px;padding-bottom:6px}
+.bultos th{font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:0 5px 4px 0}
+.bultos th.r{text-align:right}
+.bultos td{padding:2px 5px 2px 0;vertical-align:middle}
+.bultos td.vol{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap;font-size:12px;text-align:right}
+.tablewrap{overflow-x:auto}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-top:10px}
+.metric{background:var(--surface-2);border-radius:5px;padding:7px 10px}
+.metric span{display:block;font-size:9.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.metric b{font-family:var(--display);font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.metric.key{background:var(--gold-soft);box-shadow:inset 3px 0 0 var(--gold)}
+.route{display:grid;grid-template-columns:minmax(0,1fr) 26px minmax(0,1fr);gap:8px;align-items:start}
+.route .arrow{align-self:center;text-align:center;color:var(--gold);font-size:18px;font-family:var(--display);font-weight:700}
+@media (max-width:640px){.route{grid-template-columns:minmax(0,1fr)}.route .arrow{transform:rotate(90deg)}}
+.place{border:1px dashed var(--line);border-radius:5px;padding:9px;display:flex;flex-direction:column;gap:7px}
+.place .tag{font-family:var(--display);font-weight:700;letter-spacing:.1em;font-size:11px;text-transform:uppercase}
+.place .tag em{font-style:normal;color:var(--gold-ink)}
+.ac{position:absolute;top:100%;left:0;z-index:20;min-width:100%;width:max-content;max-width:min(440px,90vw);background:var(--surface);border:1px solid var(--line);border-radius:5px;box-shadow:0 10px 30px rgba(0,0,0,.14);max-height:260px;overflow:auto;margin-top:2px}
+.ac button{display:flex;gap:9px;width:100%;text-align:left;background:none;border:0;padding:6px 9px;font:inherit;font-size:12.5px;color:var(--ink);cursor:pointer;align-items:baseline;text-transform:uppercase}
+.ac button:hover,.ac button.on{background:var(--gold-soft)}
+.ac .cp{font-variant-numeric:tabular-nums;font-weight:600;min-width:58px}
+.ac .pr{margin-left:auto;padding-left:10px;color:var(--muted);font-size:11px;white-space:nowrap}
+.ac .empty{padding:8px 10px;color:var(--muted);font-size:12px}
+.ticket{position:sticky;top:calc(env(safe-area-inset-top,0px) + 62px);background:var(--asphalt);color:var(--on-asphalt);border-radius:var(--r);overflow:hidden}
+.ticket .head{padding:12px 14px 9px;border-bottom:1px solid rgba(255,255,255,.1)}
+.ticket .head .num{font-family:var(--display);font-size:22px;font-weight:700;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.ticket .head .num small{font-size:10.5px;font-weight:600;color:#A9AFB9;letter-spacing:.12em;text-transform:uppercase;display:block}
+.ticket .head .route-s{color:#C7CCD4;font-size:12px;margin-top:2px;text-transform:uppercase}
+.ticket .body{padding:6px 14px}
+.line{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dashed rgba(255,255,255,.12);font-variant-numeric:tabular-nums;font-size:13px}
+.line span{color:#C7CCD4}
+.line span small{display:block;font-size:10.5px;color:#8E95A1}
+.line.fuel input{width:62px;padding:2px 5px;text-align:right;background:#2A2E36;color:#fff;border-color:#3A3F49;font-size:12px}
+.line.sub{border-bottom-style:solid;border-bottom-color:rgba(255,255,255,.25)}
+.total{display:flex;justify-content:space-between;align-items:baseline;padding:10px 14px;background:var(--gold);color:#1a1205}
+.total span{font-family:var(--display);font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:12px}
+.total b{font-family:var(--display);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.ticket .foot{padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.ticket .btn{justify-content:center}
+.ticket .btn.ghost{color:#C7CCD4}
+.alert{border-radius:5px;padding:7px 10px;font-size:12px;margin-top:6px}
+.alert.warn{background:var(--warn-soft);color:var(--warn)}
+.ticket .alert.warn{background:#3A2A0D;color:#F6C56A}
+.zone{display:inline-block;font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:1px 7px;border-radius:3px;background:var(--gold);color:#1a1205}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+.toolbar .f{min-width:120px}
+.toolbar .f.grow{flex:1;min-width:180px}
+table.data{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+table.data th{position:sticky;top:0;background:var(--asphalt);color:var(--on-asphalt);font-family:var(--display);font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:10.5px;text-align:left;padding:7px 8px;white-space:nowrap}
+table.data th.r,table.data td.r{text-align:right}
+table.data td{padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:middle}
+table.data tbody tr:nth-child(even){background:var(--surface-2)}
+table.data tbody tr:hover{background:var(--gold-soft)}
+table.data td.wrapcell{white-space:normal;min-width:140px}
+table.data .num{font-family:var(--display);font-weight:700;font-size:13px}
+table.data .tot{font-weight:700}
+table.data tfoot td{font-weight:700;border-top:2px solid var(--ink);background:var(--surface)}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;border:0;cursor:pointer;font-family:var(--body)}
+.pill.Pendiente{background:var(--warn-soft);color:var(--warn)}
+.pill.Aceptado{background:var(--ok-soft);color:var(--ok)}
+.pill.Rechazado{background:var(--bad-soft);color:var(--bad)}
+.pill.Enviado{background:var(--ok-soft);color:var(--ok);cursor:default;margin-left:6px}
+.serie{font-size:10px;font-weight:700;letter-spacing:.06em;padding:0 4px;border-radius:2px;background:var(--asphalt);color:var(--on-asphalt);margin-right:2px}
+.empty-state{padding:34px 16px;text-align:center;color:var(--muted)}
+.empty-state b{display:block;font-family:var(--display);font-size:16px;color:var(--ink);margin-bottom:4px}
+main:has(#v-presupuestos:not([hidden])){max-width:1720px}
+table.data.compact{font-size:11px}
+table.data.compact th{font-size:9.5px;padding:5px 5px;letter-spacing:.04em}
+table.data.compact td{padding:4px 5px}
+table.data.compact td.wrapcell{min-width:0;white-space:normal}
+table.data.compact .num{font-size:12px;white-space:nowrap}
+table.data.compact .pfc{display:block;font-size:10px;color:var(--gold-ink);font-weight:600;white-space:nowrap}
+table.data.compact .cli{min-width:120px;max-width:190px}
+table.data.compact .rec{min-width:120px;max-width:200px}
+table.data.compact .mot{max-width:140px;color:var(--bad);font-size:10.5px}
+table.data.compact .mot button{all:unset;cursor:pointer;color:inherit;text-decoration:underline dotted}
+table.data.compact .pill{font-size:10px;padding:1px 6px}
+table.data.compact .acts{display:grid;grid-template-columns:auto auto auto;gap:2px 3px;justify-content:start}
+table.data.compact .acts .btn{font-size:10.5px;padding:1px 5px;justify-content:center}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:12px}
+.modal{position:fixed;inset:0;background:rgba(10,12,16,.55);z-index:50;display:flex;align-items:flex-start;justify-content:center;padding:max(20px,env(safe-area-inset-top,0px)) 16px 20px;overflow:auto}
+.modal .box{background:var(--surface);border-radius:var(--r);width:100%;max-width:640px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.modal .box.narrow{max-width:400px}
+.modal .mh{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-bottom:1px solid var(--line)}
+.modal .mh h3{font-size:17px}
+.modal .mb{padding:14px}
+.modal .mf{padding:10px 14px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--asphalt);color:var(--on-asphalt);padding:8px 16px;border-radius:5px;z-index:60;font-size:12.5px;box-shadow:0 10px 30px rgba(0,0,0,.3);max-width:calc(100% - 32px)}
+.banner{background:var(--warn-soft);color:var(--warn);font-size:12px;padding:6px 0}
+.clientpick{display:flex;gap:8px}
+.clientpick .f{flex:1}
+.clientcard{margin-top:8px;font-size:12px;background:var(--surface-2);border-radius:5px;padding:8px 10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:3px 14px;text-transform:uppercase}
+.clientcard span{color:var(--muted);text-transform:none}
+.clientcard .mail{text-transform:lowercase}
+.iva-chip{font-size:11px;font-weight:700;padding:0 6px;border-radius:3px;background:var(--surface);border:1px solid var(--line)}
+table.rate{border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums;width:100%}
+table.rate th{background:var(--gold);color:#1a1205;font-family:var(--display);font-weight:700;padding:5px 8px;text-align:right;white-space:nowrap}
+table.rate th:first-child,table.rate td:first-child{text-align:left}
+table.rate td{padding:4px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+table.rate td:first-child{font-family:var(--display);font-weight:700}
+table.rate tr.perkg td{background:var(--surface-2)}
+.zonelist{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:12px}
+.zonelist div{font-size:12px}
+.zonelist b{display:block;margin-bottom:2px}
+.rules{margin:0;padding-left:16px;font-size:12.5px}
+.rules li{margin:3px 0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg button{font-family:var(--display);font-weight:600;font-size:13px;border:0;background:var(--surface);color:var(--muted);padding:6px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--asphalt);color:var(--on-asphalt)}
+@media (prefers-reduced-motion:no-preference){.toast{animation:up .2s ease-out}@keyframes up{from{transform:translate(-50%,10px);opacity:0}}}
+@media (max-width:720px){nav.tabs{margin-left:0;width:100%}.who{width:100%}}
+</style>
+
+<div id="banner" class="banner" hidden><div class="wrap" id="bannerText"></div></div>
+<header class="top"><div class="wrap">
+  <div class="logo"><img src="{{ url_for('static', filename='logo.png') }}" alt="Alditraex"></div>
+  <div class="apptitle">Tarificador<b>Alditraex</b></div>
+  <nav class="tabs" id="tabs">
+    <a href="#nuevo" data-v="nuevo">Nuevo presupuesto</a>
+    <a href="#presupuestos" data-v="presupuestos">Presupuestos</a>
+    <a href="#clientes" data-v="clientes">Clientes</a>
+    <a href="#tarifa" data-v="tarifa">Tarifas TG 2026</a>
+  </nav>
+  <a class="btn small" href="/portada">Portada</a><a class="btn small" href="/logout">Salir</a><div class="who" id="who"><span>Identificando usuario…</span></div>
+</div></header>
+
+<main class="wrap">
+
+<section id="v-nuevo" hidden>
+  <div class="pagehead">
+    <div><h1 id="formTitle">Nuevo presupuesto</h1><p>El importe se calcula al momento con la tarifa TG 2026 de la delegación elegida.</p></div>
+    <div class="actions"><button class="btn" id="btnReset" type="button">Vaciar formulario</button></div>
+  </div>
+  <div class="grid2">
+    <form id="fPres" autocomplete="off">
+      <div class="panel">
+        <h2><span class="n">1</span>Presupuesto</h2>
+        <div class="row">
+          <div class="f"><label for="pNum">Nº presupuesto</label><input id="pNum" readonly></div>
+          <div class="f"><label for="pFecha">Fecha</label><input id="pFecha" type="date" required></div>
+          <div class="f"><label for="pDeleg">Delegación y tarifa</label>
+            <select id="pDeleg"><option value="MER">Mérida (MER)</option><option value="NAV">Navalmoral de la Mata (NAV)</option></select></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="n">2</span>Cliente</h2>
+        <div class="clientpick">
+          <div class="f"><label for="pCliente">Cliente</label>
+            <input id="pCliente" placeholder="Busca por nombre, CIF o población" role="combobox" aria-expanded="false" aria-autocomplete="list">
+            <div class="ac" id="acCliente" hidden></div>
+          </div>
+          <div class="f" style="flex:0 0 auto;justify-content:flex-end"><button class="btn gold" type="button" id="btnNuevoCliente">+ Nuevo cliente</button></div>
+        </div>
+        <div id="clientCard"></div>
+        <div class="f" style="margin-top:8px"><label for="pEmailEnvio">Email donde enviar presupuesto</label><input id="pEmailEnvio" type="email" autocomplete="off" placeholder="Correo del botón Guardar, descargar y enviar"><span class="hint">No forma parte de la ficha del cliente. «Guardar, descargar y enviar» manda el PDF a este correo.</span></div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="n">3</span>Mercancía</h2>
+        <div class="row merc">
+          <div class="f"><label for="pModo">Tarifa a aplicar</label>
+            <select id="pModo"><option value="TG" id="optTG">TG MER (por kg)</option><option value="PALLETS">T PALLETS (por pallet)</option></select></div>
+          <span class="hint" id="modoHint"></span>
+        </div>
+        <div hidden id="sharedInputs"><input id="pPeso" type="number" readonly tabindex="-1" aria-label="Peso real total en kg"><input id="pMerc" placeholder="Ej.: material de construcción" aria-label="Descripción de la mercancía"></div>
+        <div class="tablewrap">
+        <table class="bultos" id="tBultos">
+          <thead><tr><th style="width:96px">Tipo</th><th>Cantidad</th><th>Largo (m)</th><th>Ancho (m)</th><th>Alto (m)</th><th>Peso ud. (kg)</th><th class="r">Vol. / peso</th><th>Descripción de la mercancía</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        </div>
+        <div class="actions" style="margin-top:6px"><button class="btn small" type="button" id="btnAddBulto">+ Añadir línea de bultos</button></div>
+        <div class="metrics">
+          <div class="metric"><span>Bultos</span><b id="mBultos">0</b></div>
+          <div class="metric"><span>Peso real</span><b id="mPeso">0 kg</b></div>
+          <div class="metric"><span>Volumen</span><b id="mVol">0,000 m³</b></div>
+          <div class="metric"><span>PVKG (×250)</span><b id="mPvkg">0 kg</b></div>
+          <div class="metric key"><span>Kg a facturar</span><b id="mKg">0 kg</b></div>
+        </div>
+        <p class="hint" style="margin:6px 0 0">Se factura siempre el mayor entre peso real y PVKG (volumen × 250 kg/m³).</p>
+      </div>
+
+      <div class="panel">
+        <h2><span class="n">4</span>Recorrido</h2>
+        <div class="route">
+          <div class="place">
+            <div class="tag">Origen <em id="zOrigen"></em></div>
+            <div class="f"><label for="oPais">País</label><select id="oPais"></select></div>
+            <div class="row"><div class="f"><label for="oCP">Código postal</label><input id="oCP" placeholder="CP"><div class="ac" hidden></div></div>
+              <div class="f" style="grid-column:span 2"><label for="oPob">Población</label><input id="oPob" placeholder="Escribe la población"><div class="ac" hidden></div></div></div>
+            <div class="f"><label for="oProv">Provincia / región</label><input id="oProv"></div>
+          </div>
+          <div class="arrow" aria-hidden="true">→</div>
+          <div class="place">
+            <div class="tag">Destino <em id="zDestino"></em></div>
+            <div class="f"><label for="dPais">País</label><select id="dPais"></select></div>
+            <div class="row"><div class="f"><label for="dCP">Código postal</label><input id="dCP" placeholder="CP"><div class="ac" hidden></div></div>
+              <div class="f" style="grid-column:span 2"><label for="dPob">Población</label><input id="dPob" placeholder="Escribe la población"><div class="ac" hidden></div></div></div>
+            <div class="f"><label for="dProv">Provincia / región</label><input id="dProv"></div>
+          </div>
+        </div>
+        <p class="hint" style="margin:6px 0 0">Escribe el CP o el nombre de la población: aparecen CP, población y provincia para elegir.</p>
+      </div>
+
+      <div class="panel">
+        <h2><span class="n">5</span>Ajustes y observaciones</h2>
+        <div class="row">
+          <div class="f"><label for="pComb">Combustible (%)</label><input id="pComb" type="number" step="0.01" min="0"><span class="hint">Se aplica a este presupuesto · <button type="button" class="btn ghost small" id="btnCombMes" style="padding:0;color:var(--gold-ink)">fijar como % del mes</button></span></div>
+          <div class="f"><label for="pManual">Precio porte manual (€)</label><input id="pManual" type="number" min="0" step="0.01" placeholder="Vacío = tarifa"></div>
+          <div class="f"><label for="pIvaMode">IVA</label><select id="pIvaMode"><option value="auto">Automático según cliente</option><option value="21">21 % (forzado)</option><option value="0">0 % (forzado)</option></select></div>
+          <div class="f"><label for="pEstado">Estado</label><select id="pEstado"><option>Pendiente</option><option>Aceptado</option><option>Rechazado</option></select></div>
+        </div>
+        <div class="f" style="margin-top:8px"><label for="pObs">Observaciones para el cliente</label><textarea id="pObs" placeholder="Aparecen en el PDF debajo del importe"></textarea></div>
+      </div>
+    </form>
+
+    <aside class="ticket" aria-label="Liquidación">
+      <div class="head">
+        <div class="num"><small>Presupuesto</small><span id="tNum">—</span></div>
+        <div class="route-s" id="tRoute">Indica origen y destino</div>
+      </div>
+      <div class="body">
+        <div class="line"><span>Tarifa</span><b id="tTarifa">—</b></div>
+        <div class="line"><span>Zona de tarifa</span><b id="tZona">—</b></div>
+        <div class="line"><span id="tKgLbl">Kg facturables</span><b id="tKg">0 kg</b></div>
+        <div class="line"><span id="tPorteLbl">Porte según tarifa</span><b id="tPorte">0,00 €</b></div>
+        <div class="line" id="tSupRow" hidden><span>Suplemento medida no EUR (+8 %)<small id="tSupLbl"></small></span><b id="tSup">0,00 €</b></div>
+        <div class="line" id="tRecRow" hidden><span>Recargo entrega Badajoz/Cáceres<small id="tRecLbl">0,05 €/kg</small></span><b id="tRec">0,00 €</b></div>
+        <div class="line"><span>Combustible <span id="tCombPct">5,07</span> %</span><b id="tComb">0,00 €</b></div>
+        <div class="line sub"><span>Base imponible</span><b id="tBase">0,00 €</b></div>
+        <div class="line"><span>IVA <span id="tIvaPct">21</span> %<small id="tIvaWhy"></small></span><b id="tIva">0,00 €</b></div>
+      </div>
+      <div class="total"><span>Total</span><b id="tTotal">0,00 €</b></div>
+      <div class="foot">
+        <div id="tAlert"></div>
+        <button class="btn gold" type="button" id="btnGuardar">Guardar presupuesto</button>
+        <button class="btn" type="button" id="btnGuardarPdf" style="background:#fff;color:#1d2026;border-color:#fff">Guardar, descargar y enviar</button>
+        <button class="btn ghost small" type="button" id="btnCancelEdit" hidden>Cancelar edición</button>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<section id="v-presupuestos" hidden>
+  <div class="pagehead">
+    <div><h1>Presupuestos</h1><p>Todos los presupuestos guardados por el equipo. Filtra por fechas y exporta a Excel.</p></div>
+    <div class="actions"><span id="bkBox" hidden style="display:inline-flex;gap:6px"><button class="btn" id="btnBackup" type="button">Copia de seguridad</button><label class="btn" for="fRestore" style="cursor:pointer">Restaurar copia</label><input type="file" id="fRestore" accept=".json,application/json" hidden></span><button class="btn primary" id="btnExcel" type="button">Exportar a Excel</button><a class="btn gold" href="#nuevo">+ Nuevo presupuesto</a></div>
+  </div>
+  <div class="panel">
+    <div class="toolbar">
+      <div class="f grow"><label for="qTxt">Buscar</label><input id="qTxt" placeholder="Nº, cliente, CIF, población…"></div>
+      <div class="f"><label for="qDesde">Desde</label><input id="qDesde" type="date"></div>
+      <div class="f"><label for="qHasta">Hasta</label><input id="qHasta" type="date"></div>
+      <div class="f"><label for="qDeleg">Delegación</label><select id="qDeleg"><option value="">Todas</option><option value="MER">Mérida</option><option value="NAV">Navalmoral</option></select></div>
+      <div class="f"><label for="qEstado">Estado</label><select id="qEstado"><option value="">Todos</option><option>Pendiente</option><option>Aceptado</option><option>Rechazado</option></select></div>
+    </div>
+    <div class="summary" id="sumBox"></div>
+    <div class="tablewrap" id="gridWrap"></div>
+  </div>
+</section>
+
+<section id="v-clientes" hidden>
+  <div class="pagehead">
+    <div><h1>Clientes</h1><p>Base de datos compartida. Los clientes nuevos quedan disponibles para próximos presupuestos.</p></div>
+    <div class="actions"><button class="btn gold" id="btnNuevoCliente2" type="button">+ Nuevo cliente</button></div>
+  </div>
+  <div class="panel">
+    <div class="toolbar"><div class="f grow"><label for="cTxt">Buscar cliente</label><input id="cTxt" placeholder="Nombre, CIF, población, email…"></div></div>
+    <div class="tablewrap" id="cliWrap"></div>
+  </div>
+</section>
+
+<section id="v-tarifa" hidden>
+  <div class="pagehead"><div><h1>Tarifas TG 2026</h1><p>TG 2025 + 3 %. Precio por envío hasta 1.000 kg; por encima, €/kg.</p></div>
+    <div class="seg" role="group" aria-label="Delegación"><button type="button" data-rt="MER" aria-pressed="true">Mérida</button><button type="button" data-rt="NAV" aria-pressed="false">Navalmoral</button><button type="button" data-rt="PAL" aria-pressed="false">T Pallets</button><button type="button" data-rt="PALPT" aria-pressed="false">Pallets Portugal</button></div></div>
+  <div class="grid2">
+    <div class="panel"><div class="tablewrap" id="rateWrap"></div><div class="zonelist" id="zoneList"></div></div>
+    <div class="panel">
+      <h2>Cómo calcula el tarificador</h2>
+      <ol class="rules">
+        <li>Cada delegación usa su tarifa: MER (Mérida) o NAV (Navalmoral).</li>
+        <li>Kg facturables = el mayor entre peso real y PVKG (m³ × 250).</li>
+        <li>Origen en Badajoz o Cáceres: precio directo de la zona del destino.</li>
+        <li>Destino en Badajoz o Cáceres (origen fuera): zona del origen + 0,05 € por kg facturable.</li>
+        <li>Ni origen ni destino en Badajoz/Cáceres: zona del destino + 0,05 €/kg, marcado para revisar.</li>
+        <li>Combustible sobre el porte (editable en cada presupuesto).</li>
+        <li>IVA 21 % para clientes de España; 0 % para el resto de países.</li>
+        <li>«COTIZACIÓN», Canarias, Ceuta, Melilla y resto de Europa: precio manual.</li>
+        <li><b>T Pallets</b> (igual para MER y NAV): precio por pallet según provincia y número de pallets. Pallet EUR 1,20 × 0,80; medidas mayores (1,20 × 1,00 o más): +8 %.</li>
+        <li>T Pallets con origen en Badajoz/Cáceres: precio de tabla. Con destino en Badajoz/Cáceres (origen fuera): +17 € por pallet.</li>
+        <li>Pallets con origen o destino en Portugal: tabla TP3 Portugal (solo Mérida; desde Navalmoral, buscar cotización).</li>
+      </ol>
+      <div class="row" style="margin-top:12px">
+        <div class="f"><label for="setComb">Combustible por defecto (%)</label><input id="setComb" type="number" step="0.01" min="0"></div>
+        <div class="f" style="justify-content:flex-end"><button class="btn primary" type="button" id="btnSetComb">Guardar ajuste</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<div id="modalRoot"></div>
+
+<script>window.PRES2_USER = {{ usuario|tojson }};</script>
+<script src="{{ url_for('static', filename='presupuestos2/cpgz.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="{{ url_for('static', filename='presupuestos2/app.js') }}"></script>
+</body></html>

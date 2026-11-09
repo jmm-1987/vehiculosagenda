@@ -10,6 +10,7 @@ class Usuario(UserMixin, db.Base):
     id = Column(Integer, primary_key=True)
     username = Column(String(100), unique=True)
     password = Column(String(100))
+    email = Column(String(200), nullable=True, default="")
     # NULL = aún no se ha guardado desde el manager. "*" = acceso completo.
     # Una lista JSON son los módulos marcados.
     permisos = Column(Text, nullable=True)
@@ -481,6 +482,14 @@ class Presupuesto(db.Base):
         self.activo = activo
         self.fecha_creacion = fecha_creacion
         self.usuario_creacion = usuario_creacion
+
+
+class Presupuesto2Documento(db.Base):
+    """Documento del tarificador (cliente, presupuesto, ajuste o contador)."""
+    __tablename__ = "presupuesto2_documento"
+    coleccion = Column(String(40), primary_key=True)
+    doc_id = Column(String(80), primary_key=True)
+    datos = Column(Text, nullable=False, default="{}")
 
 
 class FacturaProforma(db.Base):

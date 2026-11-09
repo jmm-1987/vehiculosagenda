@@ -308,6 +308,8 @@
         <p class="aviso-error">Ese nombre de usuario ya existe.</p>
         {% elif error == 'vacio' %}
         <p class="aviso-error">El usuario y la contraseña no pueden quedar vacíos.</p>
+        {% elif error == 'email' %}
+        <p class="aviso-error">La cuenta de email no es válida.</p>
         {% endif %}
         <p class="permisos-nota">Marca a qué puede entrar cada usuario y pulsa Guardar accesos. Documentación pública y el horario semanal siguen visibles para todos. jmurillo tiene acceso completo y no se puede modificar.</p>
         <form method="post" action="{{ url_for('guardar_permisos') }}">
@@ -325,6 +327,7 @@
                 <tr>
                     <th class="usuario">Usuario</th>
                     <th>Contraseña</th>
+                    <th>Email</th>
                     {% for mid, etiqueta in modulos %}
                     <th class="mod"><span>{{ etiqueta }}</span></th>
                     {% endfor %}
@@ -339,6 +342,7 @@
                         {% if not fijo %}<input type="hidden" name="usuarios" value="{{ u.id }}">{% endif %}
                     </td>
                     <td>{{ u.password }}</td>
+                    <td>{{ u.email or '—' }}</td>
                     {% for mid, etiqueta in modulos %}
                     <td class="mod">
                         <input type="checkbox" name="perm_{{ u.id }}" value="{{ mid }}" title="{{ etiqueta }}"
@@ -353,7 +357,8 @@
                     <td><button type="button" class="boton-editar"
                         data-id="{{ u.id }}"
                         data-usuario="{{ u.username or '' }}"
-                        data-password="{{ u.password or '' }}">
+                        data-password="{{ u.password or '' }}"
+                        data-email="{{ u.email or '' }}">
                         <i class="fas fa-pencil"></i>
                     </button></td>
                     {% if current_user.username == "jmurillo" or current_user.username == "javimurillo" %}
@@ -372,7 +377,7 @@
         </form>
         {% for u in lista_usuarios %}
             {% if (u.username or '')|lower != 'jmurillo' and (current_user.username == 'jmurillo' or current_user.username == 'javimurillo') %}
-            <form id="borrar-{{ u.id }}" action="/borrar_usuario/{{ u.id }}" method="POST"></form>
+            <form id="borrar-{{ u.id }}" action="/borrar_usuario/{{ u.id }}" method="POST" onsubmit="return confirm('¿Eliminar al usuario ' + {{ u.username|tojson }} + '?');"></form>
             {% endif %}
         {% endfor %}
     </div>
@@ -385,6 +390,9 @@
                 </label>
                 <label>Contraseña
                     <input id="editPassword" name="password" required autocomplete="off">
+                </label>
+                <label>Cuenta de email
+                    <input id="editEmail" name="email" type="email" autocomplete="off" placeholder="Se usará más adelante">
                 </label>
                 <div class="edit-acciones">
                     <button type="button" class="button_red" id="editCerrar">Cancelar</button>
@@ -402,12 +410,14 @@
         const form = document.getElementById('editForm');
         const usuario = document.getElementById('editUsuario');
         const password = document.getElementById('editPassword');
+        const email = document.getElementById('editEmail');
         function cerrar() { modal.hidden = true; }
         document.querySelectorAll('.boton-editar').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 form.action = '/editar_usuario/' + btn.dataset.id;
                 usuario.value = btn.dataset.usuario || '';
                 password.value = btn.dataset.password || '';
+                email.value = btn.dataset.email || '';
                 modal.hidden = false;
                 usuario.focus();
             });

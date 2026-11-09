@@ -4,6 +4,12 @@ import db
 from models import Usuario
 from permisos import MODULOS, USUARIO_FIJO, marcas_para_formulario, guardar_permisos_de_usuarios
 
+def _email_usuario(valor):
+    email = (valor or "").strip().lower()
+    if email and ("@" not in email or " " in email):
+        return None
+    return email
+
 def register_usuarios_routes(app):
     @app.route('/manager')
     @login_required
@@ -61,8 +67,11 @@ def register_usuarios_routes(app):
             return redirect(url_for('lista_usuarios'))
         nombre = (request.form.get('usuario') or '').strip()
         password = request.form.get('password') or ''
+        email = _email_usuario(request.form.get('email'))
         if not nombre or not password.strip():
             return redirect(url_for('lista_usuarios', error='vacio'))
+        if email is None:
+            return redirect(url_for('lista_usuarios', error='email'))
         repetido = db.session.query(Usuario).filter(
             Usuario.username == nombre,
             Usuario.id != registro.id,
@@ -71,15 +80,20 @@ def register_usuarios_routes(app):
             return redirect(url_for('lista_usuarios', error='existe'))
         registro.username = nombre
         registro.password = password
+        registro.email = email
         db.session.commit()
         return redirect(url_for('lista_usuarios', editado=1))
 
     @app.route("/crear_usuario", methods=["POST", "GET"])
     @login_required
     def crear_usuario():
+        email = _email_usuario(request.form.get("email"))
+        if email is None:
+            return redirect(url_for('lista_usuarios', error='email'))
         usuario = Usuario(username=request.form["usuario"],
                           password=request.form["password"])
         usuario.permisos = "[]"
+        usuario.email = email
         db.session.add(usuario)
         db.session.commit()
         return redirect(url_for('lista_usuarios'))

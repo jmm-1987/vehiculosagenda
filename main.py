@@ -37,6 +37,7 @@ from scanner_ftp.scanner_ftp import register_scanner_ftp_routes
 from rrhh.rrhh_routes import register_rrhh_routes
 from caja.caja import register_caja_routes
 from presupuestos.presupuestos import register_presupuestos_routes
+from presupuestos2.presupuestos2 import register_presupuestos2_routes
 from presupuestos.edicion import register_presupuestoedit_routes
 from ordenes_carga.ordenes_carga import register_ordenes_carga_routes
 from vacaciones.vacaciones import register_vacaciones_routes
@@ -79,6 +80,7 @@ try:
     ensure_column_exists('rectificacion', 'importe_cobrar', 'FLOAT', None)
     ensure_column_exists('rectificacion', 'cp_destino', 'VARCHAR(10)', '')
     ensure_column_exists('usuario', 'permisos', 'TEXT', None)
+    ensure_column_exists('usuario', 'email', 'VARCHAR(200)', '')
     ensure_column_exists('llegada_camion_linea', 'tipo', 'VARCHAR(20)', 'llegada')
     # La tabla factura_proforma se creará automáticamente con SQLAlchemy
 except Exception as e:
@@ -172,6 +174,7 @@ register_scanner_ftp_routes(app)
 register_rrhh_routes(app)
 register_caja_routes(app)
 register_presupuestos_routes(app)
+register_presupuestos2_routes(app)
 register_presupuestoedit_routes(app)
 register_ordenes_carga_routes(app)
 register_vacaciones_routes(app)

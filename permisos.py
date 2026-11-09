@@ -98,6 +98,8 @@ RUTAS_POR_MODULO = {
     "caja": ("/caja",),  # Contados; se excluye caja-reembolsos en el matcher
     "presupuestos": (
         "/presupuestos",
+        "/presupuestos2",
+        "/api/presupuestos2",
         "/presupuestos_todos",
         "/formulario_presupuesto",
         "/siguiente_numero_presupuesto",
